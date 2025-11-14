@@ -1,50 +1,53 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider))]
-public class PickupInteractable : MonoBehaviour, IInteractable
+namespace Assets.Scripts
+
 {
-    [Header("Item Settings")]
-    [Tooltip("Item name displayed in popup")]
-    public string itemName = "Item";
-
-    [Tooltip("Destroy object on pickup")]
-    public bool destroyOnPickup = true;
-
-    public string GetInteractText()
+    [RequireComponent(typeof(Collider))]
+    public class PickupInteractable : MonoBehaviour, IInteractable
     {
-        return $"Press Execute button to pick up: {itemName}";
-    }
+        [Header("Item Settings")]
+        [Tooltip("Item name displayed in popup")]
+        public string itemName = "Item";
 
-    public void OnInteract(GameObject actor)
-    {
-        SimpleInventory inv = actor.GetComponent<SimpleInventory>();
-        if (inv != null)
+        [Tooltip("Destroy object on pickup")]
+        public bool destroyOnPickup = true;
+
+        public string GetInteractText()
         {
-            inv.AddItem(itemName);
-            Debug.Log($"Added {itemName} to player inventory.");
-        }
-        else
-        {
-            Debug.Log($"{itemName} picked up (inventory not found).");
+            return $"Press Execute button to pick up: {itemName}";
         }
 
-        if (destroyOnPickup)
+        public void OnInteract(GameObject actor)
         {
-            Destroy(gameObject);
+            SimpleInventory inv = actor.GetComponent<SimpleInventory>(); if (inv != null)
+            {
+                inv.AddItem(itemName);
+                Debug.Log($"Added {itemName} to player inventory.");
+            }
+            else
+            {
+                Debug.Log($"{itemName} picked up (inventory not found).");
+            }
+
+            if (destroyOnPickup)
+            {
+                Destroy(gameObject);
+            }
         }
-    }
 
-    public void Interact(GameObject actor)
-    {
-        OnInteract(actor);
-    }
-
-    private void Reset()
-    {
-        Collider c = GetComponent<Collider>();
-        if (c != null)
+        public void Interact(GameObject actor)
         {
-            c.isTrigger = false;
+            OnInteract(actor);
+        }
+
+        private void Reset()
+        {
+            Collider c = GetComponent<Collider>();
+            if (c != null)
+            {
+                c.isTrigger = false;
+            }
         }
     }
 }
