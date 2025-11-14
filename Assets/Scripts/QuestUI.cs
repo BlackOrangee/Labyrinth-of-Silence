@@ -4,441 +4,382 @@ using TMPro;
 using System.Collections.Generic;
 using System.Collections;
 
-public class QuestUI : MonoBehaviour
+namespace Assets.Scripts
+
 {
-    [Header("UI Elements (link in Inspector)")]
-    [Tooltip("Root GameObject for quest panel")]
-    public GameObject questPanelRoot;
-
-    [Tooltip("Container for quest list (with Vertical Layout Group)")]
-    public RectTransform questListContainer;
-
-    [Tooltip("Prefab for single quest (QuestItem)")]
-    public GameObject questItemPrefab;
-
-    [Header("Sounds")]
-    [Tooltip("Sound when quest is updated (bell.mp3)")]
-    public AudioClip updateSound;
-
-    [Tooltip("Sound when quest is completed (triumph.mp3)")]
-    public AudioClip completeSound;
-
-    [Range(0f, 1f)]
-    [Tooltip("Sound volume")]
-    public float soundVolume = 0.7f;
-
-    [Header("Animation")]
-    [Tooltip("Fade in animation duration")]
-    public float fadeInDuration = 0.5f;
-
-    [Tooltip("Strikethrough animation duration")]
-    public float strikethroughDuration = 0.5f;
-
-    [Tooltip("Fade out animation duration")]
-    public float fadeOutDuration = 1f;
-
-    [Header("Colors (Horror style)")]
-    [Tooltip("Color for active quests")]
-    public Color activeQuestColor = new Color(0.9f, 0.9f, 0.85f, 1f);
-
-    [Tooltip("Color for completed quests")]
-    public Color completedQuestColor = new Color(0.4f, 0.4f, 0.4f, 1f);
-
-    [Tooltip("Strikethrough line color")]
-    public Color strikethroughColor = new Color(0.8f, 0.2f, 0.2f, 1f);
-
-    private Dictionary<string, GameObject> questItems = new Dictionary<string, GameObject>();
-    private AudioSource audioSource;
-    private bool isSubscribed = false;
-
-    #region Unity Lifecycle
-
-    private void Awake()
+    public class QuestUI : MonoBehaviour
     {
-        audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
-        audioSource.volume = soundVolume;
+        [Header("UI Elements (link in Inspector)")]
+        [Tooltip("Root GameObject for quest panel")]
+        public GameObject questPanelRoot;
+        [Tooltip("Container for quest list (with Vertical Layout Group)")]
+        public RectTransform questListContainer;
 
-        if (questPanelRoot == null)
+        [Tooltip("Prefab for single quest (QuestItem)")]
+        public GameObject questItemPrefab;
+
+        [Header("Sounds")]
+        [Tooltip("Sound when quest is updated (bell.mp3)")]
+        public AudioClip updateSound;
+
+        [Tooltip("Sound when quest is completed (triumph.mp3)")]
+        public AudioClip completeSound;
+
+        [Range(0f, 1f)]
+        [Tooltip("Sound volume")]
+        public float soundVolume = 0.7f;
+
+        [Header("Animation")]
+        [Tooltip("Fade in animation duration")]
+        public float fadeInDuration = 0.5f;
+
+        [Tooltip("Strikethrough animation duration")]
+        public float strikethroughDuration = 0.5f;
+
+        [Tooltip("Fade out animation duration")]
+        public float fadeOutDuration = 1f;
+
+        [Header("Colors (Horror style)")]
+        [Tooltip("Color for active quests")]
+        public Color activeQuestColor = new Color(0.9f, 0.9f, 0.85f, 1f);
+
+        [Tooltip("Color for completed quests")]
+        public Color completedQuestColor = new Color(0.4f, 0.4f, 0.4f, 1f);
+
+        [Tooltip("Strikethrough line color")]
+        public Color strikethroughColor = new Color(0.8f, 0.2f, 0.2f, 1f);
+
+        private Dictionary<string, GameObject> questItems = new Dictionary<string, GameObject>();
+        private AudioSource audioSource;
+        private bool isSubscribed = false;
+        private QuestTracker cachedQuestTracker = null;
+
+        #region Unity Lifecycle
+
+        private void Awake()
         {
-            Debug.LogError("❌ QuestUI: questPanelRoot not linked! Link in Inspector.");
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.volume = soundVolume;
+
+            if (questPanelRoot == null)
+            {
+                Debug.LogError("❌ QuestUI: questPanelRoot not linked! Link in Inspector.");
+            }
+
+            if (questListContainer == null)
+            {
+                Debug.LogError("❌ QuestUI: questListContainer not linked! Link in Inspector.");
+            }
+
+            if (questItemPrefab == null)
+            {
+                Debug.LogError("❌ QuestUI: questItemPrefab not linked! Link in Inspector.");
+            }
+
+            if (questPanelRoot != null && questItems.Count == 0)
+            {
+                questPanelRoot.SetActive(false);
+            }
         }
 
-        if (questListContainer == null)
+        private void Start()
         {
-            Debug.LogError("❌ QuestUI: questListContainer not linked! Link in Inspector.");
+            cachedQuestTracker = QuestTracker.Instance;
+
+            if (cachedQuestTracker != null)
+            {
+                cachedQuestTracker.OnQuestAdded += OnQuestAdded;
+                cachedQuestTracker.OnQuestUpdated += OnQuestUpdated;
+                cachedQuestTracker.OnQuestCompleted += OnQuestCompleted;
+                isSubscribed = true;
+                Debug.Log("✅ QuestUI: subscribed to QuestTracker events.");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ QuestUI: QuestTracker not found!");
+            }
         }
 
-        if (questItemPrefab == null)
+        private void OnDestroy()
         {
-            Debug.LogError("❌ QuestUI: questItemPrefab not linked! Link in Inspector.");
+            UnsubscribeFromQuestTracker();
         }
 
-        if (questPanelRoot != null && questItems.Count == 0)
+        private void OnDisable()
         {
-            questPanelRoot.SetActive(false);
-        }
-    }
-
-    private void Start()
-    {
-        if (QuestTracker.Instance != null)
-        {
-            QuestTracker.Instance.OnQuestAdded += OnQuestAdded;
-            QuestTracker.Instance.OnQuestUpdated += OnQuestUpdated;
-            QuestTracker.Instance.OnQuestCompleted += OnQuestCompleted;
-            isSubscribed = true;
-            Debug.Log("✅ QuestUI: subscribed to QuestTracker events.");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ QuestUI: QuestTracker not found!");
-        }
-    }
-
-    private void OnDestroy()
-    {
-        UnsubscribeFromQuestTracker();
-    }
-
-    private void OnDisable()
-    {
-        UnsubscribeFromQuestTracker();
-    }
-
-    private void UnsubscribeFromQuestTracker()
-    {
-        if (!isSubscribed)
-        {
-            return;
+            UnsubscribeFromQuestTracker();
         }
 
-        if (QuestTracker.Instance != null)
+        private void UnsubscribeFromQuestTracker()
         {
-            QuestTracker.Instance.OnQuestAdded -= OnQuestAdded;
-            QuestTracker.Instance.OnQuestUpdated -= OnQuestUpdated;
-            QuestTracker.Instance.OnQuestCompleted -= OnQuestCompleted;
+            if (!isSubscribed || cachedQuestTracker == null)
+            {
+                return;
+            }
+
+            cachedQuestTracker.OnQuestAdded -= OnQuestAdded;
+            cachedQuestTracker.OnQuestUpdated -= OnQuestUpdated;
+            cachedQuestTracker.OnQuestCompleted -= OnQuestCompleted;
             isSubscribed = false;
-            Debug.Log("✅ QuestUI: unsubscribed from QuestTracker events.");
-        }
-    }
-
-    #endregion
-
-    #region Event Handlers
-
-    private void OnQuestAdded(Quest quest)
-    {
-        Debug.Log($"📥 QuestUI: adding quest '{quest.questId}'");
-
-        if (questPanelRoot != null && !questPanelRoot.activeSelf)
-        {
-            questPanelRoot.SetActive(true);
-            Debug.Log("✅ QuestUI: questPanelRoot activated");
+            cachedQuestTracker = null;
         }
 
-        CreateQuestItem(quest);
+        #endregion
 
-        PlaySound(updateSound);
-    }
+        #region Event Handlers
 
-    private void OnQuestUpdated(Quest quest)
-    {
-        Debug.Log($"🔄 QuestUI: updating quest '{quest.questId}' to {quest.currentProgress}/{quest.targetProgress}");
-
-        UpdateQuestItemText(quest);
-
-        PlaySound(updateSound);
-    }
-
-    private void OnQuestCompleted(Quest quest)
-    {
-        Debug.Log($"🎉 QuestUI: completed quest '{quest.questId}'");
-
-        StartCoroutine(CompleteQuestAnimation(quest.questId));
-
-        PlaySound(completeSound);
-    }
-
-    #endregion
-
-    #region Quest Item Management
-
-    private void CreateQuestItem(Quest quest)
-    {
-        Debug.Log($"🔨 CreateQuestItem: creating element for '{quest.questId}'");
-
-        if (questItemPrefab == null)
+        private void OnQuestAdded(Quest quest)
         {
-            Debug.LogError("❌ QuestUI: questItemPrefab = NULL! Link prefab in Inspector.");
-            return;
+            if (questPanelRoot != null && !questPanelRoot.activeSelf)
+            {
+                questPanelRoot.SetActive(true);
+            }
+
+            CreateQuestItem(quest);
+            PlaySound(updateSound);
         }
 
-        if (questListContainer == null)
+        private void OnQuestUpdated(Quest quest)
         {
-            Debug.LogError("❌ QuestUI: questListContainer = NULL! Link container in Inspector.");
-            return;
+            UpdateQuestItemText(quest);
+            PlaySound(updateSound);
         }
 
-        Debug.Log($"✅ QuestUI: Prefab and container exist, creating element...");
-
-        if (questItems.ContainsKey(quest.questId))
+        private void OnQuestCompleted(Quest quest)
         {
-            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{quest.questId}' already exists.");
-            return;
+            StartCoroutine(CompleteQuestAnimation(quest.questId));
+            PlaySound(completeSound);
         }
 
-        GameObject itemGO = Instantiate(questItemPrefab, questListContainer);
-        itemGO.name = $"QuestItem_{quest.questId}";
+        #endregion
 
-        RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
-        if (rectTransform != null)
+        #region Quest Item Management
+
+        private void CreateQuestItem(Quest quest)
         {
-            float halfWidth = rectTransform.rect.width / 2f;
-            rectTransform.localPosition = new Vector3(halfWidth, -10, 0);
-            rectTransform.localScale = Vector3.one;
-        }
-        
-        Debug.Log($"✅ QuestUI: Created GameObject '{itemGO.name}'");
+            if (questItemPrefab == null || questListContainer == null)
+            {
+                return;
+            }
 
-        TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
-        Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
-        Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
+            if (questItems.ContainsKey(quest.questId))
+            {
+                return;
+            }
 
-        if (textComponent != null)
-        {
-            textComponent.text = quest.GetFormattedText();
-            textComponent.color = activeQuestColor;
-            Debug.Log($"✅ QuestUI: Text set: '{textComponent.text}'");
-        }
-        else
-        {
-            Debug.LogError($"❌ QuestUI: TextMeshProUGUI not found in QuestItem prefab!");
-        }
+            GameObject itemGO = Instantiate(questItemPrefab, questListContainer);
+            itemGO.name = $"QuestItem_{quest.questId}";
 
-        if (strikethroughImage != null)
-        {
-            strikethroughImage.color = strikethroughColor;
-            strikethroughImage.fillAmount = 0f;
-            Debug.Log($"✅ QuestUI: StrikeThrough configured");
-        }
-        else
-        {
-            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough not found in prefab");
-        }
+            RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                float halfWidth = rectTransform.rect.width / 2f;
+                rectTransform.localPosition = new Vector3(halfWidth, -10, 0);
+                rectTransform.localScale = Vector3.one;
+            }
 
-        questItems.Add(quest.questId, itemGO);
-        Debug.Log($"✅ QuestUI: QuestItem '{quest.questId}' added to dictionary. Total: {questItems.Count}");
+            TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
+            Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
+            Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
 
-        StartCoroutine(FadeInAnimation(itemGO));
-    }
+            if (textComponent != null)
+            {
+                textComponent.text = quest.GetFormattedText();
+                textComponent.color = activeQuestColor;
+            }
 
-    private void UpdateQuestItemText(Quest quest)
-    {
-        if (!questItems.ContainsKey(quest.questId))
-        {
-            Debug.LogWarning($"⚠️ QuestUI: cannot update text - QuestItem '{quest.questId}' not found.");
-            return;
+            if (strikethroughImage != null)
+            {
+                strikethroughImage.color = strikethroughColor;
+                strikethroughImage.fillAmount = 0f;
+            }
+
+            questItems.Add(quest.questId, itemGO);
+            StartCoroutine(FadeInAnimation(itemGO));
         }
 
-        GameObject itemGO = questItems[quest.questId];
-        TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
-
-        if (textComponent != null)
+        private void UpdateQuestItemText(Quest quest)
         {
-            textComponent.text = quest.GetFormattedText();
-            Debug.Log($"✅ QuestUI: Text updated to '{textComponent.text}'");
-        }
-    }
+            if (!questItems.ContainsKey(quest.questId))
+            {
+                return;
+            }
 
-    private void RemoveQuestItem(string questId)
-    {
-        if (questItems.ContainsKey(questId))
-        {
-            GameObject itemGO = questItems[questId];
-            questItems.Remove(questId);
-            Destroy(itemGO);
-            Debug.Log($"🗑️ QuestUI: removed QuestItem '{questId}'");
+            GameObject itemGO = questItems[quest.questId];
+            TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
+
+            if (textComponent != null)
+            {
+                textComponent.text = quest.GetFormattedText();
+            }
         }
 
-        if (questItems.Count == 0 && questPanelRoot != null)
+        private void RemoveQuestItem(string questId)
         {
-            questPanelRoot.SetActive(false);
-            Debug.Log($"👻 QuestUI: questPanelRoot hidden (no quests)");
-        }
-    }
+            if (questItems.ContainsKey(questId))
+            {
+                GameObject itemGO = questItems[questId];
+                questItems.Remove(questId);
+                Destroy(itemGO);
+            }
 
-    #endregion
-
-    #region Animations
-
-    private IEnumerator FadeInAnimation(GameObject itemGO)
-    {
-        CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
-        
-        if (canvasGroup == null)
-        {
-            canvasGroup = itemGO.AddComponent<CanvasGroup>();
+            if (questItems.Count == 0 && questPanelRoot != null)
+            {
+                questPanelRoot.SetActive(false);
+            }
         }
 
-        RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
+        #endregion
 
-        canvasGroup.alpha = 0f;
-        Vector2 startPos = rectTransform.anchoredPosition;
-        Vector2 targetPos = startPos;
-        startPos.x -= 100f;
-        rectTransform.anchoredPosition = startPos;
+        #region Animations
 
-        float elapsed = 0f;
-
-        while (elapsed < fadeInDuration)
+        private IEnumerator FadeInAnimation(GameObject itemGO)
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / fadeInDuration;
+            CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
 
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
+            if (canvasGroup == null)
+            {
+                canvasGroup = itemGO.AddComponent<CanvasGroup>();
+            }
 
-            rectTransform.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
+            RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
 
-            yield return null;
-        }
+            canvasGroup.alpha = 0f;
+            Vector2 startPos = rectTransform.anchoredPosition;
+            Vector2 targetPos = startPos;
+            startPos.x -= 100f;
+            rectTransform.anchoredPosition = startPos;
 
-        canvasGroup.alpha = 1f;
-        rectTransform.anchoredPosition = targetPos;
-        
-        Debug.Log($"✨ QuestUI: FadeIn animation completed for {itemGO.name}");
-    }
-
-    private IEnumerator CompleteQuestAnimation(string questId)
-    {
-        Debug.Log($"🎬 QuestUI: Starting completion animation for '{questId}'");
-
-        if (!questItems.ContainsKey(questId))
-        {
-            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{questId}' not found for animation");
-            yield break;
-        }
-
-        GameObject itemGO = questItems[questId];
-        TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
-        Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
-        Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
-
-        if (textComponent != null)
-        {
-            textComponent.color = completedQuestColor;
-            Debug.Log($"🎨 QuestUI: Text color changed to completedQuestColor");
-        }
-
-        if (strikethroughImage != null)
-        {
-            Debug.Log($"✏️ QuestUI: Starting strikethrough animation...");
             float elapsed = 0f;
 
-            while (elapsed < strikethroughDuration)
+            while (elapsed < fadeInDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / strikethroughDuration;
+                float t = elapsed / fadeInDuration;
 
-                strikethroughImage.fillAmount = Mathf.Lerp(0f, 1f, t);
+                canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
+                rectTransform.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
 
                 yield return null;
             }
 
-            strikethroughImage.fillAmount = 1f;
-            Debug.Log($"✅ QuestUI: Strikethrough completed");
+            canvasGroup.alpha = 1f;
+            rectTransform.anchoredPosition = targetPos;
         }
-        else
+
+        private IEnumerator CompleteQuestAnimation(string questId)
         {
-            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough not found, skipping animation");
+            if (!questItems.ContainsKey(questId))
+            {
+                yield break;
+            }
+
+            GameObject itemGO = questItems[questId];
+            TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
+            Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
+            Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
+
+            if (textComponent != null)
+            {
+                textComponent.color = completedQuestColor;
+            }
+
+            if (strikethroughImage != null)
+            {
+                float elapsed = 0f;
+
+                while (elapsed < strikethroughDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = elapsed / strikethroughDuration;
+                    strikethroughImage.fillAmount = Mathf.Lerp(0f, 1f, t);
+                    yield return null;
+                }
+
+                strikethroughImage.fillAmount = 1f;
+            }
+
+            yield return new WaitForSeconds(0.3f);
+
+            CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
+
+            if (canvasGroup == null)
+            {
+                canvasGroup = itemGO.AddComponent<CanvasGroup>();
+            }
+
+            float elapsedFade = 0f;
+
+            while (elapsedFade < fadeOutDuration)
+            {
+                elapsedFade += Time.deltaTime;
+                float t = elapsedFade / fadeOutDuration;
+                canvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
+                yield return null;
+            }
+
+            RemoveQuestItem(questId);
         }
 
-        Debug.Log($"⏸️ QuestUI: Pause 0.3 sec...");
-        yield return new WaitForSeconds(0.3f);
+        #endregion
 
-        Debug.Log($"💨 QuestUI: Starting fade out...");
-        CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
-        
-        if (canvasGroup == null)
+        #region Audio
+
+        private void PlaySound(AudioClip clip)
         {
-            canvasGroup = itemGO.AddComponent<CanvasGroup>();
+            if (clip == null || audioSource == null)
+            {
+                return;
+            }
+
+            audioSource.PlayOneShot(clip, soundVolume);
         }
 
-        float elapsedFade = 0f;
+        #endregion
 
-        while (elapsedFade < fadeOutDuration)
+        #region Debug
+
+        [ContextMenu("Test: Add Quest")]
+        public void TestAddQuest()
         {
-            elapsedFade += Time.deltaTime;
-            float t = elapsedFade / fadeOutDuration;
-
-            canvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
-
-            yield return null;
+            if (cachedQuestTracker != null)
+            {
+                cachedQuestTracker.AddQuest(
+                    "test_quest_" + Random.Range(0, 999),
+                    "Test quest",
+                    0,
+                    5
+                );
+            }
         }
 
-        Debug.Log($"✅ QuestUI: Fade out completed, removing element");
+        [ContextMenu("Test: Update First Quest")]
+        public void TestUpdateQuest()
+        {
+            if (cachedQuestTracker == null) return;
 
-        RemoveQuestItem(questId);
+            var quests = cachedQuestTracker.GetAllQuests();
+            if (quests != null && quests.Count > 0)
+            {
+                var quest = quests[0];
+                cachedQuestTracker.UpdateQuest(quest.questId, quest.currentProgress + 1);
+            }
+        }
+
+        [ContextMenu("Test: Complete First Quest")]
+        public void TestCompleteQuest()
+        {
+            if (cachedQuestTracker == null) return;
+
+            var quests = cachedQuestTracker.GetAllQuests();
+            if (quests != null && quests.Count > 0)
+            {
+                var quest = quests[0];
+                cachedQuestTracker.UpdateQuest(quest.questId, quest.targetProgress);
+            }
+        }
+
+        #endregion
     }
-
-    #endregion
-
-    #region Audio
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (clip == null)
-        {
-            Debug.LogWarning($"⚠️ QuestUI: AudioClip = NULL, cannot play sound");
-            return;
-        }
-
-        if (audioSource == null)
-        {
-            Debug.LogError($"❌ QuestUI: AudioSource = NULL!");
-            return;
-        }
-
-        audioSource.PlayOneShot(clip, soundVolume);
-        Debug.Log($"🔊 QuestUI: Playing sound '{clip.name}' with volume {soundVolume}");
-    }
-
-    #endregion
-
-    #region Debug
-
-    [ContextMenu("Test: Add Quest")]
-    public void TestAddQuest()
-    {
-        QuestTracker.Instance?.AddQuest(
-            "test_quest_" + Random.Range(0, 999),
-            "Test quest",
-            0,
-            5
-        );
-    }
-
-    [ContextMenu("Test: Update First Quest")]
-    public void TestUpdateQuest()
-    {
-        var quests = QuestTracker.Instance?.GetAllQuests();
-        if (quests != null && quests.Count > 0)
-        {
-            var quest = quests[0];
-            QuestTracker.Instance?.UpdateQuest(quest.questId, quest.currentProgress + 1);
-        }
-    }
-
-    [ContextMenu("Test: Complete First Quest")]
-    public void TestCompleteQuest()
-    {
-        var quests = QuestTracker.Instance?.GetAllQuests();
-        if (quests != null && quests.Count > 0)
-        {
-            var quest = quests[0];
-            QuestTracker.Instance?.UpdateQuest(quest.questId, quest.targetProgress);
-        }
-    }
-
-    #endregion
 }

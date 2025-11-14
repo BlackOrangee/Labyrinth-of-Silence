@@ -2,272 +2,272 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-public class QuestTracker : MonoBehaviour
+namespace Assets.Scripts
+
 {
-    #region Singleton
-    private static QuestTracker _instance;
-    private static bool _isApplicationQuitting = false;
-
-    public static QuestTracker Instance
+    public class QuestTracker : MonoBehaviour
     {
-        get
-        {
-            // Не створюємо новий екземпляр якщо гра закривається
-            if (_isApplicationQuitting)
-            {
-                Debug.LogWarning("QuestTracker: Application is quitting, returning null.");
-                return null;
-            }
+        #region Singleton
+        private static QuestTracker _instance;
+        private static bool _isApplicationQuitting = false;
 
-            if (_instance == null)
+        public static QuestTracker Instance
+        {
+            get
             {
-                _instance = FindFirstObjectByType<QuestTracker>();
-                
+                if (_isApplicationQuitting)
+                {
+                    Debug.LogWarning("QuestTracker: Application is quitting, returning null.");
+                    return null;
+                }
+
                 if (_instance == null)
                 {
-                    GameObject go = new GameObject("QuestTracker");
-                    _instance = go.AddComponent<QuestTracker>();
-                    DontDestroyOnLoad(go);
-                    Debug.Log("QuestTracker: auto-created Singleton instance.");
+                    _instance = FindFirstObjectByType<QuestTracker>();
+
+                    if (_instance == null)
+                    {
+                        GameObject go = new GameObject("QuestTracker");
+                        _instance = go.AddComponent<QuestTracker>();
+                        DontDestroyOnLoad(go);
+                        Debug.Log("QuestTracker: auto-created Singleton instance.");
+                    }
                 }
+                return _instance;
             }
-            return _instance;
         }
-    }
 
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
+        private void Awake()
         {
-            Debug.LogWarning("QuestTracker: duplicate detected, destroying.");
-            Destroy(gameObject);
-            return;
-        }
-        
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-        Debug.Log("QuestTracker: initialized.");
-    }
+            if (_instance != null && _instance != this)
+            {
+                Debug.LogWarning("QuestTracker: duplicate detected, destroying.");
+                Destroy(gameObject);
+                return;
+            }
 
-    private void OnDestroy()
-    {
-        // Очищаємо reference якщо це наш екземпляр
-        if (_instance == this)
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+            Debug.Log("QuestTracker: initialized.");
+        }
+
+        private void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
+                Debug.Log("QuestTracker: instance destroyed and cleared.");
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            _isApplicationQuitting = true;
+            Debug.Log("QuestTracker: Application quitting flag set.");
+        }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
         {
             _instance = null;
-            Debug.Log("QuestTracker: instance destroyed and cleared.");
+            _isApplicationQuitting = false;
+            Debug.Log("QuestTracker: Static variables reset for Play Mode.");
         }
-    }
+#endif
+        #endregion
 
-    private void OnApplicationQuit()
-    {
-        _isApplicationQuitting = true;
-        Debug.Log("QuestTracker: Application quitting flag set.");
-    }
+        #region Events
+        public System.Action<Quest> OnQuestAdded;
+        public System.Action<Quest> OnQuestUpdated;
+        public System.Action<Quest> OnQuestCompleted;
+        #endregion
 
-    // Метод для Editor - очищення при вході в Play Mode
-    #if UNITY_EDITOR
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics()
-    {
-        _instance = null;
-        _isApplicationQuitting = false;
-        Debug.Log("QuestTracker: Static variables reset for Play Mode.");
-    }
-    #endif
-    #endregion
+        #region Data
+        [Header("Active Quests")]
+        [SerializeField]
+        [Tooltip("List of all active quests")]
+        private List<Quest> activeQuests = new List<Quest>();
 
-    #region Events
-    public System.Action<Quest> OnQuestAdded;
-    public System.Action<Quest> OnQuestUpdated;
-    public System.Action<Quest> OnQuestCompleted;
-    #endregion
+        [Header("Settings")]
+        [Tooltip("Maximum number of concurrent quests")]
+        public int maxActiveQuests = 5;
 
-    #region Data
-    [Header("Active Quests")]
-    [SerializeField]
-    [Tooltip("List of all active quests")]
-    private List<Quest> activeQuests = new List<Quest>();
+        [Tooltip("Delay before removing completed quest (seconds)")]
+        public float completedQuestRemoveDelay = 3f;
+        #endregion
 
-    [Header("Settings")]
-    [Tooltip("Maximum number of concurrent quests")]
-    public int maxActiveQuests = 5;
+        #region Public Methods
 
-    [Tooltip("Delay before removing completed quest (seconds)")]
-    public float completedQuestRemoveDelay = 3f;
-    #endregion
-
-    #region Public Methods
-
-    public void AddQuest(string questId, string description, int currentProgress, int targetProgress)
-    {
-        if (HasQuest(questId))
+        public void AddQuest(string questId, string description, int currentProgress, int targetProgress)
         {
-            Debug.LogWarning($"QuestTracker: quest '{questId}' already exists. Updating progress.");
-            UpdateQuest(questId, currentProgress);
-            return;
-        }
+            if (HasQuest(questId))
+            {
+                Debug.LogWarning($"QuestTracker: quest '{questId}' already exists. Updating progress.");
+                UpdateQuest(questId, currentProgress);
+                return;
+            }
 
-        if (activeQuests.Count >= maxActiveQuests)
-        {
-            Debug.LogWarning($"QuestTracker: reached maximum active quests ({maxActiveQuests}).");
-            return;
+            if (activeQuests.Count >= maxActiveQuests)
+            {
+                Debug.LogWarning($"QuestTracker: reached maximum active quests ({maxActiveQuests}).");
+                return;
+            }
+
+            Quest newQuest = new Quest(questId, description, currentProgress, targetProgress);
+            activeQuests.Add(newQuest);
+
+            Debug.Log($"QuestTracker: added quest '{questId}' - {description} ({currentProgress}/{targetProgress})");
+
+            OnQuestAdded?.Invoke(newQuest);
+
+            if (newQuest.IsTargetReached())
+            {
+                CompleteQuest(questId);
+            }
         }
 
-        Quest newQuest = new Quest(questId, description, currentProgress, targetProgress);
-        activeQuests.Add(newQuest);
-
-        Debug.Log($"QuestTracker: added quest '{questId}' - {description} ({currentProgress}/{targetProgress})");
-
-        OnQuestAdded?.Invoke(newQuest);
-
-        if (newQuest.IsTargetReached())
+        public void UpdateQuest(string questId, int newProgress)
         {
-            CompleteQuest(questId);
+            Quest quest = GetQuest(questId);
+
+            if (quest == null)
+            {
+                Debug.LogWarning($"QuestTracker: quest '{questId}' not found for update.");
+                return;
+            }
+
+            if (quest.isCompleted)
+            {
+                Debug.Log($"QuestTracker: quest '{questId}' already completed, ignoring update.");
+                return;
+            }
+
+            int oldProgress = quest.currentProgress;
+            quest.UpdateProgress(newProgress);
+
+            Debug.Log($"QuestTracker: updated '{questId}': {oldProgress} → {newProgress}/{quest.targetProgress}");
+
+            OnQuestUpdated?.Invoke(quest);
+
+            if (quest.IsTargetReached() && !quest.isCompleted)
+            {
+                quest.isCompleted = true;
+
+                Debug.Log($"🎉 QuestTracker: quest '{questId}' COMPLETED!");
+
+                OnQuestCompleted?.Invoke(quest);
+
+                StartCoroutine(RemoveQuestAfterDelay(questId, completedQuestRemoveDelay));
+            }
         }
-    }
 
-    public void UpdateQuest(string questId, int newProgress)
-    {
-        Quest quest = GetQuest(questId);
-        
-        if (quest == null)
+        public void CompleteQuest(string questId)
         {
-            Debug.LogWarning($"QuestTracker: quest '{questId}' not found for update.");
-            return;
-        }
+            Quest quest = GetQuest(questId);
 
-        if (quest.isCompleted)
-        {
-            Debug.Log($"QuestTracker: quest '{questId}' already completed, ignoring update.");
-            return;
-        }
+            if (quest == null)
+            {
+                Debug.LogWarning($"QuestTracker: quest '{questId}' not found for completion.");
+                return;
+            }
 
-        int oldProgress = quest.currentProgress;
-        quest.UpdateProgress(newProgress);
+            if (quest.isCompleted)
+            {
+                Debug.Log($"QuestTracker: quest '{questId}' was already completed earlier.");
+                return;
+            }
 
-        Debug.Log($"QuestTracker: updated '{questId}': {oldProgress} → {newProgress}/{quest.targetProgress}");
-
-        OnQuestUpdated?.Invoke(quest);
-
-        if (quest.IsTargetReached() && !quest.isCompleted)
-        {
             quest.isCompleted = true;
-            
-            Debug.Log($"🎉 QuestTracker: quest '{questId}' COMPLETED!");
+
+            Debug.Log($"🎉 QuestTracker: quest '{questId}' force completed!");
 
             OnQuestCompleted?.Invoke(quest);
 
             StartCoroutine(RemoveQuestAfterDelay(questId, completedQuestRemoveDelay));
         }
-    }
 
-    public void CompleteQuest(string questId)
-    {
-        Quest quest = GetQuest(questId);
-        
-        if (quest == null)
+        public void RemoveQuest(string questId)
         {
-            Debug.LogWarning($"QuestTracker: quest '{questId}' not found for completion.");
-            return;
+            Quest quest = GetQuest(questId);
+
+            if (quest != null)
+            {
+                activeQuests.Remove(quest);
+                Debug.Log($"QuestTracker: removed quest '{questId}'.");
+            }
         }
 
-        if (quest.isCompleted)
+        public bool HasQuest(string questId)
         {
-            Debug.Log($"QuestTracker: quest '{questId}' was already completed earlier.");
-            return;
+            return activeQuests.Any(q => q.questId == questId);
         }
 
-        quest.isCompleted = true;
-
-        Debug.Log($"🎉 QuestTracker: quest '{questId}' force completed!");
-
-        OnQuestCompleted?.Invoke(quest);
-
-        StartCoroutine(RemoveQuestAfterDelay(questId, completedQuestRemoveDelay));
-    }
-
-    public void RemoveQuest(string questId)
-    {
-        Quest quest = GetQuest(questId);
-        
-        if (quest != null)
+        public Quest GetQuest(string questId)
         {
-            activeQuests.Remove(quest);
-            Debug.Log($"QuestTracker: removed quest '{questId}'.");
+            return activeQuests.FirstOrDefault(q => q.questId == questId);
         }
-    }
 
-    public bool HasQuest(string questId)
-    {
-        return activeQuests.Any(q => q.questId == questId);
-    }
-
-    public Quest GetQuest(string questId)
-    {
-        return activeQuests.FirstOrDefault(q => q.questId == questId);
-    }
-
-    public List<Quest> GetAllQuests()
-    {
-        return new List<Quest>(activeQuests);
-    }
-
-    public (int current, int target) GetQuestProgress(string questId)
-    {
-        Quest quest = GetQuest(questId);
-        
-        if (quest != null)
+        public List<Quest> GetAllQuests()
         {
-            return (quest.currentProgress, quest.targetProgress);
+            return new List<Quest>(activeQuests);
         }
-        
-        return (-1, -1);
-    }
 
-    public void ClearAllQuests()
-    {
-        activeQuests.Clear();
-        
-        // Очищаємо події
-        OnQuestAdded = null;
-        OnQuestUpdated = null;
-        OnQuestCompleted = null;
-        
-        Debug.Log("QuestTracker: all quests cleared.");
-    }
-
-    #endregion
-
-    #region Private Methods
-
-    private System.Collections.IEnumerator RemoveQuestAfterDelay(string questId, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        RemoveQuest(questId);
-    }
-
-    #endregion
-
-    #region Debug
-
-    [ContextMenu("Debug: Show All Quests")]
-    public void DebugShowAllQuests()
-    {
-        Debug.Log($"=== QuestTracker: active quests = {activeQuests.Count} ===");
-        
-        foreach (Quest quest in activeQuests)
+        public (int current, int target) GetQuestProgress(string questId)
         {
-            string status = quest.isCompleted ? "✅ COMPLETED" : "🔄 ACTIVE";
-            Debug.Log($"{status} | {quest.questId} | {quest.GetFormattedText()}");
+            Quest quest = GetQuest(questId);
+
+            if (quest != null)
+            {
+                return (quest.currentProgress, quest.targetProgress);
+            }
+
+            return (-1, -1);
         }
-    }
 
-    [ContextMenu("Debug: Clear All Quests")]
-    public void DebugClearAllQuests()
-    {
-        ClearAllQuests();
-    }
+        public void ClearAllQuests()
+        {
+            activeQuests.Clear();
 
-    #endregion
+            OnQuestAdded = null;
+            OnQuestUpdated = null;
+            OnQuestCompleted = null;
+
+            Debug.Log("QuestTracker: all quests cleared.");
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private System.Collections.IEnumerator RemoveQuestAfterDelay(string questId, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            RemoveQuest(questId);
+        }
+
+        #endregion
+
+        #region Debug
+
+        [ContextMenu("Debug: Show All Quests")]
+        public void DebugShowAllQuests()
+        {
+            Debug.Log($"=== QuestTracker: active quests = {activeQuests.Count} ===");
+
+            foreach (Quest quest in activeQuests)
+            {
+                string status = quest.isCompleted ? "✅ COMPLETED" : "🔄 ACTIVE";
+                Debug.Log($"{status} | {quest.questId} | {quest.GetFormattedText()}");
+            }
+        }
+
+        [ContextMenu("Debug: Clear All Quests")]
+        public void DebugClearAllQuests()
+        {
+            ClearAllQuests();
+        }
+
+        #endregion
+    }
 }
