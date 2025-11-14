@@ -1,53 +1,58 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class SimpleInventory : MonoBehaviour
+namespace Assets.Scripts
+
 {
-    private List<string> items = new List<string>();
-    private int collectedKeys = 0;
 
-    public void AddItem(string name)
+    public class SimpleInventory : MonoBehaviour
     {
-        items.Add(name);
+        private List<string> items = new List<string>();
+        private int collectedKeys = 0;
 
-        if (!string.IsNullOrEmpty(name))
+        public void AddItem(string name)
         {
-            string lower = name.ToLowerInvariant();
-            if (lower.Contains("key"))
+            items.Add(name);
+
+            if (!string.IsNullOrEmpty(name))
             {
-                collectedKeys++;
-                
-                if (collectedKeys == 1 && QuestTracker.Instance != null)
+                string lower = name.ToLowerInvariant();
+                if (lower.Contains("key"))
                 {
-                    if (!QuestTracker.Instance.HasQuest("collect_keys"))
+                    collectedKeys++;
+
+                    if (collectedKeys == 1 && QuestTracker.Instance != null)
                     {
-                        QuestTracker.Instance.AddQuest(
-                            "collect_keys",
-                            "Collect all keys",
-                            1,
-                            4
-                        );
-                        Debug.Log("SimpleInventory: added quest 'collect_keys' after picking up first key.");
+                        if (!QuestTracker.Instance.HasQuest("collect_keys"))
+                        {
+                            QuestTracker.Instance.AddQuest(
+                                "collect_keys",
+                                "Collect all keys",
+                                1,
+                                4
+                            );
+                            Debug.Log("SimpleInventory: added quest 'collect_keys' after picking up first key.");
+                        }
                     }
                 }
             }
+
+            Debug.Log($"SimpleInventory: added {name}. Total items: {items.Count}. Keys: {collectedKeys}");
         }
 
-        Debug.Log($"SimpleInventory: added {name}. Total items: {items.Count}. Keys: {collectedKeys}");
-    }
+        public int GetCollectedKeysCount()
+        {
+            return collectedKeys;
+        }
 
-    public int GetCollectedKeysCount()
-    {
-        return collectedKeys;
-    }
+        public string[] GetItems()
+        {
+            return items.ToArray();
+        }
 
-    public string[] GetItems()
-    {
-        return items.ToArray();
-    }
-
-    public void SetCollectedKeysCount(int count)
-    {
-        collectedKeys = Mathf.Max(0, count);
+        public void SetCollectedKeysCount(int count)
+        {
+            collectedKeys = Mathf.Max(0, count);
+        }
     }
 }
