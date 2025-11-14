@@ -1,46 +1,43 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// RaycastInteractor (оновлений)
-/// - кидає промінь від камери (по центру екрану),
-/// - якщо попадає в IInteractable і actor знаходиться ближче ніж popupDistance,
-///   показує popup через PopupManager з кнопкою "Підібрати",
-/// - тільки при натисканні "Підібрати" викликає Interact(actor).
-/// </summary>
 public class RaycastInteractor : MonoBehaviour
 {
     [Header("Raycast")]
-    [Tooltip("Максимальна відстань raycast'у")]
+    [Tooltip("Maximum raycast distance")]
     public float raycastDistance = 10f;
 
-    [Tooltip("Камера або трансформ, від якого кидається промінь (якщо null, буде Camera.main)")]
+    [Tooltip("Camera or transform from which ray is cast (if null, will use Camera.main)")]
     public Camera cam;
 
-    [Header("Actor (гравець)")]
-    [Tooltip("GameObject який виступає actor (той, хто виконує взаємодію). Зазвичай це Player. Якщо не вказано, скрипт спробує знайти його автоматично.")]
+    [Header("Actor (player)")]
+    [Tooltip("GameObject acting as actor (the one performing interaction). Usually Player. If not specified, script will try to find it automatically.")]
     public GameObject actor;
 
     [Header("Popup")]
-    [Tooltip("Відстань від гравця до предмета, при якій з'являється popup (в одиницях сцени)")]
+    [Tooltip("Distance from player to item at which popup appears (in scene units)")]
     public float popupDistance = 2.0f;
 
-    [Tooltip("Посилання на PopupManager у сцені (перетягни UI_Manager з компонентом PopupManager)")]
+    [Tooltip("Reference to PopupManager in scene (drag UI_Manager with PopupManager component)")]
     public PopupManager popupManager;
 
-    // Внутрішній стан
     private IInteractable currentInteractable = null;
     private GameObject currentHitGO = null;
     private bool popupVisible = false;
 
     private void Start()
     {
-        if (cam == null) cam = Camera.main;
+        if (cam == null)
+        {
+            cam = Camera.main;
+        }
 
         if (actor == null)
         {
-            // Спроба знайти actor розумно
             GameObject found = GameObject.FindWithTag("Player");
-            if (found != null) actor = found;
+            if (found != null)
+            {
+                actor = found;
+            }
             else
             {
 #if UNITY_2023_1_OR_NEWER
@@ -48,22 +45,28 @@ public class RaycastInteractor : MonoBehaviour
 #else
                 var pi = FindObjectOfType<PlayerInteractor>();
 #endif
-                if (pi != null) actor = pi.gameObject;
+                if (pi != null)
+                {
+                    actor = pi.gameObject;
+                }
                 else
                 {
                     GameObject byName = GameObject.Find("Player");
-                    if (byName != null) actor = byName;
+                    if (byName != null)
+                    {
+                        actor = byName;
+                    }
                 }
             }
 
             if (actor == null)
             {
                 actor = this.gameObject;
-                Debug.Log($"RaycastInteractor: actor не встановлено — використовую {actor.name} (fallback).");
+                Debug.Log($"RaycastInteractor: actor not set — using {actor.name} (fallback).");
             }
             else
             {
-                Debug.Log($"RaycastInteractor: actor знайдено -> {actor.name}");
+                Debug.Log($"RaycastInteractor: actor found -> {actor.name}");
             }
         }
 
@@ -75,18 +78,22 @@ public class RaycastInteractor : MonoBehaviour
             popupManager = FindObjectOfType<PopupManager>();
 #endif
             if (popupManager == null)
-                Debug.LogWarning("RaycastInteractor: PopupManager не знайдено. Прив'яжіть його вручну в інспекторі.");
+            {
+                Debug.LogWarning("RaycastInteractor: PopupManager not found. Link it manually in inspector.");
+            }
         }
     }
 
     private void Update()
     {
-        if (cam == null) return;
+        if (cam == null)
+        {
+            return;
+        }
 
         Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         RaycastHit hit;
 
-        // Якщо попадаємо чимось в межах raycastDistance
         if (Physics.Raycast(ray, out hit, raycastDistance))
         {
             GameObject hitGO = hit.collider.gameObject;
@@ -94,13 +101,10 @@ public class RaycastInteractor : MonoBehaviour
 
             if (interactable != null)
             {
-                // Перевіряємо відстань між actor та позицією предмета
                 float distance = Vector3.Distance(actor.transform.position, hitGO.transform.position);
 
-                // Якщо в межах popupDistance — показуємо popup
                 if (distance <= popupDistance)
                 {
-                    // Якщо це новий об'єкт або popup ще не показаний — покажемо
                     if (currentInteractable != interactable || !popupVisible)
                     {
                         currentInteractable = interactable;
@@ -110,11 +114,11 @@ public class RaycastInteractor : MonoBehaviour
                 }
                 else
                 {
-                    // Якщо уже був popup видаляємо його, бо пішли з діапазону
                     if (popupVisible)
                     {
                         HidePopup();
                     }
+                    
                     if (currentInteractable == interactable)
                     {
                         currentInteractable = null;
@@ -124,14 +128,22 @@ public class RaycastInteractor : MonoBehaviour
             }
             else
             {
-                if (popupVisible) HidePopup();
+                if (popupVisible)
+                {
+                    HidePopup();
+                }
+                
                 currentInteractable = null;
                 currentHitGO = null;
             }
         }
         else
         {
-            if (popupVisible) HidePopup();
+            if (popupVisible)
+            {
+                HidePopup();
+            }
+            
             currentInteractable = null;
             currentHitGO = null;
         }
@@ -146,15 +158,18 @@ public class RaycastInteractor : MonoBehaviour
 
         Sprite icon = null;
         var ci = currentHitGO.GetComponent<CollectItem>();
-        if (ci != null) icon = ci.itemIcon;
+        if (ci != null)
+        {
+            icon = ci.itemIcon;
+        }
 
-        popupManager.ShowPopup(currentInteractable.GetInteractText(), OnPopupExecute, this, "Підібрати", icon);
+        popupManager.ShowPopup(currentInteractable.GetInteractText(), OnPopupExecute, this, "Pick Up", icon);
         popupVisible = true;
     }
 
     private void HidePopup()
     {
-        popupManager?.HidePopup(this); // <- передаємо this
+        popupManager?.HidePopup(this);
         popupVisible = false;
     }
 
@@ -174,9 +189,13 @@ public class RaycastInteractor : MonoBehaviour
         if (cam == null)
         {
             if (Application.isPlaying)
+            {
                 cam = Camera.main;
+            }
             else
+            {
                 return;
+            }
         }
 
         Gizmos.color = Color.cyan;
