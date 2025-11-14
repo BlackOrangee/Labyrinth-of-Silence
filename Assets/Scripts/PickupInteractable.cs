@@ -1,37 +1,31 @@
 using UnityEngine;
 
-/// <summary>
-/// Компонент для предмета, який можна підібрати/забрати.
-/// Прикріплюється до Cube, Cube (1) тощо.
-/// Реалізує IInteractable (GetInteractText, OnInteract, Interact).
-/// </summary>
 [RequireComponent(typeof(Collider))]
 public class PickupInteractable : MonoBehaviour, IInteractable
 {
-    [Header("Налаштування предмета")]
-    [Tooltip("Назва предмета, показується в попапі")]
-    public string itemName = "Предмет";
+    [Header("Item Settings")]
+    [Tooltip("Item name displayed in popup")]
+    public string itemName = "Item";
 
-    [Tooltip("Чи буде показуватися анімація при знищенні (поки просте видалення)")]
+    [Tooltip("Destroy object on pickup")]
     public bool destroyOnPickup = true;
 
     public string GetInteractText()
     {
-        return $"Натисніть кнопку «Виконати», щоб забрати: {itemName}";
+        return $"Press Execute button to pick up: {itemName}";
     }
 
     public void OnInteract(GameObject actor)
     {
-        // Логіка підбору
         SimpleInventory inv = actor.GetComponent<SimpleInventory>();
         if (inv != null)
         {
             inv.AddItem(itemName);
-            Debug.Log($"Додано {itemName} в інвентар гравця.");
+            Debug.Log($"Added {itemName} to player inventory.");
         }
         else
         {
-            Debug.Log($"{itemName} підібрано (інвентар не знайдено).");
+            Debug.Log($"{itemName} picked up (inventory not found).");
         }
 
         if (destroyOnPickup)
@@ -40,7 +34,6 @@ public class PickupInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    // Нова реалізація Interact — просто делегує в OnInteract.
     public void Interact(GameObject actor)
     {
         OnInteract(actor);

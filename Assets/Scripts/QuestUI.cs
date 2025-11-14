@@ -4,83 +4,76 @@ using TMPro;
 using System.Collections.Generic;
 using System.Collections;
 
-/// <summary>
-/// QuestUI - менеджер UI для відображення завдань.
-/// Відображає завдання у лівому верхньому куті екрану з анімацією.
-/// </summary>
 public class QuestUI : MonoBehaviour
 {
-    [Header("UI Елементи (прив'язати в Inspector)")]
-    [Tooltip("Корінний GameObject для панелі завдань")]
+    [Header("UI Elements (link in Inspector)")]
+    [Tooltip("Root GameObject for quest panel")]
     public GameObject questPanelRoot;
 
-    [Tooltip("Контейнер для списку завдань (з Vertical Layout Group)")]
-    public RectTransform questListContainer; // ВИПРАВЛЕНО: Transform → RectTransform
+    [Tooltip("Container for quest list (with Vertical Layout Group)")]
+    public RectTransform questListContainer;
 
-    [Tooltip("Префаб для одного завдання (QuestItem)")]
+    [Tooltip("Prefab for single quest (QuestItem)")]
     public GameObject questItemPrefab;
 
-    [Header("Звуки")]
-    [Tooltip("Звук при оновленні завдання (bell.mp3)")]
+    [Header("Sounds")]
+    [Tooltip("Sound when quest is updated (bell.mp3)")]
     public AudioClip updateSound;
 
-    [Tooltip("Звук при завершенні завдання (triumph.mp3)")]
+    [Tooltip("Sound when quest is completed (triumph.mp3)")]
     public AudioClip completeSound;
 
     [Range(0f, 1f)]
-    [Tooltip("Гучність звуків")]
+    [Tooltip("Sound volume")]
     public float soundVolume = 0.7f;
 
-    [Header("Анімація")]
-    [Tooltip("Тривалість анімації появи (fade in)")]
+    [Header("Animation")]
+    [Tooltip("Fade in animation duration")]
     public float fadeInDuration = 0.5f;
 
-    [Tooltip("Тривалість анімації викреслювання")]
+    [Tooltip("Strikethrough animation duration")]
     public float strikethroughDuration = 0.5f;
 
-    [Tooltip("Тривалість анімації зникнення (fade out)")]
+    [Tooltip("Fade out animation duration")]
     public float fadeOutDuration = 1f;
 
-    [Header("Кольори (Horror стиль)")]
-    [Tooltip("Колір для активних завдань")]
-    public Color activeQuestColor = new Color(0.9f, 0.9f, 0.85f, 1f); // Світло-жовтуватий
+    [Header("Colors (Horror style)")]
+    [Tooltip("Color for active quests")]
+    public Color activeQuestColor = new Color(0.9f, 0.9f, 0.85f, 1f);
 
-    [Tooltip("Колір для виконаних завдань")]
-    public Color completedQuestColor = new Color(0.4f, 0.4f, 0.4f, 1f); // Темно-сірий
+    [Tooltip("Color for completed quests")]
+    public Color completedQuestColor = new Color(0.4f, 0.4f, 0.4f, 1f);
 
-    [Tooltip("Колір лінії викреслювання")]
-    public Color strikethroughColor = new Color(0.8f, 0.2f, 0.2f, 1f); // Кривавий червоний
+    [Tooltip("Strikethrough line color")]
+    public Color strikethroughColor = new Color(0.8f, 0.2f, 0.2f, 1f);
 
-    // Внутрішні дані
     private Dictionary<string, GameObject> questItems = new Dictionary<string, GameObject>();
     private AudioSource audioSource;
+    private bool isSubscribed = false;
 
     #region Unity Lifecycle
 
     private void Awake()
     {
-        // Налаштування AudioSource
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
         audioSource.volume = soundVolume;
 
-        // Перевірка налаштувань
         if (questPanelRoot == null)
         {
-            Debug.LogError("❌ QuestUI: questPanelRoot не прив'язано! Прив'яжіть у Inspector.");
+            Debug.LogError("❌ QuestUI: questPanelRoot not linked! Link in Inspector.");
         }
 
         if (questListContainer == null)
         {
-            Debug.LogError("❌ QuestUI: questListContainer не прив'язано! Прив'яжіть у Inspector.");
+            Debug.LogError("❌ QuestUI: questListContainer not linked! Link in Inspector.");
         }
 
         if (questItemPrefab == null)
         {
-            Debug.LogError("❌ QuestUI: questItemPrefab не прив'язано! Прив'яжіть у Inspector.");
+            Debug.LogError("❌ QuestUI: questItemPrefab not linked! Link in Inspector.");
         }
 
-        // Початково ховаємо панель якщо немає завдань
         if (questPanelRoot != null && questItems.Count == 0)
         {
             questPanelRoot.SetActive(false);
@@ -89,29 +82,44 @@ public class QuestUI : MonoBehaviour
 
     private void Start()
     {
-        // Підписуємось на події QuestTracker
         if (QuestTracker.Instance != null)
         {
             QuestTracker.Instance.OnQuestAdded += OnQuestAdded;
             QuestTracker.Instance.OnQuestUpdated += OnQuestUpdated;
             QuestTracker.Instance.OnQuestCompleted += OnQuestCompleted;
-            Debug.Log("✅ QuestUI: підписано на події QuestTracker.");
+            isSubscribed = true;
+            Debug.Log("✅ QuestUI: subscribed to QuestTracker events.");
         }
         else
         {
-            Debug.LogWarning("⚠️ QuestUI: QuestTracker не знайдено!");
+            Debug.LogWarning("⚠️ QuestUI: QuestTracker not found!");
         }
     }
 
-    // ВИПРАВЛЕНО: OnDestroy тепер безпечний
+    private void OnDestroy()
+    {
+        UnsubscribeFromQuestTracker();
+    }
+
     private void OnDisable()
     {
-        // Відписуємось від подій коли компонент вимикається
+        UnsubscribeFromQuestTracker();
+    }
+
+    private void UnsubscribeFromQuestTracker()
+    {
+        if (!isSubscribed)
+        {
+            return;
+        }
+
         if (QuestTracker.Instance != null)
         {
             QuestTracker.Instance.OnQuestAdded -= OnQuestAdded;
             QuestTracker.Instance.OnQuestUpdated -= OnQuestUpdated;
             QuestTracker.Instance.OnQuestCompleted -= OnQuestCompleted;
+            isSubscribed = false;
+            Debug.Log("✅ QuestUI: unsubscribed from QuestTracker events.");
         }
     }
 
@@ -119,52 +127,36 @@ public class QuestUI : MonoBehaviour
 
     #region Event Handlers
 
-    /// <summary>
-    /// Обробник події: додано нове завдання
-    /// </summary>
     private void OnQuestAdded(Quest quest)
     {
-        Debug.Log($"📥 QuestUI: додається завдання '{quest.questId}'");
+        Debug.Log($"📥 QuestUI: adding quest '{quest.questId}'");
 
-        // Показуємо панель якщо вона прихована
         if (questPanelRoot != null && !questPanelRoot.activeSelf)
         {
             questPanelRoot.SetActive(true);
-            Debug.Log("✅ QuestUI: questPanelRoot активовано");
+            Debug.Log("✅ QuestUI: questPanelRoot activated");
         }
 
-        // Створюємо новий UI елемент для завдання
         CreateQuestItem(quest);
 
-        // Відтворюємо звук оновлення (при додаванні)
         PlaySound(updateSound);
     }
 
-    /// <summary>
-    /// Обробник події: оновлено прогрес завдання
-    /// </summary>
     private void OnQuestUpdated(Quest quest)
     {
-        Debug.Log($"🔄 QuestUI: оновлюється завдання '{quest.questId}' до {quest.currentProgress}/{quest.targetProgress}");
+        Debug.Log($"🔄 QuestUI: updating quest '{quest.questId}' to {quest.currentProgress}/{quest.targetProgress}");
 
-        // Оновлюємо текст завдання
         UpdateQuestItemText(quest);
 
-        // Відтворюємо звук оновлення
         PlaySound(updateSound);
     }
 
-    /// <summary>
-    /// Обробник події: завдання виконано
-    /// </summary>
     private void OnQuestCompleted(Quest quest)
     {
-        Debug.Log($"🎉 QuestUI: завершено завдання '{quest.questId}'");
+        Debug.Log($"🎉 QuestUI: completed quest '{quest.questId}'");
 
-        // ВИПРАВЛЕНО: Запускаємо анімацію викреслювання і зникнення
         StartCoroutine(CompleteQuestAnimation(quest.questId));
 
-        // ВИПРАВЛЕНО: Відтворюємо тріумфальний звук ОДРАЗУ
         PlaySound(completeSound);
     }
 
@@ -172,42 +164,43 @@ public class QuestUI : MonoBehaviour
 
     #region Quest Item Management
 
-    /// <summary>
-    /// Створити UI елемент для завдання
-    /// </summary>
     private void CreateQuestItem(Quest quest)
     {
-        // ДОДАНО: Детальні логи для діагностики
-        Debug.Log($"🔨 CreateQuestItem: створюю елемент для '{quest.questId}'");
+        Debug.Log($"🔨 CreateQuestItem: creating element for '{quest.questId}'");
 
         if (questItemPrefab == null)
         {
-            Debug.LogError("❌ QuestUI: questItemPrefab = NULL! Прив'яжіть префаб у Inspector.");
+            Debug.LogError("❌ QuestUI: questItemPrefab = NULL! Link prefab in Inspector.");
             return;
         }
 
         if (questListContainer == null)
         {
-            Debug.LogError("❌ QuestUI: questListContainer = NULL! Прив'яжіть контейнер у Inspector.");
+            Debug.LogError("❌ QuestUI: questListContainer = NULL! Link container in Inspector.");
             return;
         }
 
-        Debug.Log($"✅ QuestUI: Префаб і контейнер існують, створюю елемент...");
+        Debug.Log($"✅ QuestUI: Prefab and container exist, creating element...");
 
-        // Перевіряємо чи вже існує
         if (questItems.ContainsKey(quest.questId))
         {
-            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{quest.questId}' вже існує.");
+            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{quest.questId}' already exists.");
             return;
         }
 
-        // Створюємо екземпляр префабу
         GameObject itemGO = Instantiate(questItemPrefab, questListContainer);
         itemGO.name = $"QuestItem_{quest.questId}";
-        
-        Debug.Log($"✅ QuestUI: Створено GameObject '{itemGO.name}'");
 
-        // Знаходимо компоненти
+        RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            float halfWidth = rectTransform.rect.width / 2f;
+            rectTransform.localPosition = new Vector3(halfWidth, -10, 0);
+            rectTransform.localScale = Vector3.one;
+        }
+        
+        Debug.Log($"✅ QuestUI: Created GameObject '{itemGO.name}'");
+
         TextMeshProUGUI textComponent = itemGO.GetComponentInChildren<TextMeshProUGUI>();
         Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
         Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
@@ -216,40 +209,35 @@ public class QuestUI : MonoBehaviour
         {
             textComponent.text = quest.GetFormattedText();
             textComponent.color = activeQuestColor;
-            Debug.Log($"✅ QuestUI: Текст встановлено: '{textComponent.text}'");
+            Debug.Log($"✅ QuestUI: Text set: '{textComponent.text}'");
         }
         else
         {
-            Debug.LogError($"❌ QuestUI: не знайдено TextMeshProUGUI в префабі QuestItem!");
+            Debug.LogError($"❌ QuestUI: TextMeshProUGUI not found in QuestItem prefab!");
         }
 
         if (strikethroughImage != null)
         {
             strikethroughImage.color = strikethroughColor;
-            strikethroughImage.fillAmount = 0f; // Початково прихована
-            Debug.Log($"✅ QuestUI: StrikeThrough налаштовано");
+            strikethroughImage.fillAmount = 0f;
+            Debug.Log($"✅ QuestUI: StrikeThrough configured");
         }
         else
         {
-            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough не знайдено в префабі");
+            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough not found in prefab");
         }
 
-        // Зберігаємо посилання
         questItems.Add(quest.questId, itemGO);
-        Debug.Log($"✅ QuestUI: QuestItem '{quest.questId}' доданий до словника. Всього: {questItems.Count}");
+        Debug.Log($"✅ QuestUI: QuestItem '{quest.questId}' added to dictionary. Total: {questItems.Count}");
 
-        // Запускаємо анімацію появи
         StartCoroutine(FadeInAnimation(itemGO));
     }
 
-    /// <summary>
-    /// Оновити текст завдання
-    /// </summary>
     private void UpdateQuestItemText(Quest quest)
     {
         if (!questItems.ContainsKey(quest.questId))
         {
-            Debug.LogWarning($"⚠️ QuestUI: не можу оновити текст - QuestItem '{quest.questId}' не знайдено.");
+            Debug.LogWarning($"⚠️ QuestUI: cannot update text - QuestItem '{quest.questId}' not found.");
             return;
         }
 
@@ -259,13 +247,10 @@ public class QuestUI : MonoBehaviour
         if (textComponent != null)
         {
             textComponent.text = quest.GetFormattedText();
-            Debug.Log($"✅ QuestUI: Текст оновлено на '{textComponent.text}'");
+            Debug.Log($"✅ QuestUI: Text updated to '{textComponent.text}'");
         }
     }
 
-    /// <summary>
-    /// Видалити UI елемент завдання
-    /// </summary>
     private void RemoveQuestItem(string questId)
     {
         if (questItems.ContainsKey(questId))
@@ -273,14 +258,13 @@ public class QuestUI : MonoBehaviour
             GameObject itemGO = questItems[questId];
             questItems.Remove(questId);
             Destroy(itemGO);
-            Debug.Log($"🗑️ QuestUI: видалено QuestItem '{questId}'");
+            Debug.Log($"🗑️ QuestUI: removed QuestItem '{questId}'");
         }
 
-        // Якщо більше немає завдань - ховаємо панель
         if (questItems.Count == 0 && questPanelRoot != null)
         {
             questPanelRoot.SetActive(false);
-            Debug.Log($"👻 QuestUI: questPanelRoot приховано (немає завдань)");
+            Debug.Log($"👻 QuestUI: questPanelRoot hidden (no quests)");
         }
     }
 
@@ -288,9 +272,6 @@ public class QuestUI : MonoBehaviour
 
     #region Animations
 
-    /// <summary>
-    /// Анімація появи (fade in + slide)
-    /// </summary>
     private IEnumerator FadeInAnimation(GameObject itemGO)
     {
         CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
@@ -302,11 +283,10 @@ public class QuestUI : MonoBehaviour
 
         RectTransform rectTransform = itemGO.GetComponent<RectTransform>();
 
-        // Початкові значення
         canvasGroup.alpha = 0f;
         Vector2 startPos = rectTransform.anchoredPosition;
         Vector2 targetPos = startPos;
-        startPos.x -= 100f; // Зсув ліворуч для ефекту slide
+        startPos.x -= 100f;
         rectTransform.anchoredPosition = startPos;
 
         float elapsed = 0f;
@@ -316,32 +296,26 @@ public class QuestUI : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = elapsed / fadeInDuration;
 
-            // Плавне збільшення прозорості
             canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
 
-            // Плавний зсув
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
 
             yield return null;
         }
 
-        // Фінальні значення
         canvasGroup.alpha = 1f;
         rectTransform.anchoredPosition = targetPos;
         
-        Debug.Log($"✨ QuestUI: FadeIn анімація завершена для {itemGO.name}");
+        Debug.Log($"✨ QuestUI: FadeIn animation completed for {itemGO.name}");
     }
 
-    /// <summary>
-    /// Анімація викреслювання та зникнення
-    /// </summary>
     private IEnumerator CompleteQuestAnimation(string questId)
     {
-        Debug.Log($"🎬 QuestUI: Запуск анімації завершення для '{questId}'");
+        Debug.Log($"🎬 QuestUI: Starting completion animation for '{questId}'");
 
         if (!questItems.ContainsKey(questId))
         {
-            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{questId}' не знайдено для анімації");
+            Debug.LogWarning($"⚠️ QuestUI: QuestItem '{questId}' not found for animation");
             yield break;
         }
 
@@ -350,17 +324,15 @@ public class QuestUI : MonoBehaviour
         Transform strikethroughTransform = itemGO.transform.Find("StrikeThrough");
         Image strikethroughImage = strikethroughTransform?.GetComponent<Image>();
 
-        // Змінюємо колір тексту на "виконаний"
         if (textComponent != null)
         {
             textComponent.color = completedQuestColor;
-            Debug.Log($"🎨 QuestUI: Колір тексту змінено на completedQuestColor");
+            Debug.Log($"🎨 QuestUI: Text color changed to completedQuestColor");
         }
 
-        // Анімація викреслювання
         if (strikethroughImage != null)
         {
-            Debug.Log($"✏️ QuestUI: Запуск анімації викреслювання...");
+            Debug.Log($"✏️ QuestUI: Starting strikethrough animation...");
             float elapsed = 0f;
 
             while (elapsed < strikethroughDuration)
@@ -374,19 +346,17 @@ public class QuestUI : MonoBehaviour
             }
 
             strikethroughImage.fillAmount = 1f;
-            Debug.Log($"✅ QuestUI: Викреслювання завершено");
+            Debug.Log($"✅ QuestUI: Strikethrough completed");
         }
         else
         {
-            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough не знайдено, пропускаю анімацію");
+            Debug.LogWarning($"⚠️ QuestUI: StrikeThrough not found, skipping animation");
         }
 
-        // Пауза перед зникненням
-        Debug.Log($"⏸️ QuestUI: Пауза 0.3 сек...");
+        Debug.Log($"⏸️ QuestUI: Pause 0.3 sec...");
         yield return new WaitForSeconds(0.3f);
 
-        // Анімація fade out
-        Debug.Log($"💨 QuestUI: Запуск fade out...");
+        Debug.Log($"💨 QuestUI: Starting fade out...");
         CanvasGroup canvasGroup = itemGO.GetComponent<CanvasGroup>();
         
         if (canvasGroup == null)
@@ -406,9 +376,8 @@ public class QuestUI : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"✅ QuestUI: Fade out завершено, видаляю елемент");
+        Debug.Log($"✅ QuestUI: Fade out completed, removing element");
 
-        // Видаляємо елемент
         RemoveQuestItem(questId);
     }
 
@@ -416,14 +385,11 @@ public class QuestUI : MonoBehaviour
 
     #region Audio
 
-    /// <summary>
-    /// Відтворити звук
-    /// </summary>
     private void PlaySound(AudioClip clip)
     {
         if (clip == null)
         {
-            Debug.LogWarning($"⚠️ QuestUI: AudioClip = NULL, не можу відтворити звук");
+            Debug.LogWarning($"⚠️ QuestUI: AudioClip = NULL, cannot play sound");
             return;
         }
 
@@ -434,30 +400,24 @@ public class QuestUI : MonoBehaviour
         }
 
         audioSource.PlayOneShot(clip, soundVolume);
-        Debug.Log($"🔊 QuestUI: Відтворюю звук '{clip.name}' з гучністю {soundVolume}");
+        Debug.Log($"🔊 QuestUI: Playing sound '{clip.name}' with volume {soundVolume}");
     }
 
     #endregion
 
     #region Debug
 
-    /// <summary>
-    /// Тестове додавання завдання (для дебагу)
-    /// </summary>
     [ContextMenu("Test: Add Quest")]
     public void TestAddQuest()
     {
         QuestTracker.Instance?.AddQuest(
             "test_quest_" + Random.Range(0, 999),
-            "Тестове завдання",
+            "Test quest",
             0,
             5
         );
     }
 
-    /// <summary>
-    /// Тестове оновлення завдання
-    /// </summary>
     [ContextMenu("Test: Update First Quest")]
     public void TestUpdateQuest()
     {
@@ -469,9 +429,6 @@ public class QuestUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Тестове завершення першого завдання
-    /// </summary>
     [ContextMenu("Test: Complete First Quest")]
     public void TestCompleteQuest()
     {
@@ -479,7 +436,6 @@ public class QuestUI : MonoBehaviour
         if (quests != null && quests.Count > 0)
         {
             var quest = quests[0];
-            // Оновлюємо до максимуму
             QuestTracker.Instance?.UpdateQuest(quest.questId, quest.targetProgress);
         }
     }
