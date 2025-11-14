@@ -1,22 +1,17 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Скрипт кидає raycast з камери в центр екрану.
-/// Якщо попадає в IInteractable — показує popup через PopupManager.
-/// Також обробляє натискання клавіші E для швидкої взаємодії.
-/// </summary>
 public class PlayerInteractor : MonoBehaviour
 {
-    [Header("Налаштування променю")]
-    [Tooltip("Максимальна відстань взаємодії")]
+    [Header("Ray Settings")]
+    [Tooltip("Maximum interaction distance")]
     public float interactDistance = 3f;
 
-    [Tooltip("Camera - від якої робиться ray (залиште Main Camera якщо не вказано)")]
+    [Tooltip("Camera - from which ray is cast (leave Main Camera if not specified)")]
     public Camera cam;
 
     [Header("UI")]
-    [Tooltip("Посилання на PopupManager у сцені")]
+    [Tooltip("Reference to PopupManager in scene")]
     public PopupManager popupManager;
 
     private IInteractable currentInteractable = null;
@@ -24,7 +19,10 @@ public class PlayerInteractor : MonoBehaviour
 
     void Start()
     {
-        if (cam == null) cam = Camera.main;
+        if (cam == null)
+        {
+            cam = Camera.main;
+        }
 
         if (popupManager == null)
         {
@@ -35,23 +33,23 @@ public class PlayerInteractor : MonoBehaviour
             #endif
 
             if (popupManager == null)
-                Debug.LogWarning("PopupManager не знайдено в сцені. Додайте його і зв'яжіть у інспекторі.");
+            {
+                Debug.LogWarning("PopupManager not found in scene. Add it and link in inspector.");
+            }
         }
     }
 
     void Update()
     {
-        // Якщо UI над активним елементом (наприклад курсор у полі вводу) — не показувати
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            // Якщо курсор над UI — приховати попередній попап
             ClearCurrent();
             return;
         }
 
-        // Візуальна діагностика (опціонально): Debug.DrawRay(cam.transform.position, cam.transform.forward * interactDistance, Color.green);
         Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         RaycastHit hit;
+        
         if (Physics.Raycast(ray, out hit, interactDistance))
         {
             GameObject hitGO = hit.collider.gameObject;
@@ -59,20 +57,23 @@ public class PlayerInteractor : MonoBehaviour
 
             if (interactable != null)
             {
-                // Якщо новий — оновити
                 if (interactable != currentInteractable)
                 {
                     currentInteractable = interactable;
                     currentGO = hitGO;
-                    // Тепер викликаємо ShowPopup з owner = this
                     string msg = interactable.GetInteractText();
-                    popupManager?.ShowPopup(msg, OnPopupExecute, this, "Підібрати", hitGO.GetComponent<CollectItem>()?.itemIcon);
+                    
+                    string buttonText = "Pick Up";
+                    if (hitGO.GetComponent<HidingSpot>() != null)
+                    {
+                        buttonText = "Enter";
+                    }
+                    
+                    popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
                 }
-                // Ніяких додаткових дій поки що
             }
             else
             {
-                // hit не-інтерактивний
                 ClearCurrent();
             }
         }
@@ -81,21 +82,9 @@ public class PlayerInteractor : MonoBehaviour
             ClearCurrent();
         }
 
-        // Нативна клавіша швидкої взаємодії (E)
-        if (Input.GetKeyDown(KeyCode.E))
+        if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && InteractionLocker.IsOwner(this) && currentInteractable != null)
         {
-            // Якщо ми є current owner — E спрацьовує
-            if (InteractionLocker.IsOwner(this))
-            {
-                if (currentInteractable != null)
-                {
-                    ExecuteCurrent();
-                }
-            }
-            else
-            {
-                // Якщо не наш owner — нічого
-            }
+            ExecuteCurrent();
         }
     }
 
@@ -105,7 +94,6 @@ public class PlayerInteractor : MonoBehaviour
         {
             currentInteractable = null;
             currentGO = null;
-            // Передаємо this як requester — щоб не ховати popup який належить іншому інтеррактору
             popupManager?.HidePopup(this);
         }
     }

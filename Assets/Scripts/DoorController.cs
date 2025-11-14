@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// DoorController (ВИПРАВЛЕНИЙ - popup не ховається при виході з тригера якщо ключів достатньо)
-/// </summary>
 [RequireComponent(typeof(Collider))]
 public class DoorController : MonoBehaviour
 {
@@ -20,7 +17,6 @@ public class DoorController : MonoBehaviour
 
     void Start()
     {
-        // Найдемо PlayerInteractor або GameObject з тегом Player
 #if UNITY_2023_1_OR_NEWER
         var pi = UnityEngine.Object.FindFirstObjectByType<PlayerInteractor>();
 #else
@@ -55,9 +51,13 @@ public class DoorController : MonoBehaviour
             popupManager = FindObjectOfType<PopupManager>();
 #endif
             if (popupManager != null)
+            {
                 Debug.Log($"DoorController: PopupManager found -> {popupManager.gameObject.name}");
+            }
             else
+            {
                 Debug.LogWarning("DoorController: PopupManager NOT found; please assign it in Inspector.");
+            }
         }
         else
         {
@@ -70,14 +70,23 @@ public class DoorController : MonoBehaviour
         Debug.Log($"DoorController: TryOpenDoor called by {(requester != null ? requester.name : "null")}");
         
         SimpleInventory inv = null;
-        if (requester != null) inv = requester.GetComponent<SimpleInventory>();
-        if (inv == null) inv = playerInventory;
+        if (requester != null)
+        {
+            inv = requester.GetComponent<SimpleInventory>();
+        }
+        
+        if (inv == null)
+        {
+            inv = playerInventory;
+        }
 
         if (inv == null)
         {
             Debug.LogWarning("DoorController: SimpleInventory not found on requester or player.");
             if (popupManager != null)
-                popupManager.ShowPopup("Інвентар не знайдено.", null, requester ?? player, "OK", null);
+            {
+                popupManager.ShowPopup("Inventory not found.", null, requester ?? player, "OK", null);
+            }
             return;
         }
 
@@ -108,7 +117,7 @@ public class DoorController : MonoBehaviour
 
     public void OpenDoor()
     {
-        Debug.Log($"DoorController: Відчиняю двері {gameObject.name}");
+        Debug.Log($"DoorController: Opening door {gameObject.name}");
         
         if (doorAnimator != null)
         {
@@ -121,7 +130,10 @@ public class DoorController : MonoBehaviour
         else
         {
             Collider c = GetComponent<Collider>();
-            if (c != null) c.enabled = false;
+            if (c != null)
+            {
+                c.enabled = false;
+            }
             transform.Translate(Vector3.up * 2f);
         }
     }
@@ -139,7 +151,10 @@ public class DoorController : MonoBehaviour
             isPlayerInTrigger = true;
             
             SimpleInventory inv = other.GetComponent<SimpleInventory>();
-            if (inv == null) inv = playerInventory;
+            if (inv == null)
+            {
+                inv = playerInventory;
+            }
             
             if (inv != null)
             {
@@ -151,11 +166,11 @@ public class DoorController : MonoBehaviour
                     {
                         QuestTracker.Instance.AddQuest(
                             "collect_keys",
-                            "Потрібно знайти всі ключі",
+                            "Need to find all keys",
                             collected,
                             keysRequired
                         );
-                        Debug.Log($"DoorController: додано квест 'collect_keys' ({collected}/{keysRequired})");
+                        Debug.Log($"DoorController: added quest 'collect_keys' ({collected}/{keysRequired})");
                     }
                 }
             }
@@ -171,26 +186,26 @@ public class DoorController : MonoBehaviour
             Debug.Log($"DoorController: OnTriggerExit by {other.name}");
             isPlayerInTrigger = false;
             
-            // ВИПРАВЛЕНО: НЕ ховаємо popup якщо ключів достатньо!
             SimpleInventory inv = other.GetComponent<SimpleInventory>();
-            if (inv == null) inv = playerInventory;
+            if (inv == null)
+            {
+                inv = playerInventory;
+            }
             
             if (inv != null)
             {
                 int collected = inv.GetCollectedKeysCount();
                 
-                // ТІЛЬКИ ховаємо якщо ключів НЕДОСТАТНЬО
                 if (collected < keysRequired && popupManager != null)
                 {
                     popupManager.HidePopup(other.gameObject);
-                    Debug.Log("DoorController: popup приховано через OnTriggerExit (недостатньо ключів)");
+                    Debug.Log("DoorController: popup hidden via OnTriggerExit (not enough keys)");
                 }
                 else
                 {
-                    Debug.Log("DoorController: popup НЕ приховано - ключів достатньо, чекаємо на натискання кнопки");
+                    Debug.Log("DoorController: popup NOT hidden - enough keys, waiting for button press");
                 }
             }
         }
     }
 }
-
