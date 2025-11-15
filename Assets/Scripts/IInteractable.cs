@@ -1,8 +1,15 @@
-﻿
+﻿using UnityEngine;
+
 namespace Assets.Scripts
+
 {
+
     public interface IInteractable
     {
-        void Interact();
+        string GetInteractText();
+
+        void OnInteract(GameObject actor);
+
+        void Interact(GameObject actor);
     }
 }
