@@ -1,60 +1,199 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 
 namespace Assets.Scripts
 {
     public class RaycastInteractor : MonoBehaviour
     {
-        public float interactDistance = 1.7f;
-        public KeyCode interactKey = KeyCode.E;
-        public Transform rayOrigin;
-        public Text interactTip;
+        [Header("Raycast")]
+        [Tooltip("Maximum raycast distance")]
+        public float raycastDistance = 10f;
 
-        private IInteractable currentTarget;
+        [Tooltip("Camera or transform from which ray is cast (if null, will use Camera.main)")]
+        public Camera cam;
 
-        void Start()
+        [Header("Actor (player)")]
+        [Tooltip("GameObject acting as actor (the one performing interaction). Usually Player. If not specified, script will try to find it automatically.")]
+        public GameObject actor;
+
+        [Header("Popup")]
+        [Tooltip("Distance from player to item at which popup appears (in scene units)")]
+        public float popupDistance = 2.0f;
+
+        [Tooltip("Reference to PopupManager in scene (drag UI_Manager with PopupManager component)")]
+        public PopupManager popupManager;
+
+        private IInteractable currentInteractable = null;
+        private GameObject currentHitGO = null;
+        private bool popupVisible = false;
+
+        private void Start()
         {
-            interactTip.text = "";
-            if (rayOrigin == null)
+            if (cam == null)
             {
-                rayOrigin = transform;
+                cam = Camera.main;
             }
 
-            InvokeRepeating(nameof(CheckForInteractable), 0f, 0.1f);
-        }
-
-        void Update()
-        {
-            if (currentTarget != null && Input.GetKeyDown(interactKey))
+            if (actor == null)
             {
-                currentTarget.Interact();
-                Debug.Log("Interacted with " + currentTarget);
+                GameObject found = GameObject.FindWithTag("Player");
+                if (found != null)
+                {
+                    actor = found;
+                }
+                else
+                {
+                    var pi = FindFirstObjectByType<PlayerInteractor>();
+                    if (pi != null)
+                    {
+                        actor = pi.gameObject;
+                    }
+                    else
+                    {
+                        GameObject byName = GameObject.Find("Player");
+                        if (byName != null)
+                        {
+                            actor = byName;
+                        }
+                    }
+                }
+
+                if (actor == null)
+                {
+                    actor = this.gameObject;
+                }
+            }
+
+            if (popupManager == null)
+            {
+                popupManager = FindFirstObjectByType<PopupManager>();
+                if (popupManager == null)
+                {
+                    Debug.LogWarning("RaycastInteractor: PopupManager not found. Link it manually in inspector.");
+                }
             }
         }
 
-        void CheckForInteractable()
+        private void Update()
         {
-            Ray ray = new Ray(rayOrigin.position, rayOrigin.forward);
+            if (cam == null)
+            {
+                return;
+            }
+
+            Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, interactDistance))
+            if (Physics.Raycast(ray, out hit, raycastDistance))
             {
-                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                GameObject hitGO = hit.collider.gameObject;
+                IInteractable interactable = hitGO.GetComponent<IInteractable>();
+
                 if (interactable != null)
                 {
-                    if (currentTarget != interactable)
+                    float distance = Vector3.Distance(actor.transform.position, hitGO.transform.position);
+
+                    if (distance <= popupDistance)
                     {
-                        currentTarget = interactable;
-                        interactTip.text = $"Press {interactKey} to interact with {hit.collider.name}";
+                        if (currentInteractable != interactable || !popupVisible)
+                        {
+                            currentInteractable = interactable;
+                            currentHitGO = hitGO;
+                            ShowPopupForCurrent();
+                        }
                     }
+                    else
+                    {
+                        if (popupVisible)
+                        {
+                            HidePopup();
+                        }
+
+                        if (currentInteractable == interactable)
+                        {
+                            currentInteractable = null;
+                            currentHitGO = null;
+                        }
+                    }
+                }
+                else
+                {
+                    if (popupVisible)
+                    {
+                        HidePopup();
+                    }
+
+                    currentInteractable = null;
+                    currentHitGO = null;
+                }
+            }
+            else
+            {
+                if (popupVisible)
+                {
+                    HidePopup();
+                }
+
+                currentInteractable = null;
+                currentHitGO = null;
+            }
+        }
+
+        private void ShowPopupForCurrent()
+        {
+            if (currentInteractable == null || popupManager == null)
+            {
+                return;
+            }
+
+            Sprite icon = null;
+            var ci = currentHitGO.GetComponent<CollectItem>();
+            if (ci != null)
+            {
+                icon = ci.itemIcon;
+            }
+
+            popupManager.ShowPopup(currentInteractable.GetInteractText(), OnPopupExecute, this, "Pick Up", icon);
+            popupVisible = true;
+        }
+
+        private void HidePopup()
+        {
+            popupManager?.HidePopup(this);
+            popupVisible = false;
+        }
+
+        private void OnPopupExecute()
+        {
+            if (currentInteractable != null && currentHitGO != null)
+            {
+                currentInteractable.Interact(actor);
+                HidePopup();
+                currentInteractable = null;
+                currentHitGO = null;
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (cam == null)
+            {
+                if (Application.isPlaying)
+                {
+                    cam = Camera.main;
+                }
+                else
+                {
                     return;
                 }
             }
 
-            if (currentTarget != null)
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawRay(cam.transform.position, cam.transform.forward * raycastDistance);
+
+            if (actor != null)
             {
-                currentTarget = null;
-                interactTip.text = "";
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(actor.transform.position, popupDistance);
             }
         }
     }
