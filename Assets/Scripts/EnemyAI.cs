@@ -41,7 +41,15 @@ namespace Assets.Scripts
         public Transform[] patrolPoints;
         [Tooltip("Wait time at each point")]
         public float waitTimeAtPoint = 2f;
-        
+
+        [Header("Search Settings")]
+        [Tooltip("Radius around last known position to search")]
+        public float searchRadius = 8f;
+        [Tooltip("How long to search before giving up (seconds)")]
+        public float searchDuration = 10f;
+        [Tooltip("Time between choosing new random points during search")]
+        public float searchPointInterval = 3f;
+
         [Header("Debug")]
         public bool showDebugGizmos = true;
         
@@ -50,7 +58,8 @@ namespace Assets.Scripts
             Patrol,
             Alert,
             Chase,
-            Attack
+            Attack,
+            Search
         }
         
         private EnemyState currentState = EnemyState.Patrol;
@@ -60,6 +69,9 @@ namespace Assets.Scripts
         private float loseTargetTimer = 0f;
         private Vector3 lastKnownPlayerPosition;
         private bool playerInSight = false;
+        private float searchTimer = 0f;
+        private float searchPointTimer = 0f;
+        private Vector3 currentSearchPoint;
 
         private float visionRangeSqr;
         private float attackRangeSqr;
@@ -133,6 +145,9 @@ namespace Assets.Scripts
                     break;
                 case EnemyState.Attack:
                     AttackBehavior();
+                    break;
+                case EnemyState.Search:
+                    SearchBehavior();
                     break;
             }
         }
@@ -210,8 +225,8 @@ namespace Assets.Scripts
         {
             lastKnownPlayerPosition = player.position;
             loseTargetTimer = 0f;
-            
-            if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert)
+
+            if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
             {
                 Debug.Log($"[EnemyAI] Player spotted! Changing from {currentState} to Chase");
                 ChangeState(EnemyState.Chase);
@@ -235,7 +250,7 @@ namespace Assets.Scripts
 
             if (distanceSqr <= hearingRangeWithIntensitySqr)
             {
-                if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert)
+                if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
                 {
                     lastKnownPlayerPosition = soundPosition;
                     ChangeState(EnemyState.Alert);
@@ -301,7 +316,8 @@ namespace Assets.Scripts
 
                 if (loseTargetTimer >= loseTargetTime || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
                 {
-                    ChangeState(EnemyState.Patrol);
+                    Debug.Log("Lost player - starting search");
+                    ChangeState(EnemyState.Search);
                 }
             }
         }
@@ -327,7 +343,42 @@ namespace Assets.Scripts
                 ChangeState(EnemyState.Chase);
             }
         }
-        
+
+        void SearchBehavior()
+        {
+            navAgent.speed = patrolSpeed;
+            searchTimer += Time.deltaTime;
+            searchPointTimer += Time.deltaTime;
+
+            if (searchTimer >= searchDuration)
+            {
+                Debug.Log("Search timeout - returning to patrol");
+                ChangeState(EnemyState.Patrol);
+                return;
+            }
+
+            if (searchPointTimer >= searchPointInterval || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
+            {
+                searchPointTimer = 0f;
+                Vector3 randomPoint = GetRandomPointAroundPosition(lastKnownPlayerPosition, searchRadius);
+
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(randomPoint, out hit, searchRadius, NavMesh.AllAreas))
+                {
+                    currentSearchPoint = hit.position;
+                    navAgent.SetDestination(currentSearchPoint);
+                    Debug.Log($"Moving to new search point around last known position");
+                }
+            }
+        }
+
+        Vector3 GetRandomPointAroundPosition(Vector3 center, float radius)
+        {
+            Vector2 randomCircle = Random.insideUnitCircle * radius;
+            Vector3 randomPoint = center + new Vector3(randomCircle.x, 0, randomCircle.y);
+            return randomPoint;
+        }
+
         #endregion
         
         #region Helper Methods
@@ -335,15 +386,20 @@ namespace Assets.Scripts
         void ChangeState(EnemyState newState)
         {
             if (currentState == newState) return;
-            
+
             Debug.Log($"Enemy state changed: {currentState} -> {newState}");
             currentState = newState;
-            
+
             if (newState == EnemyState.Patrol)
             {
                 navAgent.speed = patrolSpeed;
                 loseTargetTimer = 0f;
                 GoToNextPatrolPoint();
+            }
+            else if (newState == EnemyState.Search)
+            {
+                searchTimer = 0f;
+                searchPointTimer = 0f;
             }
         }
         
