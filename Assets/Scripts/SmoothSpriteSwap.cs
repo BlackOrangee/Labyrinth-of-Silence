@@ -41,7 +41,7 @@ namespace Assets.Scripts
 
             if (buttonImage == null)
             {
-                Debug.LogError("[SmoothButtonAnimation] Image component не найден!");
+                Debug.LogError("[SmoothButtonAnimation] Image component not found!");
                 enabled = false;
                 return;
             }
@@ -58,7 +58,7 @@ namespace Assets.Scripts
                 button.transition = Selectable.Transition.None;
             }
 
-            Debug.Log("[SmoothButtonAnimation] Инициализация завершена");
+            Debug.Log("[SmoothButtonAnimation] Initialization completed");
         }
 
         private void CreateOverlayImage()
@@ -92,7 +92,7 @@ namespace Assets.Scripts
                 UpdateButtonState();
             }
             
-            Debug.Log("[SmoothButtonAnimation] Курсор наведён");
+            Debug.Log("[SmoothButtonAnimation] Pointer entered");
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -107,7 +107,7 @@ namespace Assets.Scripts
             }
             
             UpdateButtonState();
-            Debug.Log("[SmoothButtonAnimation] Курсор ушёл");
+            Debug.Log("[SmoothButtonAnimation] Pointer exited");
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -123,7 +123,7 @@ namespace Assets.Scripts
             }
             
             UpdateButtonState();
-            Debug.Log("[SmoothButtonAnimation] Кнопка нажата");
+            Debug.Log("[SmoothButtonAnimation] Button pressed");
         }
 
         public void OnPointerUp(PointerEventData eventData)
@@ -134,7 +134,7 @@ namespace Assets.Scripts
             }
             pressedDelayCoroutine = StartCoroutine(DelayedStateChange());
             
-            Debug.Log("[SmoothButtonAnimation] Кнопка отпущена");
+            Debug.Log("[SmoothButtonAnimation] Button released");
         }
 
         private IEnumerator DelayedStateChange()
