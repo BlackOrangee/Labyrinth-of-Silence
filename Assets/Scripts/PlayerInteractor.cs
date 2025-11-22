@@ -2,40 +2,38 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Assets.Scripts
-
 {
-
     public class PlayerInteractor : MonoBehaviour
     {
         [Header("Ray Settings")]
-        [Tooltip("Maximum interaction distance")]
         public float interactDistance = 3f;
-
-        [Tooltip("Camera - from which ray is cast (leave Main Camera if not specified)")]
         public Camera cam;
 
         [Header("UI")]
-        [Tooltip("Reference to PopupManager in scene")]
         public PopupManager popupManager;
 
+        private PlayerHideController hideController;
         private IInteractable currentInteractable = null;
         private GameObject currentGO = null;
 
         void Start()
         {
-            if (cam == null)
-            {
-                cam = Camera.main;
-            }
+            if (cam == null) cam = Camera.main;
+            if (popupManager == null) popupManager = FindFirstObjectByType<PopupManager>();
+            hideController = GetComponent<PlayerHideController>();
+        }
 
-                if (popupManager == null)
-                {
-                    Debug.LogWarning("PopupManager not found in scene. Add it and link in inspector.");
-                }
-            }
+        public void ForceReset()
+        {
+            currentInteractable = null;
+            currentGO = null;
+            if (popupManager != null) popupManager.HidePopup(this);
+        }
 
         void Update()
         {
+            if (hideController != null && hideController.IsHiding) return;
+
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 ClearCurrent();
@@ -56,13 +54,10 @@ namespace Assets.Scripts
                     {
                         currentInteractable = interactable;
                         currentGO = hitGO;
+                        
                         string msg = interactable.GetInteractText();
-
                         string buttonText = "Pick Up";
-                        if (hitGO.GetComponent<HidingSpot>() != null)
-                        {
-                            buttonText = "Enter";
-                        }
+                        if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Enter";
 
                         popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
                     }
@@ -77,7 +72,8 @@ namespace Assets.Scripts
                 ClearCurrent();
             }
 
-            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && InteractionLocker.IsOwner(this) && currentInteractable != null)
+            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) 
+                && InteractionLocker.IsOwner(this) && currentInteractable != null)
             {
                 ExecuteCurrent();
             }
@@ -93,19 +89,14 @@ namespace Assets.Scripts
             }
         }
 
-        private void OnPopupExecute()
-        {
-            ExecuteCurrent();
-        }
+        private void OnPopupExecute() => ExecuteCurrent();
 
         private void ExecuteCurrent()
         {
             if (currentInteractable != null && currentGO != null)
             {
-                currentInteractable.Interact(this.gameObject);
-                popupManager?.HidePopup(this);
-                currentInteractable = null;
-                currentGO = null;
+                var target = currentInteractable;
+                target.Interact(this.gameObject);
             }
         }
     }
