@@ -18,10 +18,12 @@ namespace Assets.Scripts
         
         private bool isHiding = false;
         private HidingSpot currentSpot;
-
+        
+        // Компоненти
         private CharacterController charController;
         private PlayerMovement playerMovement;
-
+        
+        // ВСІ МОЖЛИВІ ІНТЕРАКТОРИ
         private PlayerInteractor playerInteractor;
         private ProximityInteractor proximityInteractor;
         private RaycastInteractor raycastInteractor;
@@ -38,7 +40,8 @@ namespace Assets.Scripts
         {
             charController = GetComponent<CharacterController>();
             playerMovement = GetComponent<PlayerMovement>();
-
+            
+            // Шукаємо ВСІ можливі скрипти взаємодії на гравцеві
             playerInteractor = GetComponent<PlayerInteractor>();
             proximityInteractor = GetComponent<ProximityInteractor>();
             raycastInteractor = GetComponent<RaycastInteractor>();
@@ -65,7 +68,7 @@ namespace Assets.Scripts
         public void StartHiding(HidingSpot spot)
         {
             if (isHiding || isTransitioning) return;
-            isHiding = true;
+            isHiding = true; // Блокуємо миттєво
             StartCoroutine(EnterHidingRoutine(spot));
         }
 
@@ -74,16 +77,20 @@ namespace Assets.Scripts
             isTransitioning = true;
             currentSpot = spot;
 
+            // 1. ВИМИКАЄМО АБСОЛЮТНО ВСІ ІНТЕРАКТОРИ
             DisableAllInteractors();
 
+            // 2. Чистимо UI
             if (popupManager != null) popupManager.HidePopup(null);
 
-            yield return null;
+            yield return null; // Чекаємо кадр
 
+            // 3. Вимикаємо фізику
             if (charController) charController.enabled = false;
             if (playerMovement) playerMovement.enabled = false;
             if (mainCamController) mainCamController.enabled = false;
 
+            // 4. Телепортація
             transform.position = spot.hidePoint.position;
             transform.rotation = spot.hidePoint.rotation;
             initialHidePos = spot.hidePoint.position;
@@ -92,6 +99,7 @@ namespace Assets.Scripts
             currentXRotation = 0f;
             Camera.main.transform.localRotation = Quaternion.identity;
 
+            // 5. Показуємо повідомлення (тепер ніхто не заважатиме)
             if (popupManager != null)
             {
                 popupManager.ShowPopup(
@@ -125,23 +133,28 @@ namespace Assets.Scripts
             yield return null;
 
             isHiding = false;
-
+            
+            // Вмикаємо інтерактори назад
             EnableAllInteractors();
 
             currentSpot = null;
             isTransitioning = false;
         }
+
+        // --- Допоміжні методи для вимкнення всього зоопарку скриптів ---
         
         private void DisableAllInteractors()
         {
             if (playerInteractor) 
             {
-                playerInteractor.ForceReset();
+                playerInteractor.ForceReset(); // Використовуємо наш метод скидання
                 playerInteractor.enabled = false;
             }
-
+            
+            // Proximity зазвичай не має ForceReset, тому просто вимикаємо
             if (proximityInteractor) proximityInteractor.enabled = false;
-
+            
+            // Raycast теж вимикаємо
             if (raycastInteractor) raycastInteractor.enabled = false;
         }
 
@@ -152,6 +165,7 @@ namespace Assets.Scripts
             if (raycastInteractor) raycastInteractor.enabled = true;
         }
 
+        // Керування камерою
         public void StopHiding() { if (!isHiding || isTransitioning) return; StartCoroutine(ExitHidingRoutine()); }
         
         private void HandleHidingCamera() {

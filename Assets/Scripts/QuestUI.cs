@@ -64,17 +64,17 @@ namespace Assets.Scripts
 
             if (questPanelRoot == null)
             {
-                Debug.LogError("QuestUI: questPanelRoot not linked! Link in Inspector.");
+                Debug.LogError("❌ QuestUI: questPanelRoot not linked! Link in Inspector.");
             }
 
             if (questListContainer == null)
             {
-                Debug.LogError("QuestUI: questListContainer not linked! Link in Inspector.");
+                Debug.LogError("❌ QuestUI: questListContainer not linked! Link in Inspector.");
             }
 
             if (questItemPrefab == null)
             {
-                Debug.LogError("QuestUI: questItemPrefab not linked! Link in Inspector.");
+                Debug.LogError("❌ QuestUI: questItemPrefab not linked! Link in Inspector.");
             }
 
             if (questPanelRoot != null && questItems.Count == 0)
@@ -93,11 +93,11 @@ namespace Assets.Scripts
                 cachedQuestTracker.OnQuestUpdated += OnQuestUpdated;
                 cachedQuestTracker.OnQuestCompleted += OnQuestCompleted;
                 isSubscribed = true;
-                Debug.Log("QuestUI: subscribed to QuestTracker events.");
+                Debug.Log("✅ QuestUI: subscribed to QuestTracker events.");
             }
             else
             {
-                Debug.LogWarning("QuestUI: QuestTracker not found!");
+                Debug.LogWarning("⚠️ QuestUI: QuestTracker not found!");
             }
         }
 

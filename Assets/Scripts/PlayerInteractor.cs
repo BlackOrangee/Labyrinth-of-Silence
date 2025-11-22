@@ -32,6 +32,8 @@ namespace Assets.Scripts
 
         void Update()
         {
+            // ЗАПОБІЖНИК: Якщо ми почали ховатися (IsHiding стало true миттєво),
+            // ми просто виходимо. Ми НЕ викликаємо ClearCurrent(), бо це зіб'є UI ховання.
             if (hideController != null && hideController.IsHiding) return;
 
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
