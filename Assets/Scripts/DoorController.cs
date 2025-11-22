@@ -1,161 +1,125 @@
 using UnityEngine;
+using System.Collections;
+using TMPro;
+
 namespace Assets.Scripts
 {
-    [RequireComponent(typeof(Collider))]
-    public class DoorController : MonoBehaviour
+    public class DoorController : MonoBehaviour, IInteractable
     {
-        [Header("Door settings")]
+        [Header("Settings")]
         public int keysRequired = 4;
-        public Animator doorAnimator;
-        public bool destroyOnOpen = false;
+        [Tooltip("Angle to open (e.g. 60 or -60)")]
+        public float openAngle = 60f;
+        public float openSpeed = 2f;
+
         [Header("References")]
+        [Tooltip("Drag the Door_Pivot object here")]
+        public Transform doorPivot;
         public PopupManager popupManager;
 
-        private GameObject player;
+        [Header("Level Complete UI")]
+        [Tooltip("Assign the LevelCompletePanel here")]
+        public GameObject levelCompletePanel;
+
+        private bool isOpen = false;
         private SimpleInventory playerInventory;
 
         void Start()
         {
-            var pi = FindFirstObjectByType<PlayerInteractor>();
-            if (pi != null)
-            {
-                player = pi.gameObject;
-                playerInventory = player.GetComponent<SimpleInventory>();
-            }
-            else
-            {
-                GameObject p = GameObject.FindWithTag("Player");
-                if (p != null)
-                {
-                    player = p;
-                    playerInventory = player.GetComponent<SimpleInventory>();
-                }
-            }
-
             if (popupManager == null)
-            {
                 popupManager = FindFirstObjectByType<PopupManager>();
+
+            var playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                playerInventory = playerObj.GetComponent<SimpleInventory>();
             }
         }
 
-        public void TryOpenDoor(GameObject requester)
+        public string GetInteractText()
         {
-            SimpleInventory inv = null;
-            if (requester != null)
+            if (isOpen) return "";
+
+            int currentKeys = playerInventory != null ? playerInventory.GetCollectedKeysCount() : 0;
+
+            if (currentKeys >= keysRequired)
+                return "Press Enter to Open Door";
+            else
+                return $"Locked. Need keys: {currentKeys}/{keysRequired}";
+        }
+
+        public void Interact(GameObject actor)
+        {
+            if (isOpen) return;
+
+            if (playerInventory == null)
             {
-                inv = requester.GetComponent<SimpleInventory>();
+                playerInventory = actor.GetComponent<SimpleInventory>();
             }
 
-            if (inv == null)
-            {
-                inv = playerInventory;
-            }
+            int currentKeys = playerInventory != null ? playerInventory.GetCollectedKeysCount() : 0;
 
-            if (inv == null)
+            if (currentKeys >= keysRequired)
+            {
+                OpenDoor();
+            }
+            else
             {
                 if (popupManager != null)
                 {
-                    popupManager.ShowPopup("Inventory not found.", null, requester ?? player, "OK", null);
+                    popupManager.ShowPopup($"Need {keysRequired} keys! You have {currentKeys}.", null, this, "OK", null);
+                    StartCoroutine(AutoClosePopup());
                 }
-                return;
-            }
-
-            int collected = inv.GetCollectedKeysCount();
-
-            if (popupManager == null)
-            {
-                return;
-            }
-
-            object owner = requester != null ? (object)requester : (object)player;
-
-            System.Action onConfirmed = null;
-            if (collected >= keysRequired)
-            {
-                onConfirmed = () => OpenDoor();
-            }
-
-            popupManager.ShowKeysCollectedPopup(collected, keysRequired, onConfirmed, owner);
-        }
-
-        public void OpenDoor()
-        {
-            if (doorAnimator != null)
-            {
-                doorAnimator.SetTrigger("Open");
-            }
-            else if (destroyOnOpen)
-            {
-                gameObject.SetActive(false);
-            }
-            else
-            {
-                Collider c = GetComponent<Collider>();
-                if (c != null)
-                {
-                    c.enabled = false;
-                }
-                transform.Translate(Vector3.up * 2f);
             }
         }
 
-        public void DebugTryOpenNow()
+        public void OnInteract(GameObject actor) => Interact(actor);
+
+
+        private void OpenDoor()
         {
-            TryOpenDoor(player);
+            isOpen = true;
+
+            StartCoroutine(RotateDoorRoutine());
+
+            StartCoroutine(LevelCompleteRoutine());
+
+            if (popupManager != null) popupManager.HidePopup(this);
         }
 
-        private void OnTriggerEnter(Collider other)
+        private IEnumerator RotateDoorRoutine()
         {
-            if (other.CompareTag("Player"))
+            Quaternion startRot = doorPivot.localRotation;
+            Quaternion targetRot = Quaternion.Euler(0, openAngle, 0);
+
+            float time = 0;
+            while (time < 1)
             {
-                SimpleInventory inv = other.GetComponent<SimpleInventory>();
-                if (inv == null)
-                {
-                    inv = playerInventory;
-                }
-
-                if (inv != null)
-                {
-                    int collected = inv.GetCollectedKeysCount();
-
-                    if (collected < keysRequired && QuestTracker.Instance != null)
-                    {
-                        if (!QuestTracker.Instance.HasQuest("collect_keys"))
-                        {
-                            QuestTracker.Instance.AddQuest(
-                                "collect_keys",
-                                "Need to find all keys",
-                                collected,
-                                keysRequired
-                            );
-                        }
-                    }
-                }
-
-                TryOpenDoor(other.gameObject);
+                time += Time.deltaTime * openSpeed;
+                doorPivot.localRotation = Quaternion.Slerp(startRot, targetRot, time);
+                yield return null;
             }
         }
 
-        private void OnTriggerExit(Collider other)
+        private IEnumerator LevelCompleteRoutine()
         {
-            if (other.CompareTag("Player"))
+            if (levelCompletePanel != null)
             {
-                SimpleInventory inv = other.GetComponent<SimpleInventory>();
-                if (inv == null)
-                {
-                    inv = playerInventory;
-                }
-
-                if (inv != null)
-                {
-                    int collected = inv.GetCollectedKeysCount();
-
-                    if (collected < keysRequired && popupManager != null)
-                    {
-                        popupManager.HidePopup(other.gameObject);
-                    }
-                }
+                levelCompletePanel.SetActive(true);
             }
+
+            yield return new WaitForSeconds(5f);
+
+            if (levelCompletePanel != null)
+            {
+                levelCompletePanel.SetActive(false);
+            }
+        }
+
+        private IEnumerator AutoClosePopup()
+        {
+            yield return new WaitForSeconds(2f);
+            if (popupManager != null) popupManager.HidePopup(this);
         }
     }
 }
