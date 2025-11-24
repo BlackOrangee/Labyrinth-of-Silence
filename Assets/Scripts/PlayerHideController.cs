@@ -1,195 +1,173 @@
 using UnityEngine;
+using System.Collections;
 using TMPro;
+
 namespace Assets.Scripts
 {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerHideController : MonoBehaviour
     {
         [Header("References")]
-        [Tooltip("Player camera")]
-        public Camera playerCamera;
-        [Tooltip("Canvas for black screen")]
-        public Canvas hideCanvas;
+        public CameraController mainCamController;
+        public PopupManager popupManager;
 
-        [Tooltip("UI Image for black screen (must be on hideCanvas)")]
-        public UnityEngine.UI.Image blackScreen;
+        [Header("Hiding Settings")]
+        public float mouseSensitivity = 2f;
+        public float maxLookAngle = 80f; 
+        public float movementRange = 0.1f; 
+        
+        private bool isHiding = false;
+        private HidingSpot currentSpot;
 
-        [Tooltip("Message text on black screen")]
-        public TextMeshProUGUI hideText;
-
-        [Header("Settings")]
-        [Tooltip("Is player currently hiding?")]
-        [SerializeField] private bool isHiding = false;
-
-        private HidingSpot currentHidingSpot;
+        private CharacterController charController;
         private PlayerMovement playerMovement;
-        private CharacterController characterController;
-        private PlayerInteractor playerInteractor;
-        private RaycastInteractor raycastInteractor;
 
-        private bool wasMovementEnabled;
-        private bool wasInteractorEnabled;
-        private bool wasRaycastEnabled;
+        private PlayerInteractor playerInteractor;
+        private ProximityInteractor proximityInteractor;
+        private RaycastInteractor raycastInteractor;
+        
+        private float currentYRotation = 0f;
+        private float currentXRotation = 0f;
+        private Vector3 initialHidePos;
+
+        private bool isTransitioning = false; 
 
         public bool IsHiding => isHiding;
 
         void Awake()
         {
+            charController = GetComponent<CharacterController>();
             playerMovement = GetComponent<PlayerMovement>();
-            characterController = GetComponent<CharacterController>();
+
             playerInteractor = GetComponent<PlayerInteractor>();
+            proximityInteractor = GetComponent<ProximityInteractor>();
             raycastInteractor = GetComponent<RaycastInteractor>();
 
-            if (playerCamera == null)
-            {
-                playerCamera = GetComponentInChildren<Camera>();
-                if (playerCamera == null)
-                {
-                    Debug.LogError("PlayerHideController: Camera not found!");
-                }
-            }
-        }
-
-        void Start()
-        {
-            if (hideCanvas == null || blackScreen == null || hideText == null)
-            {
-                CreateHideCanvas();
-            }
-
-            if (hideCanvas != null)
-            {
-                hideCanvas.gameObject.SetActive(false);
-            }
+            if (mainCamController == null) mainCamController = GetComponent<CameraController>();
+            if (popupManager == null) popupManager = FindFirstObjectByType<PopupManager>();
         }
 
         void Update()
         {
-            if (isHiding && Input.GetKeyDown(KeyCode.Escape))
+            if (isTransitioning) return;
+
+            if (isHiding)
             {
-                ExitHiding();
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    StartCoroutine(ExitHidingRoutine());
+                }
+                HandleHidingCamera();
+                HandleHidingMovement();
             }
         }
 
-        public void EnterHiding(HidingSpot hidingSpot)
+        public void StartHiding(HidingSpot spot)
         {
-            if (isHiding)
+            if (isHiding || isTransitioning) return;
+            isHiding = true; // Блокуємо миттєво
+            StartCoroutine(EnterHidingRoutine(spot));
+        }
+
+        private IEnumerator EnterHidingRoutine(HidingSpot spot)
+        {
+            isTransitioning = true;
+            currentSpot = spot;
+
+            DisableAllInteractors();
+
+            if (popupManager != null) popupManager.HidePopup(null);
+
+            yield return null;
+
+            if (charController) charController.enabled = false;
+            if (playerMovement) playerMovement.enabled = false;
+            if (mainCamController) mainCamController.enabled = false;
+
+            transform.position = spot.hidePoint.position;
+            transform.rotation = spot.hidePoint.rotation;
+            initialHidePos = spot.hidePoint.position;
+
+            currentYRotation = 0f;
+            currentXRotation = 0f;
+            Camera.main.transform.localRotation = Quaternion.identity;
+
+            if (popupManager != null)
             {
-                Debug.LogWarning("PlayerHideController: Player already hidden!");
-                return;
+                popupManager.ShowPopup(
+                    $"Player in hiding spot: {spot.spotName}\nPress ESC to exit", 
+                    null, 
+                    this, 
+                    "", 
+                    null
+                );
             }
 
-            currentHidingSpot = hidingSpot;
-            isHiding = true;
+            isTransitioning = false;
+        }
 
-            wasMovementEnabled = playerMovement != null && playerMovement.enabled;
-            wasInteractorEnabled = playerInteractor != null && playerInteractor.enabled;
-            wasRaycastEnabled = raycastInteractor != null && raycastInteractor.enabled;
+        private IEnumerator ExitHidingRoutine()
+        {
+            if (currentSpot == null) yield break;
+            isTransitioning = true;
 
-            if (playerMovement != null)
+            if (popupManager != null) popupManager.HidePopup(this);
+
+            yield return null; 
+
+            currentSpot.ExitHiding(this.gameObject);
+
+            if (charController) charController.enabled = true;
+            if (playerMovement) playerMovement.enabled = true;
+            if (mainCamController) mainCamController.enabled = true;
+
+            Physics.SyncTransforms();
+            yield return null;
+
+            isHiding = false;
+
+            EnableAllInteractors();
+
+            currentSpot = null;
+            isTransitioning = false;
+        }
+
+        private void DisableAllInteractors()
+        {
+            if (playerInteractor) 
             {
-                playerMovement.enabled = false;
-            }
-
-            if (playerInteractor != null)
-            {
+                playerInteractor.ForceReset();
                 playerInteractor.enabled = false;
             }
 
-            if (raycastInteractor != null)
-            {
-                raycastInteractor.enabled = false;
-            }
+            if (proximityInteractor) proximityInteractor.enabled = false;
 
-            ShowBlackScreen(true, $"Player in hiding spot: {hidingSpot.GetSpotName()}\n\nPress ESC to exit");
+            if (raycastInteractor) raycastInteractor.enabled = false;
         }
 
-        public void ExitHiding()
+        private void EnableAllInteractors()
         {
-            if (!isHiding || currentHidingSpot == null)
-            {
-                Debug.LogWarning("PlayerHideController: Player not in hiding!");
-                return;
-            }
-
-            currentHidingSpot.ExitHiding();
-
-            if (playerMovement != null)
-            {
-                playerMovement.enabled = wasMovementEnabled;
-            }
-
-            if (playerInteractor != null)
-            {
-                playerInteractor.enabled = wasInteractorEnabled;
-            }
-
-            if (raycastInteractor != null)
-            {
-                raycastInteractor.enabled = wasRaycastEnabled;
-            }
-
-            ShowBlackScreen(false, "");
-
-            isHiding = false;
-            currentHidingSpot = null;
+            if (playerInteractor) playerInteractor.enabled = true;
+            if (proximityInteractor) proximityInteractor.enabled = true;
+            if (raycastInteractor) raycastInteractor.enabled = true;
         }
 
-        private void ShowBlackScreen(bool show, string text = "")
-        {
-            if (hideCanvas != null)
-            {
-                hideCanvas.gameObject.SetActive(show);
-
-                if (hideText != null)
-                {
-                    hideText.text = text;
-                }
-            }
+        public void StopHiding() { if (!isHiding || isTransitioning) return; StartCoroutine(ExitHidingRoutine()); }
+        
+        private void HandleHidingCamera() {
+            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+            currentYRotation += mouseX; currentYRotation = Mathf.Clamp(currentYRotation, -maxLookAngle, maxLookAngle);
+            currentXRotation -= mouseY; currentXRotation = Mathf.Clamp(currentXRotation, -60f, 60f);
+            Camera.main.transform.localRotation = Quaternion.Euler(currentXRotation, currentYRotation, 0f);
         }
-
-        private void CreateHideCanvas()
-        {
-            GameObject canvasObj = new GameObject("HideCanvas");
-            canvasObj.transform.SetParent(transform);
-
-            hideCanvas = canvasObj.AddComponent<Canvas>();
-            hideCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            hideCanvas.sortingOrder = 9999;
-
-            var scaler = canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
-            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-
-            canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-
-            GameObject imageObj = new GameObject("BlackScreen");
-            imageObj.transform.SetParent(canvasObj.transform, false);
-
-            blackScreen = imageObj.AddComponent<UnityEngine.UI.Image>();
-            blackScreen.color = Color.black;
-
-            RectTransform rectImage = imageObj.GetComponent<RectTransform>();
-            rectImage.anchorMin = Vector2.zero;
-            rectImage.anchorMax = Vector2.one;
-            rectImage.sizeDelta = Vector2.zero;
-            rectImage.anchoredPosition = Vector2.zero;
-
-            GameObject textObj = new GameObject("HideText");
-            textObj.transform.SetParent(canvasObj.transform, false);
-
-            hideText = textObj.AddComponent<TextMeshProUGUI>();
-            hideText.text = "";
-            hideText.fontSize = 36;
-            hideText.color = Color.white;
-            hideText.alignment = TextAlignmentOptions.Center;
-            hideText.fontStyle = FontStyles.Bold;
-
-            RectTransform rectText = textObj.GetComponent<RectTransform>();
-            rectText.anchorMin = Vector2.zero;
-            rectText.anchorMax = Vector2.one;
-            rectText.sizeDelta = Vector2.zero;
-            rectText.anchoredPosition = Vector2.zero;
+        
+        private void HandleHidingMovement() {
+            float x = Input.GetAxis("Horizontal"); float z = Input.GetAxis("Vertical");
+            Vector3 moveDir = (transform.right * x + transform.forward * z).normalized;
+            Vector3 newPos = transform.position + moveDir * Time.deltaTime * 1.5f;
+            if (Vector3.Distance(newPos, initialHidePos) < movementRange) transform.position = newPos;
+            else transform.position = initialHidePos + (newPos - initialHidePos).normalized * movementRange;
         }
     }
 }
