@@ -257,7 +257,7 @@ namespace Assets.Scripts
 
             foreach (Quest quest in activeQuests)
             {
-                string status = quest.isCompleted ? "✅ COMPLETED" : "🔄 ACTIVE";
+                string status = quest.isCompleted ? "COMPLETED" : "ACTIVE";
                 Debug.Log($"{status} | {quest.questId} | {quest.GetFormattedText()}");
             }
         }

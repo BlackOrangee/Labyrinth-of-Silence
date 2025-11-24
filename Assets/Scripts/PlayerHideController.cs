@@ -65,7 +65,7 @@ namespace Assets.Scripts
         public void StartHiding(HidingSpot spot)
         {
             if (isHiding || isTransitioning) return;
-            isHiding = true; // Блокуємо миттєво
+            isHiding = true;
             StartCoroutine(EnterHidingRoutine(spot));
         }
 
