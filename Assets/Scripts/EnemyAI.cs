@@ -50,9 +50,15 @@ namespace Assets.Scripts
         [Tooltip("Time between choosing new random points during search")]
         public float searchPointInterval = 3f;
 
+        [Header("Light Detection")]
+        [Tooltip("Enable light-based detection")]
+        public bool useLightDetection = true;
+        [Tooltip("Should light trigger chase behavior")]
+        public bool chaseOnLightDetection = true;
+
         [Header("Debug")]
         public bool showDebugGizmos = true;
-        
+
         public enum EnemyState
         {
             Patrol,
@@ -78,6 +84,9 @@ namespace Assets.Scripts
         private float hearingRangeSqr;
         private float halfFieldOfView;
         private Vector3 eyeOffset;
+
+        private LightDetector lightDetector;
+        private bool wasLightDetected = false;
 
         void Start()
         {
@@ -116,6 +125,15 @@ namespace Assets.Scripts
             hearingRangeSqr = hearingRange * hearingRange;
             halfFieldOfView = fieldOfViewAngle * 0.5f;
             eyeOffset = Vector3.up;
+
+            if (useLightDetection)
+            {
+                lightDetector = GetComponent<LightDetector>();
+                if (lightDetector == null)
+                {
+                    Debug.LogWarning($"[EnemyAI] Light detection enabled but no LightDetector component found on {gameObject.name}");
+                }
+            }
         }
         
         void OnDestroy()
@@ -129,9 +147,10 @@ namespace Assets.Scripts
             {
                 return;
             }
-            
+
             CheckVision();
-            
+            CheckLightDetection();
+
             switch (currentState)
             {
                 case EnemyState.Patrol:
@@ -259,7 +278,65 @@ namespace Assets.Scripts
         }
         
         #endregion
-        
+
+        #region Light Detection System
+
+        void CheckLightDetection()
+        {
+            if (!useLightDetection || lightDetector == null)
+            {
+                return;
+            }
+
+            bool isLightDetected = lightDetector.IsLightDetected;
+
+            if (isLightDetected && !wasLightDetected)
+            {
+                OnLightDetected();
+            }
+            else if (!isLightDetected && wasLightDetected)
+            {
+                OnLightLost();
+            }
+
+            wasLightDetected = isLightDetected;
+        }
+
+        void OnLightDetected()
+        {
+            if (!chaseOnLightDetection)
+            {
+                return;
+            }
+
+            if (!lightDetector.CanTriggerChase())
+            {
+                if (showDebugGizmos)
+                {
+                    Debug.Log("[EnemyAI] Light detected but intensity/range too low for chase");
+                }
+                return;
+            }
+
+            if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
+            {
+                lastKnownPlayerPosition = lightDetector.LastLightPosition;
+                Debug.Log($"[EnemyAI] Light detected! Changing from {currentState} to Chase");
+                ChangeState(EnemyState.Chase);
+            }
+        }
+
+        void OnLightLost()
+        {
+            if (currentState == EnemyState.Chase && !playerInSight)
+            {
+                lastKnownPlayerPosition = lightDetector.LastLightPosition;
+                Debug.Log($"[EnemyAI] Light lost - remembering position: {lastKnownPlayerPosition}");
+            }
+        }
+
+        #endregion
+
         #region State Behaviors
         
         void PatrolBehavior()
@@ -297,16 +374,30 @@ namespace Assets.Scripts
         {
             navAgent.speed = chaseSpeed;
 
-            if (playerInSight)
+            bool hasVisualContact = playerInSight;
+            bool hasLightContact = useLightDetection && lightDetector != null && lightDetector.IsLightDetected && lightDetector.CanTriggerChase();
+
+            if (hasVisualContact || hasLightContact)
             {
-                navAgent.SetDestination(player.position);
-                lastKnownPlayerPosition = player.position;
+                if (hasVisualContact)
+                {
+                    lastKnownPlayerPosition = player.position;
+                }
+                else if (hasLightContact)
+                {
+                    lastKnownPlayerPosition = lightDetector.LastLightPosition;
+                }
+
+                navAgent.SetDestination(lastKnownPlayerPosition);
                 loseTargetTimer = 0f;
 
-                float distanceSqr = (player.position - transform.position).sqrMagnitude;
-                if (distanceSqr <= attackRangeSqr)
+                if (hasVisualContact)
                 {
-                    ChangeState(EnemyState.Attack);
+                    float distanceSqr = (player.position - transform.position).sqrMagnitude;
+                    if (distanceSqr <= attackRangeSqr)
+                    {
+                        ChangeState(EnemyState.Attack);
+                    }
                 }
             }
             else
@@ -316,7 +407,7 @@ namespace Assets.Scripts
 
                 if (loseTargetTimer >= loseTargetTime || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
                 {
-                    Debug.Log("Lost player - starting search");
+                    Debug.Log("Lost player and light - starting search");
                     ChangeState(EnemyState.Search);
                 }
             }
