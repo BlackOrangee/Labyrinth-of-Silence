@@ -14,7 +14,7 @@ namespace Assets.Scripts
         public Button executeButton;
         public TextMeshProUGUI executeButtonText;
         [Header("Default")]
-        public string defaultMessage = "Press the E button to pick up the item.";
+        public string defaultMessage = "Press to pick up the item.";
         public string defaultButtonText = "";
 
         private const string keysMessageFormat = "Keys collected: {0} / {1}";

@@ -4,8 +4,8 @@ namespace Assets.Scripts
 {
     public enum HidingSpotType
     {
-        Closet, // Шафа з дверима
-        Table   // Стіл (без дверей)
+        Closet,
+        Table 
     }
 
     public class HidingSpot : MonoBehaviour, IInteractable
@@ -19,9 +19,9 @@ namespace Assets.Scripts
 
         [Header("Positions")]
         [Tooltip("Where player stands inside")]
-        public Transform hidePoint; // Точка ВНУТРЕДИНІ
+        public Transform hidePoint;
         [Tooltip("Where player appears after exit")]
-        public Transform exitPoint; // Точка ЗЗОВНІ
+        public Transform exitPoint;
 
         [Header("Wardrobe Specifics (Optional for Table)")]
         public Transform leftDoorPivot;
@@ -37,11 +37,9 @@ namespace Assets.Scripts
         [Range(0f, 1f)]
         public float soundVolume = 0.5f;
 
-        // Internal state
         private AudioSource audioSource;
         private bool isOccupied = false;
-        
-        // References
+
         private PopupManager popupManager;
 
         void Awake()
@@ -56,12 +54,11 @@ namespace Assets.Scripts
         {
             popupManager = FindFirstObjectByType<PopupManager>();
 
-            // Автоматичне створення точок, якщо забули (захист від помилок)
             if (hidePoint == null)
             {
                 GameObject hideObj = new GameObject("HidePoint_Ref");
                 hideObj.transform.SetParent(transform);
-                hideObj.transform.localPosition = Vector3.zero; // Центр об'єкта
+                hideObj.transform.localPosition = Vector3.zero;
                 hidePoint = hideObj.transform;
             }
 
@@ -69,21 +66,19 @@ namespace Assets.Scripts
             {
                 GameObject exitObj = new GameObject("ExitPoint_Ref");
                 exitObj.transform.SetParent(transform);
-                exitObj.transform.localPosition = Vector3.forward * 1.5f; // 1.5 метра вперед
+                exitObj.transform.localPosition = Vector3.forward * 1.5f;
                 exitPoint = exitObj.transform;
             }
         }
 
         void Update()
         {
-            // Логіка анімації дверей тільки для Шафи
             if (spotType == HidingSpotType.Closet && leftDoorPivot != null && rightDoorPivot != null)
             {
                 float targetAngle = isOccupied ? openAngle : 0f;
-                
-                // Ліва двері (відкриваються в мінус або плюс залежно від орієнтації, зазвичай +)
+
                 Quaternion targetRotL = Quaternion.Euler(0, targetAngle, 0);
-                // Права двері (дзеркально, зазвичай -)
+
                 Quaternion targetRotR = Quaternion.Euler(0, -targetAngle, 0);
 
                 leftDoorPivot.localRotation = Quaternion.Slerp(leftDoorPivot.localRotation, targetRotL, Time.deltaTime * doorSmoothness);
@@ -115,8 +110,7 @@ namespace Assets.Scripts
 
             isOccupied = true;
             PlaySound(enterSound);
-            
-            // Передаємо керування контролеру гравця
+
             controller.StartHiding(this);
         }
 
@@ -127,9 +121,8 @@ namespace Assets.Scripts
             isOccupied = false;
             PlaySound(exitSound);
 
-            // Телепортуємо гравця на точку виходу
             CharacterController cc = player.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false; // Вимикаємо фізику для телепортації
+            if (cc != null) cc.enabled = false;
             
             player.transform.position = exitPoint.position;
             player.transform.rotation = exitPoint.rotation;
@@ -150,7 +143,6 @@ namespace Assets.Scripts
 
         void OnDrawGizmos()
         {
-            // Малювання точок для зручності налаштування
             if (hidePoint != null)
             {
                 Gizmos.color = Color.cyan;
@@ -163,7 +155,7 @@ namespace Assets.Scripts
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireSphere(exitPoint.position, 0.3f);
                 Gizmos.DrawLine(transform.position, exitPoint.position);
-                Gizmos.DrawRay(exitPoint.position, exitPoint.forward * 0.5f); // Напрямок погляду
+                Gizmos.DrawRay(exitPoint.position, exitPoint.forward * 0.5f);
             }
         }
     }

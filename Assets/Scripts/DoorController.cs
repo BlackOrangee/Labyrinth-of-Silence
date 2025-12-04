@@ -1,97 +1,113 @@
 using UnityEngine;
 using System.Collections;
-using TMPro;
+using System.Collections.Generic;
 
 namespace Assets.Scripts
 {
+    [RequireComponent(typeof(AudioSource))]
     public class DoorController : MonoBehaviour, IInteractable
     {
-        [Header("Settings")]
-        public int keysRequired = 4;
-        [Tooltip("Angle to open (e.g. 60 or -60)")]
-        public float openAngle = 60f;
+        [Header("Door Requirements")]
+        [Tooltip("Список кольорів ключів, необхідних для цих дверей")]
+        public List<KeyColorType> requiredKeys; 
+
+        [Header("Door Settings")]
+        public float openAngle = 90f;
         public float openSpeed = 2f;
-
-        [Header("References")]
-        [Tooltip("Drag the Door_Pivot object here")]
         public Transform doorPivot;
-        public PopupManager popupManager;
 
-        [Header("Level Complete UI")]
-        [Tooltip("Assign the LevelCompletePanel here")]
-        public GameObject levelCompletePanel;
+        [Header("Audio Settings")]
+        public AudioClip openSound;
+        public AudioClip lockedSound;
+
+        [Header("Dependencies")]
+        public PopupManager popupManager;
+        public GameObject levelCompletePanel; 
 
         private bool isOpen = false;
         private SimpleInventory playerInventory;
+        private AudioSource audioSource;
 
         void Start()
         {
+            audioSource = GetComponent<AudioSource>();
+
             if (popupManager == null)
                 popupManager = FindFirstObjectByType<PopupManager>();
-
-            var playerObj = GameObject.FindWithTag("Player");
-            if (playerObj != null)
-            {
-                playerInventory = playerObj.GetComponent<SimpleInventory>();
-            }
+            
+            var player = GameObject.FindWithTag("Player");
+            if (player != null) playerInventory = player.GetComponent<SimpleInventory>();
         }
 
         public string GetInteractText()
         {
             if (isOpen) return "";
 
-            int currentKeys = playerInventory != null ? playerInventory.GetCollectedKeysCount() : 0;
-
-            if (currentKeys >= keysRequired)
-                return "Press Enter to Open Door";
+            if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
+            {
+                return "Keys collected - Press to Open";
+            }
             else
-                return $"Locked. Need keys: {currentKeys}/{keysRequired}";
+            {
+                return "Locked. Check Tasks.";
+            }
         }
 
         public void Interact(GameObject actor)
         {
             if (isOpen) return;
-
-            if (playerInventory == null)
-            {
+            
+            if (playerInventory == null) 
                 playerInventory = actor.GetComponent<SimpleInventory>();
-            }
 
-            int currentKeys = playerInventory != null ? playerInventory.GetCollectedKeysCount() : 0;
-
-            if (currentKeys >= keysRequired)
+            if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
             {
                 OpenDoor();
             }
             else
             {
+                PlaySound(lockedSound);
+
                 if (popupManager != null)
                 {
-                    popupManager.ShowPopup($"Need {keysRequired} keys! You have {currentKeys}.", null, this, "OK", null);
+                    popupManager.ShowPopup("You need specific keys to open this door!", null, this, "OK", null);
                     StartCoroutine(AutoClosePopup());
                 }
             }
         }
 
-        public void OnInteract(GameObject actor) => Interact(actor);
-
+        public void OnInteract(GameObject actor)
+        {
+            Interact(actor);
+        }
 
         private void OpenDoor()
         {
             isOpen = true;
 
+            PlaySound(openSound);
+
             StartCoroutine(RotateDoorRoutine());
+            
+            if (levelCompletePanel != null)
+            {
+                levelCompletePanel.SetActive(true);
+                StartCoroutine(HideLevelCompleteAfterTime());
+            }
+        }
 
-            StartCoroutine(LevelCompleteRoutine());
-
-            if (popupManager != null) popupManager.HidePopup(this);
+        private void PlaySound(AudioClip clip)
+        {
+            if (audioSource != null && clip != null)
+            {
+                audioSource.PlayOneShot(clip);
+            }
         }
 
         private IEnumerator RotateDoorRoutine()
         {
             Quaternion startRot = doorPivot.localRotation;
             Quaternion targetRot = Quaternion.Euler(0, openAngle, 0);
-
             float time = 0;
             while (time < 1)
             {
@@ -101,19 +117,10 @@ namespace Assets.Scripts
             }
         }
 
-        private IEnumerator LevelCompleteRoutine()
+        private IEnumerator HideLevelCompleteAfterTime()
         {
-            if (levelCompletePanel != null)
-            {
-                levelCompletePanel.SetActive(true);
-            }
-
             yield return new WaitForSeconds(5f);
-
-            if (levelCompletePanel != null)
-            {
-                levelCompletePanel.SetActive(false);
-            }
+            if(levelCompletePanel != null) levelCompletePanel.SetActive(false);
         }
 
         private IEnumerator AutoClosePopup()
