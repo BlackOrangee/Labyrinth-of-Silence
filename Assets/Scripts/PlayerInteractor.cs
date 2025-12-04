@@ -56,8 +56,8 @@ namespace Assets.Scripts
                         currentGO = hitGO;
                         
                         string msg = interactable.GetInteractText();
-                        string buttonText = "Pick Up";
-                        if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Enter";
+                        string buttonText = "Press E"; 
+                        if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Press E to Hide";
 
                         popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
                     }
@@ -72,8 +72,7 @@ namespace Assets.Scripts
                 ClearCurrent();
             }
 
-            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) 
-                && InteractionLocker.IsOwner(this) && currentInteractable != null)
+            if (Input.GetKeyDown(KeyCode.E) && InteractionLocker.IsOwner(this) && currentInteractable != null)
             {
                 ExecuteCurrent();
             }
