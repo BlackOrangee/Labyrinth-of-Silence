@@ -3,7 +3,6 @@
 namespace Assets.Scripts
 
 {
-
     public interface IInteractable
     {
         string GetInteractText();

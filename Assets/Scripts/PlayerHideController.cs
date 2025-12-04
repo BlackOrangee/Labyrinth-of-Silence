@@ -13,26 +13,24 @@ namespace Assets.Scripts
 
         [Header("Hiding Settings")]
         public float mouseSensitivity = 2f;
-        public float maxLookAngle = 80f; 
-        public float movementRange = 0.1f; 
-        
+        public float maxLookAngle = 80f;
+        public float movementRange = 0.1f;
+
         private bool isHiding = false;
         private HidingSpot currentSpot;
-        
-        // Компоненти
+
         private CharacterController charController;
         private PlayerMovement playerMovement;
-        
-        // ВСІ МОЖЛИВІ ІНТЕРАКТОРИ
+
         private PlayerInteractor playerInteractor;
         private ProximityInteractor proximityInteractor;
         private RaycastInteractor raycastInteractor;
-        
+
         private float currentYRotation = 0f;
         private float currentXRotation = 0f;
         private Vector3 initialHidePos;
 
-        private bool isTransitioning = false; 
+        private bool isTransitioning = false;
 
         public bool IsHiding => isHiding;
 
@@ -40,8 +38,7 @@ namespace Assets.Scripts
         {
             charController = GetComponent<CharacterController>();
             playerMovement = GetComponent<PlayerMovement>();
-            
-            // Шукаємо ВСІ можливі скрипти взаємодії на гравцеві
+
             playerInteractor = GetComponent<PlayerInteractor>();
             proximityInteractor = GetComponent<ProximityInteractor>();
             raycastInteractor = GetComponent<RaycastInteractor>();
@@ -68,7 +65,7 @@ namespace Assets.Scripts
         public void StartHiding(HidingSpot spot)
         {
             if (isHiding || isTransitioning) return;
-            isHiding = true; // Блокуємо миттєво
+            isHiding = true;
             StartCoroutine(EnterHidingRoutine(spot));
         }
 
@@ -77,20 +74,16 @@ namespace Assets.Scripts
             isTransitioning = true;
             currentSpot = spot;
 
-            // 1. ВИМИКАЄМО АБСОЛЮТНО ВСІ ІНТЕРАКТОРИ
             DisableAllInteractors();
 
-            // 2. Чистимо UI
             if (popupManager != null) popupManager.HidePopup(null);
 
-            yield return null; // Чекаємо кадр
+            yield return null;
 
-            // 3. Вимикаємо фізику
             if (charController) charController.enabled = false;
             if (playerMovement) playerMovement.enabled = false;
             if (mainCamController) mainCamController.enabled = false;
 
-            // 4. Телепортація
             transform.position = spot.hidePoint.position;
             transform.rotation = spot.hidePoint.rotation;
             initialHidePos = spot.hidePoint.position;
@@ -99,14 +92,13 @@ namespace Assets.Scripts
             currentXRotation = 0f;
             Camera.main.transform.localRotation = Quaternion.identity;
 
-            // 5. Показуємо повідомлення (тепер ніхто не заважатиме)
             if (popupManager != null)
             {
                 popupManager.ShowPopup(
-                    $"Player in hiding spot: {spot.spotName}\nPress ESC to exit", 
-                    null, 
-                    this, 
-                    "", 
+                    $"Player in hiding spot: {spot.spotName}\nPress ESC to exit",
+                    null,
+                    this,
+                    "",
                     null
                 );
             }
@@ -121,7 +113,7 @@ namespace Assets.Scripts
 
             if (popupManager != null) popupManager.HidePopup(this);
 
-            yield return null; 
+            yield return null;
 
             currentSpot.ExitHiding(this.gameObject);
 
@@ -133,28 +125,23 @@ namespace Assets.Scripts
             yield return null;
 
             isHiding = false;
-            
-            // Вмикаємо інтерактори назад
+
             EnableAllInteractors();
 
             currentSpot = null;
             isTransitioning = false;
         }
 
-        // --- Допоміжні методи для вимкнення всього зоопарку скриптів ---
-        
         private void DisableAllInteractors()
         {
-            if (playerInteractor) 
+            if (playerInteractor)
             {
-                playerInteractor.ForceReset(); // Використовуємо наш метод скидання
+                playerInteractor.ForceReset();
                 playerInteractor.enabled = false;
             }
-            
-            // Proximity зазвичай не має ForceReset, тому просто вимикаємо
+
             if (proximityInteractor) proximityInteractor.enabled = false;
-            
-            // Raycast теж вимикаємо
+
             if (raycastInteractor) raycastInteractor.enabled = false;
         }
 
@@ -165,18 +152,19 @@ namespace Assets.Scripts
             if (raycastInteractor) raycastInteractor.enabled = true;
         }
 
-        // Керування камерою
         public void StopHiding() { if (!isHiding || isTransitioning) return; StartCoroutine(ExitHidingRoutine()); }
-        
-        private void HandleHidingCamera() {
+
+        private void HandleHidingCamera()
+        {
             float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
             float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
             currentYRotation += mouseX; currentYRotation = Mathf.Clamp(currentYRotation, -maxLookAngle, maxLookAngle);
             currentXRotation -= mouseY; currentXRotation = Mathf.Clamp(currentXRotation, -60f, 60f);
             Camera.main.transform.localRotation = Quaternion.Euler(currentXRotation, currentYRotation, 0f);
         }
-        
-        private void HandleHidingMovement() {
+
+        private void HandleHidingMovement()
+        {
             float x = Input.GetAxis("Horizontal"); float z = Input.GetAxis("Vertical");
             Vector3 moveDir = (transform.right * x + transform.forward * z).normalized;
             Vector3 newPos = transform.position + moveDir * Time.deltaTime * 1.5f;
