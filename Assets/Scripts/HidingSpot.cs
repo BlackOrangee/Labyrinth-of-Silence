@@ -89,7 +89,7 @@ namespace Assets.Scripts
         #region IInteractable
         public string GetInteractText()
         {
-            return $"Press Enter to hide: {spotName}";
+            return $"Press E to hide: {spotName}";
         }
 
         public void Interact(GameObject actor)
