@@ -58,7 +58,7 @@ Material:
     - _Blend: 2
     - _DstBlend: 1
     - _DstBlendAlpha: 1
-    - _Smoothness: 0.8
+    - _Smoothness: 0.22
     - _Surface: 1
     - _ZWrite: 0
     m_Colors:
