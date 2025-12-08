@@ -9,25 +9,33 @@ namespace Assets.Scripts
     {
         [Header("Door 1 UI (Green/Yellow)")]
         public GameObject door1Panel; 
+        
         public TextMeshProUGUI txtGreenKey;
         public Image iconGreenKey;
+        public GameObject lineGreenKey;
+
         public TextMeshProUGUI txtYellowKey;
         public Image iconYellowKey;
+        public GameObject lineYellowKey;
+
         public GameObject strikeThroughLine1;
 
         [Header("Door 2 UI (Blue/Pink)")]
         public GameObject door2Panel;
+        
         public TextMeshProUGUI txtBlueKey;
         public Image iconBlueKey;
+        public GameObject lineBlueKey;
+
         public TextMeshProUGUI txtPinkKey;
         public Image iconPinkKey;
+        public GameObject linePinkKey;
+
         public GameObject strikeThroughLine2;
 
         [Header("Settings")]
         public Color inactiveColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-        public Color activeColor = new Color(1f, 1f, 1f, 1f);
-        public Color bloodRedColor = new Color(0.8f, 0f, 0f, 1f); 
-        
+        public Color activeColor = Color.white;
         public float delayBeforeHide = 2.0f;
 
         private SimpleInventory inventory;
@@ -48,6 +56,11 @@ namespace Assets.Scripts
 
             if(door1Panel) door1Panel.SetActive(false);
             if(door2Panel) door2Panel.SetActive(false);
+
+            if(lineGreenKey) lineGreenKey.SetActive(false);
+            if(lineYellowKey) lineYellowKey.SetActive(false);
+            if(lineBlueKey) lineBlueKey.SetActive(false);
+            if(linePinkKey) linePinkKey.SetActive(false);
 
             SimpleInventory.OnInventoryChanged += UpdateUI;
         }
@@ -71,8 +84,8 @@ namespace Assets.Scripts
                     if (!door1Panel.activeSelf) door1Panel.SetActive(true);
                 }
 
-                UpdateSingleTask(txtGreenKey, iconGreenKey, hasGreen, originalTxtGreen);
-                UpdateSingleTask(txtYellowKey, iconYellowKey, hasYellow, originalTxtYellow);
+                UpdateSingleTask(txtGreenKey, iconGreenKey, lineGreenKey, hasGreen, originalTxtGreen);
+                UpdateSingleTask(txtYellowKey, iconYellowKey, lineYellowKey, hasYellow, originalTxtYellow);
 
                 if (hasGreen && hasYellow)
                 {
@@ -92,8 +105,8 @@ namespace Assets.Scripts
                     if (!door2Panel.activeSelf) door2Panel.SetActive(true);
                 }
 
-                UpdateSingleTask(txtBlueKey, iconBlueKey, hasBlue, originalTxtBlue);
-                UpdateSingleTask(txtPinkKey, iconPinkKey, hasPink, originalTxtPink);
+                UpdateSingleTask(txtBlueKey, iconBlueKey, lineBlueKey, hasBlue, originalTxtBlue);
+                UpdateSingleTask(txtPinkKey, iconPinkKey, linePinkKey, hasPink, originalTxtPink);
 
                 if (hasBlue && hasPink)
                 {
@@ -104,20 +117,23 @@ namespace Assets.Scripts
             }
         }
 
-        private void UpdateSingleTask(TextMeshProUGUI textComp, Image icon, bool isCollected, string originalText)
+        private void UpdateSingleTask(TextMeshProUGUI textComp, Image icon, GameObject lineObj, bool isCollected, string originalText)
         {
             if (textComp != null)
             {
                 if (isCollected)
                 {
-                    textComp.color = bloodRedColor;
-                    textComp.fontStyle = FontStyles.Strikethrough | FontStyles.Bold;
+                    textComp.color = activeColor;
+                    textComp.text = originalText;
+                    
+                    if(lineObj != null) lineObj.SetActive(true);
                 }
                 else
                 {
                     textComp.color = inactiveColor;
                     textComp.text = originalText;
-                    textComp.fontStyle = FontStyles.Normal;
+                    
+                    if(lineObj != null) lineObj.SetActive(false);
                 }
             }
             
