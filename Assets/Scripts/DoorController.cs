@@ -7,6 +7,10 @@ namespace Assets.Scripts
     [RequireComponent(typeof(AudioSource))]
     public class DoorController : MonoBehaviour, IInteractable
     {
+        [Header("Door Identity")]
+        [Tooltip("Назва дверей (DOOR1, DOOR2). Відображається в підказці.")]
+        public string doorName = "Door"; 
+
         [Header("Door Requirements")]
         [Tooltip("Список кольорів ключів, необхідних для цих дверей")]
         public List<KeyColorType> requiredKeys; 
@@ -45,11 +49,11 @@ namespace Assets.Scripts
 
             if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
             {
-                return "Keys collected - Press to Open";
+                return $"{doorName}: Keys collected - Press E to Open";
             }
             else
             {
-                return "Locked. Check Tasks.";
+                return $"{doorName} Locked. Check Tasks.";
             }
         }
 
@@ -70,7 +74,7 @@ namespace Assets.Scripts
 
                 if (popupManager != null)
                 {
-                    popupManager.ShowPopup("You need specific keys to open this door!", null, this, "OK", null);
+                    popupManager.ShowPopup($"You need specific keys to open {doorName}!", null, this, "OK", null);
                     StartCoroutine(AutoClosePopup());
                 }
             }
