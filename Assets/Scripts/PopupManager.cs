@@ -63,6 +63,12 @@ namespace Assets.Scripts
                 return;
             }
 
+            if (string.IsNullOrEmpty(message))
+            {
+                HidePopup(owner);
+                return;
+            }
+
             if (ownerRef != null && !InteractionLocker.IsOwner(owner))
             {
                 return;
@@ -81,7 +87,8 @@ namespace Assets.Scripts
             ownerRef = owner;
             onExecuteCallback = onExecute;
 
-            messageText.text = string.IsNullOrEmpty(message) ? defaultMessage : message;
+            messageText.text = message; 
+            
             SetButtonText(buttonText);
             SetIcon(icon);
 

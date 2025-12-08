@@ -50,13 +50,18 @@ namespace Assets.Scripts
 
                 if (interactable != null)
                 {
-                    if (interactable != currentInteractable)
+                    string msg = interactable.GetInteractText();
+
+                    if (string.IsNullOrEmpty(msg))
+                    {
+                        ClearCurrent();
+                    }
+                    else
                     {
                         currentInteractable = interactable;
                         currentGO = hitGO;
-                        
-                        string msg = interactable.GetInteractText();
-                        string buttonText = "Press E"; 
+
+                        string buttonText = "Press E";
                         if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Press E to Hide";
 
                         popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
@@ -96,6 +101,11 @@ namespace Assets.Scripts
             {
                 var target = currentInteractable;
                 target.Interact(this.gameObject);
+
+                if (string.IsNullOrEmpty(target.GetInteractText()))
+                {
+                    ClearCurrent();
+                }
             }
         }
     }
