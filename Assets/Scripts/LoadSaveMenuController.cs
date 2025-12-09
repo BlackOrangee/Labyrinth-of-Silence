@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Assets.Scripts;
 
 public class LoadSaveMenuController : MonoBehaviour
 {
-    
+
     [Tooltip("Title name")]
     public string titleName = "Title";
     [Tooltip("Content name")]
@@ -16,7 +18,19 @@ public class LoadSaveMenuController : MonoBehaviour
     public string saveButtonName = "SaveButton";
     [Tooltip("Load button name")]
     public string loadButtonName = "LoadButton";
-    
+    [Tooltip("Delete button name")]
+    public string deleteButtonName = "DeleteButton";
+
+    [Header("Save Item UI Elements")]
+    [Tooltip("Text element name for save name")]
+    public string saveNameTextName = "SaveNameText";
+    [Tooltip("Text element name for save time")]
+    public string saveTimeTextName = "SaveTimeText";
+    [Tooltip("Text element name for quest info")]
+    public string questInfoTextName = "QuestInfoText";
+    [Tooltip("Image element name for screenshot")]
+    public string screenshotImageName = "ScreenshotImage";
+
     private GameObject title;
     private GameObject content;
     private GameObject saveItem;
@@ -119,13 +133,21 @@ public class LoadSaveMenuController : MonoBehaviour
     {
         ClearMenu();
 
+        if (SaveManager.Instance == null)
+        {
+            Debug.LogError("[LoadSaveMenuController] SaveManager instance not found!");
+            return;
+        }
+
         RectTransform saveItemRect = saveItem.GetComponent<RectTransform>();
         float itemHeight = saveItemRect.rect.height;
         float spacing = 10f;
 
-        Vector2 saveItemPos = new Vector2(0, -itemHeight/2);
+        Vector2 saveItemPos = new Vector2(0, -itemHeight / 2);
 
-        for (int i = 0; i < 10; i++)
+        int maxSlots = SaveManager.Instance.maxSaveSlots;
+
+        for (int i = 0; i < maxSlots; i++)
         {
             GameObject newSaveItem = Instantiate(this.saveItem);
             RectTransform newSaveItemRect = newSaveItem.GetComponent<RectTransform>();
@@ -136,17 +158,195 @@ public class LoadSaveMenuController : MonoBehaviour
             newSaveItemRect.anchoredPosition = saveItemPos;
             newSaveItem.SetActive(true);
 
-            GameObject button = newSaveItem.transform.GetComponentsInChildren<Transform>(includeInactive: true)
-                .FirstOrDefault(t => t.name == (saveMenu ? saveButtonName : loadButtonName))?.gameObject;
-            if (button)
-            {
-                button.SetActive(true);
-            }
+            int slotIndex = i;
+            PopulateSaveSlot(newSaveItem, slotIndex);
 
             saveItems.Add(newSaveItem);
 
             saveItemPos.y -= (itemHeight + spacing);
         }
+
+        RectTransform contentRect = content.GetComponent<RectTransform>();
+        float totalHeight = (itemHeight * maxSlots) + (spacing * (maxSlots - 1)) + spacing;
+        contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, totalHeight);
+    }
+
+    private void PopulateSaveSlot(GameObject slotObject, int slotIndex)
+    {
+        SaveData saveData = SaveManager.Instance.GetSaveData(slotIndex);
+        bool saveExists = saveData != null;
+
+        Text saveNameText = slotObject.transform.GetComponentsInChildren<Text>(includeInactive: true)
+            .FirstOrDefault(t => t.name == saveNameTextName);
+
+        Text saveTimeText = slotObject.transform.GetComponentsInChildren<Text>(includeInactive: true)
+            .FirstOrDefault(t => t.name == saveTimeTextName);
+
+        Text questInfoText = slotObject.transform.GetComponentsInChildren<Text>(includeInactive: true)
+            .FirstOrDefault(t => t.name == questInfoTextName);
+
+        Image screenshotImage = slotObject.transform.GetComponentsInChildren<Image>(includeInactive: true)
+            .FirstOrDefault(t => t.name == screenshotImageName);
+
+        if (saveExists)
+        {
+            if (saveNameText != null)
+            {
+                saveNameText.text = saveData.saveName;
+            }
+
+            if (saveTimeText != null)
+            {
+                saveTimeText.text = saveData.saveDateTime;
+            }
+
+            if (questInfoText != null)
+            {
+                questInfoText.text = string.IsNullOrEmpty(saveData.currentQuest)
+                    ? saveData.chapter
+                    : $"{saveData.chapter} - {saveData.currentQuest}";
+            }
+
+            if (screenshotImage != null && !string.IsNullOrEmpty(saveData.screenshotPath))
+            {
+                LoadScreenshot(screenshotImage, saveData.screenshotPath);
+            }
+        }
+        else
+        {
+            if (saveNameText != null)
+            {
+                saveNameText.text = saveMenu ? $"Empty Slot {slotIndex + 1}" : $"Slot {slotIndex + 1}";
+            }
+
+            if (saveTimeText != null)
+            {
+                saveTimeText.text = saveMenu ? "Click to Save" : "No Save";
+            }
+
+            if (questInfoText != null)
+            {
+                questInfoText.text = "";
+            }
+
+            if (screenshotImage != null)
+            {
+                screenshotImage.color = new Color(0.2f, 0.2f, 0.2f);
+            }
+        }
+
+        GameObject saveButton = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == saveButtonName)?.gameObject;
+
+        GameObject loadButton = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == loadButtonName)?.gameObject;
+
+        GameObject deleteButton = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == deleteButtonName)?.gameObject;
+
+        if (saveMenu)
+        {
+            if (saveButton != null)
+            {
+                saveButton.SetActive(true);
+                Button btn = saveButton.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => OnSaveClicked(slotIndex));
+                }
+            }
+
+            if (loadButton != null)
+            {
+                loadButton.SetActive(false);
+            }
+
+            if (deleteButton != null)
+            {
+                deleteButton.SetActive(saveExists);
+                Button btn = deleteButton.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => OnDeleteClicked(slotIndex));
+                }
+            }
+        }
+        else
+        {
+            if (loadButton != null)
+            {
+                loadButton.SetActive(saveExists);
+                Button btn = loadButton.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => OnLoadClicked(slotIndex));
+                }
+            }
+
+            if (saveButton != null)
+            {
+                saveButton.SetActive(false);
+            }
+
+            if (deleteButton != null)
+            {
+                deleteButton.SetActive(saveExists);
+                Button btn = deleteButton.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => OnDeleteClicked(slotIndex));
+                }
+            }
+        }
+    }
+
+    private void LoadScreenshot(Image image, string path)
+    {
+        if (File.Exists(path))
+        {
+            byte[] fileData = File.ReadAllBytes(path);
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f)
+            );
+
+            image.sprite = sprite;
+            image.color = Color.white;
+        }
+    }
+
+    private void OnSaveClicked(int slotIndex)
+    {
+        Debug.Log($"[LoadSaveMenuController] Saving to slot {slotIndex}");
+
+        Canvas canvasToHide = GetComponentInParent<Canvas>();
+
+        SaveManager.Instance.SaveGame(slotIndex, "", () =>
+        {
+            FillMenu();
+        }, canvasToHide);
+    }
+
+    private void OnLoadClicked(int slotIndex)
+    {
+        Debug.Log($"[LoadSaveMenuController] Loading from slot {slotIndex}");
+        SaveManager.Instance.LoadGame(slotIndex);
+    }
+
+    private void OnDeleteClicked(int slotIndex)
+    {
+        Debug.Log($"[LoadSaveMenuController] Deleting slot {slotIndex}");
+        SaveManager.Instance.DeleteSave(slotIndex);
+
+        FillMenu();
     }
 
     private void OnDisable()
