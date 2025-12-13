@@ -12,6 +12,9 @@ namespace Assets.Scripts
         private float xRotation = 0f;
         private float yRotation = 0f;
 
+        [HideInInspector]
+        public float crouchOffset = 0f;
+
         void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -28,7 +31,7 @@ namespace Assets.Scripts
 
             player.rotation = Quaternion.Euler(0f, yRotation, 0f);
 
-            Vector3 cameraPos = player.position + new Vector3(xOffset, yOffset, 0);
+            Vector3 cameraPos = player.position + new Vector3(xOffset, yOffset + crouchOffset, 0);
             transform.position = cameraPos;
 
             transform.rotation = Quaternion.Euler(xRotation, yRotation, 0f);
