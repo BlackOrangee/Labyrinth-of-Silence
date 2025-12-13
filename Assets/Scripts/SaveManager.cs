@@ -112,7 +112,7 @@ namespace Assets.Scripts
             if (inventory != null)
             {
                 saveData.inventoryData.items = new List<string>(inventory.GetItems());
-                saveData.inventoryData.collectedKeys = inventory.GetCollectedKeysCount();
+                saveData.inventoryData.collectedKeys = new List<KeyColorType>(inventory.GetCollectedKeys());
             }
 
             if (QuestTracker.Instance != null)
@@ -233,11 +233,17 @@ namespace Assets.Scripts
             SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>();
             if (inventory != null)
             {
+                inventory.ClearInventory();
+
                 foreach (string item in saveData.inventoryData.items)
                 {
                     inventory.AddItem(item);
                 }
-                inventory.SetCollectedKeysCount(saveData.inventoryData.collectedKeys);
+
+                if (saveData.inventoryData.collectedKeys != null)
+                {
+                    inventory.SetCollectedKeys(saveData.inventoryData.collectedKeys);
+                }
             }
 
             if (QuestTracker.Instance != null)

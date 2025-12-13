@@ -7,6 +7,7 @@ namespace Assets.Scripts
     public class SimpleInventory : MonoBehaviour
     {
         private List<KeyColorType> collectedKeys = new List<KeyColorType>();
+        private List<string> items = new List<string>();
 
         public static event Action OnInventoryChanged;
 
@@ -18,7 +19,7 @@ namespace Assets.Scripts
             {
                 collectedKeys.Add(keyType);
                 Debug.Log($"SimpleInventory: Picked up {keyType} key.");
-                
+
                 OnInventoryChanged?.Invoke();
             }
         }
@@ -40,7 +41,12 @@ namespace Assets.Scripts
 
         public void AddItem(string name)
         {
-            Debug.Log($"SimpleInventory: Picked up generic item '{name}'. (No specific logic yet).");
+            if (!items.Contains(name))
+            {
+                items.Add(name);
+                Debug.Log($"SimpleInventory: Picked up generic item '{name}'.");
+                OnInventoryChanged?.Invoke();
+            }
         }
 
         public int GetCollectedKeysCount()
@@ -48,9 +54,30 @@ namespace Assets.Scripts
             return collectedKeys.Count;
         }
 
+        public List<string> GetItems()
+        {
+            return new List<string>(items);
+        }
+
+        public List<KeyColorType> GetCollectedKeys()
+        {
+            return new List<KeyColorType>(collectedKeys);
+        }
+
+        public void SetCollectedKeys(List<KeyColorType> keys)
+        {
+            collectedKeys.Clear();
+            if (keys != null)
+            {
+                collectedKeys.AddRange(keys);
+            }
+            OnInventoryChanged?.Invoke();
+        }
+
         public void ClearInventory()
         {
             collectedKeys.Clear();
+            items.Clear();
             OnInventoryChanged?.Invoke();
         }
     }
