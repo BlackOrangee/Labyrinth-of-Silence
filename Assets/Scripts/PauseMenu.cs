@@ -115,6 +115,9 @@ namespace Assets.Scripts
         public void ResumeGame()
         {
             pausePanel.SetActive(false);
+            loadSavePanel.SetActive(false);
+            optionsPanel.SetActive(false);
+            developersPanel.SetActive(false);
 
             Time.timeScale = 1f;
             isPaused = false;
@@ -151,9 +154,22 @@ namespace Assets.Scripts
             return isPaused;
         }
 
+        /// <summary>
+        /// Quick save - Save to slot 0
+        /// </summary>
         public void Save()
         {
-            
+            if (SaveManager.Instance != null)
+            {
+                Canvas canvasToHide = GetComponent<Canvas>();
+
+                SaveManager.Instance.SaveGame(0, "Quick Save", null, canvasToHide);
+                Debug.Log("Quick save created!");
+            }
+            else
+            {
+                Debug.LogError("SaveManager not found!");
+            }
         }
 
         public void SaveAs()
