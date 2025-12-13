@@ -167,12 +167,12 @@ namespace Assets.Scripts
     public class InventoryData
     {
         public List<string> items;
-        public int collectedKeys;
+        public List<KeyColorType> collectedKeys;
 
         public InventoryData()
         {
             items = new List<string>();
-            collectedKeys = 0;
+            collectedKeys = new List<KeyColorType>();
         }
     }
 
