@@ -1,58 +1,57 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace Assets.Scripts
-
 {
-
     public class SimpleInventory : MonoBehaviour
     {
-        private List<string> items = new List<string>();
-        private int collectedKeys = 0;
+        private List<KeyColorType> collectedKeys = new List<KeyColorType>();
+
+        public static event Action OnInventoryChanged;
+
+        public void AddKey(KeyColorType keyType)
+        {
+            if (keyType == KeyColorType.None) return;
+
+            if (!collectedKeys.Contains(keyType))
+            {
+                collectedKeys.Add(keyType);
+                Debug.Log($"SimpleInventory: Picked up {keyType} key.");
+                
+                OnInventoryChanged?.Invoke();
+            }
+        }
+
+        public bool HasKey(KeyColorType keyType)
+        {
+            return collectedKeys.Contains(keyType);
+        }
+
+        public bool HasAllKeys(List<KeyColorType> requiredKeys)
+        {
+            foreach (var key in requiredKeys)
+            {
+                if (!collectedKeys.Contains(key))
+                    return false;
+            }
+            return true;
+        }
 
         public void AddItem(string name)
         {
-            items.Add(name);
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                string lower = name.ToLowerInvariant();
-                if (lower.Contains("key"))
-                {
-                    collectedKeys++;
-
-                    if (collectedKeys == 1 && QuestTracker.Instance != null)
-                    {
-                        if (!QuestTracker.Instance.HasQuest("collect_keys"))
-                        {
-                            QuestTracker.Instance.AddQuest(
-                                "collect_keys",
-                                "Collect all keys",
-                                1,
-                                4
-                            );
-                            Debug.Log("SimpleInventory: added quest 'collect_keys' after picking up first key.");
-                        }
-                    }
-                }
-            }
-
-            Debug.Log($"SimpleInventory: added {name}. Total items: {items.Count}. Keys: {collectedKeys}");
+            Debug.Log($"SimpleInventory: Picked up generic item '{name}'. (No specific logic yet).");
         }
 
         public int GetCollectedKeysCount()
         {
-            return collectedKeys;
+            return collectedKeys.Count;
         }
 
-        public string[] GetItems()
+        public void ClearInventory()
         {
-            return items.ToArray();
-        }
-
-        public void SetCollectedKeysCount(int count)
-        {
-            collectedKeys = Mathf.Max(0, count);
+            collectedKeys.Clear();
+            OnInventoryChanged?.Invoke();
         }
     }
 }
