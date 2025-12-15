@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 673f5f06e726b4647821939a7846632c
+guid: d349f31d7b7229e45b51536c86b47ecf
 SpeedTreeImporter:
   externalObjects: {}
   serializedVersion: 7
@@ -29,16 +29,6 @@ SpeedTreeImporter:
     windQuality: 4
   - enableSettingOverride: 0
     height: 0.25
-    castShadows: 1
-    receiveShadows: 1
-    useLightProbes: 1
-    reflectionProbeUsage: 1
-    enableBump: 1
-    enableHue: 0
-    enableSubsurface: 1
-    windQuality: 4
-  - enableSettingOverride: 0
-    height: 0.125
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
