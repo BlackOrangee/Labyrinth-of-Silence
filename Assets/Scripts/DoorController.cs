@@ -1,161 +1,136 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace Assets.Scripts
 {
-    [RequireComponent(typeof(Collider))]
-    public class DoorController : MonoBehaviour
+    [RequireComponent(typeof(AudioSource))]
+    public class DoorController : MonoBehaviour, IInteractable
     {
-        [Header("Door settings")]
-        public int keysRequired = 4;
-        public Animator doorAnimator;
-        public bool destroyOnOpen = false;
-        [Header("References")]
-        public PopupManager popupManager;
+        [Header("Door Identity")]
+        [Tooltip("Назва дверей (DOOR1, DOOR2). Відображається в підказці.")]
+        public string doorName = "Door"; 
 
-        private GameObject player;
+        [Header("Door Requirements")]
+        [Tooltip("Список кольорів ключів, необхідних для цих дверей")]
+        public List<KeyColorType> requiredKeys; 
+
+        [Header("Door Settings")]
+        public float openAngle = 90f;
+        public float openSpeed = 2f;
+        public Transform doorPivot;
+
+        [Header("Audio Settings")]
+        public AudioClip openSound;
+        public AudioClip lockedSound;
+
+        [Header("Dependencies")]
+        public PopupManager popupManager;
+        public GameObject levelCompletePanel; 
+
+        private bool isOpen = false;
         private SimpleInventory playerInventory;
+        private AudioSource audioSource;
 
         void Start()
         {
-            var pi = FindFirstObjectByType<PlayerInteractor>();
-            if (pi != null)
+            audioSource = GetComponent<AudioSource>();
+
+            if (popupManager == null)
+                popupManager = FindFirstObjectByType<PopupManager>();
+            
+            var player = GameObject.FindWithTag("Player");
+            if (player != null) playerInventory = player.GetComponent<SimpleInventory>();
+        }
+
+        public string GetInteractText()
+        {
+            if (isOpen) return "";
+
+            if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
             {
-                player = pi.gameObject;
-                playerInventory = player.GetComponent<SimpleInventory>();
+                return $"{doorName}: Keys collected - Press E to Open";
             }
             else
             {
-                GameObject p = GameObject.FindWithTag("Player");
-                if (p != null)
-                {
-                    player = p;
-                    playerInventory = player.GetComponent<SimpleInventory>();
-                }
-            }
-
-            if (popupManager == null)
-            {
-                popupManager = FindFirstObjectByType<PopupManager>();
+                return $"{doorName} Locked. Check Tasks.";
             }
         }
 
-        public void TryOpenDoor(GameObject requester)
+        public void Interact(GameObject actor)
         {
-            SimpleInventory inv = null;
-            if (requester != null)
-            {
-                inv = requester.GetComponent<SimpleInventory>();
-            }
+            if (isOpen) return;
+            
+            if (playerInventory == null) 
+                playerInventory = actor.GetComponent<SimpleInventory>();
 
-            if (inv == null)
+            if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
             {
-                inv = playerInventory;
+                OpenDoor();
             }
-
-            if (inv == null)
+            else
             {
+                PlaySound(lockedSound);
+
                 if (popupManager != null)
                 {
-                    popupManager.ShowPopup("Inventory not found.", null, requester ?? player, "OK", null);
+                    popupManager.ShowPopup($"You need specific keys to open {doorName}!", null, this, "OK", null);
+                    StartCoroutine(AutoClosePopup());
                 }
-                return;
-            }
-
-            int collected = inv.GetCollectedKeysCount();
-
-            if (popupManager == null)
-            {
-                return;
-            }
-
-            object owner = requester != null ? (object)requester : (object)player;
-
-            System.Action onConfirmed = null;
-            if (collected >= keysRequired)
-            {
-                onConfirmed = () => OpenDoor();
-            }
-
-            popupManager.ShowKeysCollectedPopup(collected, keysRequired, onConfirmed, owner);
-        }
-
-        public void OpenDoor()
-        {
-            if (doorAnimator != null)
-            {
-                doorAnimator.SetTrigger("Open");
-            }
-            else if (destroyOnOpen)
-            {
-                gameObject.SetActive(false);
-            }
-            else
-            {
-                Collider c = GetComponent<Collider>();
-                if (c != null)
-                {
-                    c.enabled = false;
-                }
-                transform.Translate(Vector3.up * 2f);
             }
         }
 
-        public void DebugTryOpenNow()
+        public void OnInteract(GameObject actor)
         {
-            TryOpenDoor(player);
+            Interact(actor);
         }
 
-        private void OnTriggerEnter(Collider other)
+        private void OpenDoor()
         {
-            if (other.CompareTag("Player"))
+            isOpen = true;
+
+            PlaySound(openSound);
+
+            StartCoroutine(RotateDoorRoutine());
+            
+            if (levelCompletePanel != null)
             {
-                SimpleInventory inv = other.GetComponent<SimpleInventory>();
-                if (inv == null)
-                {
-                    inv = playerInventory;
-                }
-
-                if (inv != null)
-                {
-                    int collected = inv.GetCollectedKeysCount();
-
-                    if (collected < keysRequired && QuestTracker.Instance != null)
-                    {
-                        if (!QuestTracker.Instance.HasQuest("collect_keys"))
-                        {
-                            QuestTracker.Instance.AddQuest(
-                                "collect_keys",
-                                "Need to find all keys",
-                                collected,
-                                keysRequired
-                            );
-                        }
-                    }
-                }
-
-                TryOpenDoor(other.gameObject);
+                levelCompletePanel.SetActive(true);
+                StartCoroutine(HideLevelCompleteAfterTime());
             }
         }
 
-        private void OnTriggerExit(Collider other)
+        private void PlaySound(AudioClip clip)
         {
-            if (other.CompareTag("Player"))
+            if (audioSource != null && clip != null)
             {
-                SimpleInventory inv = other.GetComponent<SimpleInventory>();
-                if (inv == null)
-                {
-                    inv = playerInventory;
-                }
-
-                if (inv != null)
-                {
-                    int collected = inv.GetCollectedKeysCount();
-
-                    if (collected < keysRequired && popupManager != null)
-                    {
-                        popupManager.HidePopup(other.gameObject);
-                    }
-                }
+                audioSource.PlayOneShot(clip);
             }
+        }
+
+        private IEnumerator RotateDoorRoutine()
+        {
+            Quaternion startRot = doorPivot.localRotation;
+            Quaternion targetRot = Quaternion.Euler(0, openAngle, 0);
+            float time = 0;
+            while (time < 1)
+            {
+                time += Time.deltaTime * openSpeed;
+                doorPivot.localRotation = Quaternion.Slerp(startRot, targetRot, time);
+                yield return null;
+            }
+        }
+
+        private IEnumerator HideLevelCompleteAfterTime()
+        {
+            yield return new WaitForSeconds(5f);
+            if(levelCompletePanel != null) levelCompletePanel.SetActive(false);
+        }
+
+        private IEnumerator AutoClosePopup()
+        {
+            yield return new WaitForSeconds(2f);
+            if (popupManager != null) popupManager.HidePopup(this);
         }
     }
 }
