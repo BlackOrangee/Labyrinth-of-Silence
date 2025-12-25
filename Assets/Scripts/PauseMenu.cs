@@ -137,7 +137,6 @@ namespace Assets.Scripts
 
         private void SetUIAnimatorsUnscaledTime(bool unscaled)
         {
-            // Находим все аниматоры на канвасе
             Animator[] animators = GetComponentsInChildren<Animator>(includeInactive: true);
 
             foreach (Animator animator in animators)
@@ -201,7 +200,8 @@ namespace Assets.Scripts
         public void LoadMainMenu()
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(mainMenuSceneName);
+            LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(mainMenuSceneName);
+            SceneLoader.Instance.LoadScene(mainMenuSceneName, config);
         }
 
         public void QuitGame()

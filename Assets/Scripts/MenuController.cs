@@ -1,4 +1,5 @@
 using System.Linq;
+using Assets.Scripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -93,7 +94,9 @@ public class MenuController : MonoBehaviour
 
     public void ConfirmNewGame()
     {
-        SceneManager.LoadScene(1);
+        string targetScene = SceneLoader.Instance.GetSceneNameFromBuildIndex(1);
+        LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(targetScene);
+        SceneLoader.Instance.LoadScene(1, config);
     }
     
     public void Load()
