@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a139e15df9ce5d46b793958935d1878, type: 3}
+  m_Name: 3_Level_LoadingScreenConfig
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.LoadingScreenConfig
+  backgroundSprite: {fileID: 1620442577, guid: 727769fcb90ef2d419d6cca9309404a0, type: 3}
+  backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  tipText: I think I've stumbled upon an abandoned laboratory... Who worked here,
+    and why did they create all these monsters?! Whoever they were, they probably
+    didn't know what they were capable of... I need to get out of here as soon as
+    possible...
+  animationFrames:
+  - {fileID: -979537548, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: -81650152, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: 1871084549, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: 2078840042, guid: 4145b63233a822240b14665429093a71, type: 3}
+  frameRate: 0.2
