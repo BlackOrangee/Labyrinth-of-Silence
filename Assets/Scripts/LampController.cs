@@ -10,8 +10,9 @@ namespace Assets.Scripts
         public Light lampLight;           
         public Light fillLight;           
         public ParticleSystem fireEffect; 
+        
+        [Header("Old UI (Optional)")]
         public Slider fuelSlider;
-
         public TextMeshProUGUI fuelPercentageText;
 
         [Header("Settings")]
@@ -39,12 +40,12 @@ namespace Assets.Scripts
         public float brightBurnRate = 10f;    
 
         private float currentFuel;
-        private int lightMode = 0; 
+        private int lightMode = 0;
 
         private void Start()
         {
             currentFuel = maxFuel;
-            
+
             if (fuelSlider != null)
             {
                 fuelSlider.maxValue = maxFuel;
@@ -167,6 +168,11 @@ namespace Assets.Scripts
                     fuelPercentageText.color = normalTextColor;
                 }
             }
+
+            if (GameHUDManager.Instance != null)
+            {
+                GameHUDManager.Instance.UpdateFuelUI(currentFuel, maxFuel);
+            }
         }
 
         public void Refuel(float amount)
@@ -180,5 +186,10 @@ namespace Assets.Scripts
 
         public float GetCurrentFuel() => currentFuel;
         public float GetMaxFuel() => maxFuel;
+
+        public bool IsLightOn()
+        {
+            return lightMode != 0 && currentFuel > 0;
+        }
     }
 }

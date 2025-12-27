@@ -8,25 +8,25 @@ namespace Assets.Scripts
     public class DoorController : MonoBehaviour, IInteractable
     {
         [Header("Door Identity")]
-        [Tooltip("Назва дверей (DOOR1, DOOR2). Відображається в підказці.")]
-        public string doorName = "Door"; 
+        [Tooltip("Назва для UI (DOOR1, DOOR2...)")]
+        [SerializeField] private string doorName = "Door"; 
 
-        [Header("Door Requirements")]
-        [Tooltip("Список кольорів ключів, необхідних для цих дверей")]
-        public List<KeyColorType> requiredKeys; 
+        [Header("Requirements")]
+        [Tooltip("Які ключі потрібні")]
+        [SerializeField] private List<KeyColorType> requiredKeys; 
 
-        [Header("Door Settings")]
-        public float openAngle = 90f;
-        public float openSpeed = 2f;
-        public Transform doorPivot;
+        [Header("Settings")]
+        [SerializeField] private float openAngle = 90f;
+        [SerializeField] private float openSpeed = 2f;
+        [SerializeField] private Transform doorPivot;
 
-        [Header("Audio Settings")]
-        public AudioClip openSound;
-        public AudioClip lockedSound;
+        [Header("Audio")]
+        [SerializeField] private AudioClip openSound;
+        [SerializeField] private AudioClip lockedSound;
 
         [Header("Dependencies")]
-        public PopupManager popupManager;
-        public GameObject levelCompletePanel; 
+        [SerializeField] private PopupManager popupManager;
+        [SerializeField] private GameObject levelCompletePanel; 
 
         private bool isOpen = false;
         private SimpleInventory playerInventory;
@@ -49,11 +49,11 @@ namespace Assets.Scripts
 
             if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
             {
-                return $"{doorName}: Keys collected - Press E to Open";
+                return $"{doorName}: Press [E] to open";
             }
             else
             {
-                return $"{doorName} Locked. Check Tasks.";
+                return $"{doorName} Locked. Find all keys";
             }
         }
 
@@ -88,9 +88,7 @@ namespace Assets.Scripts
         private void OpenDoor()
         {
             isOpen = true;
-
             PlaySound(openSound);
-
             StartCoroutine(RotateDoorRoutine());
             
             if (levelCompletePanel != null)
