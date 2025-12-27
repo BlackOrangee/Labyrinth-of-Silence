@@ -2,18 +2,24 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Collections;
 using UnityEngine.EventSystems;
 
 namespace Assets.Scripts
 {
     public class PopupManager : MonoBehaviour
     {
-        [Header("UI elements (assign in inspector)")]
+        [Header("UI elements")]
         public GameObject popupRoot;
         public TextMeshProUGUI messageText;
         public Image itemIconImage;
         public Button executeButton;
         public TextMeshProUGUI executeButtonText;
+
+        [Header("Animation Settings")]
+        public float fadeInDuration = 0.2f;
+        public float fadeOutDuration = 2f;
+
         [Header("Default")]
         public string defaultMessage = "Press E to interact.";
         public string defaultButtonText = "E";
@@ -23,27 +29,30 @@ namespace Assets.Scripts
         private Action onExecuteCallback;
         private object ownerRef = null;
 
+        private CanvasGroup canvasGroup;
+        private Coroutine currentFadeRoutine;
+
         void Awake()
         {
             if (popupRoot != null)
             {
-                popupRoot.SetActive(false);
+                canvasGroup = popupRoot.GetComponent<CanvasGroup>();
+                if (canvasGroup == null)
+                {
+                    canvasGroup = popupRoot.AddComponent<CanvasGroup>();
+                }
+                canvasGroup.alpha = 0f;
+                canvasGroup.blocksRaycasts = false;
+                canvasGroup.interactable = false;
             }
 
-            if (executeButtonText != null)
-            {
-                executeButtonText.text = defaultButtonText;
-            }
-
-            if (itemIconImage != null)
-            {
-                itemIconImage.gameObject.SetActive(false);
-            }
+            if (executeButtonText != null) executeButtonText.text = defaultButtonText;
+            if (itemIconImage != null) itemIconImage.gameObject.SetActive(false);
         }
 
         void Update()
         {
-            if (popupRoot != null && popupRoot.activeSelf && InteractionLocker.IsOwner(ownerRef))
+            if (canvasGroup != null && canvasGroup.alpha > 0.01f && InteractionLocker.IsOwner(ownerRef))
             {
                 if (Input.GetKeyDown(KeyCode.E))
                 {
@@ -57,11 +66,7 @@ namespace Assets.Scripts
 
         public void ShowPopup(string message, Action onExecute, object owner, string buttonText = null, Sprite icon = null)
         {
-            if (popupRoot == null || messageText == null || executeButton == null)
-            {
-                Debug.LogWarning("PopupManager: UI fields not configured or null; check Inspector.");
-                return;
-            }
+            if (popupRoot == null) return;
 
             if (string.IsNullOrEmpty(message))
             {
@@ -69,32 +74,22 @@ namespace Assets.Scripts
                 return;
             }
 
-            if (ownerRef != null && !InteractionLocker.IsOwner(owner))
-            {
-                return;
-            }
+            if (ownerRef != null && !InteractionLocker.IsOwner(owner)) return;
 
             if (!InteractionLocker.IsLocked)
             {
-                bool ok = InteractionLocker.Claim(owner);
-
-                if (!ok)
-                {
-                    return;
-                }
+                if (!InteractionLocker.Claim(owner)) return;
             }
 
             ownerRef = owner;
             onExecuteCallback = onExecute;
 
-            messageText.text = message; 
-            
+            if (messageText != null) messageText.text = message;
             SetButtonText(buttonText);
             SetIcon(icon);
-
             SetupButton();
 
-            EnsureVisibleAndInteractive();
+            StartFade(1f, fadeInDuration); 
         }
 
         public void HidePopup(object requester = null)
@@ -104,139 +99,89 @@ namespace Assets.Scripts
                 return;
             }
 
-            DoHide();
-
             if (ownerRef != null)
             {
                 InteractionLocker.Release(ownerRef);
                 ownerRef = null;
             }
-        }
-
-        public void HidePopup()
-        {
-            HidePopup(null);
-        }
-
-        private void DoHide()
-        {
-            if (popupRoot != null)
-            {
-                popupRoot.SetActive(false);
-            }
 
             onExecuteCallback = null;
+            if (executeButton != null) executeButton.interactable = false;
 
-            if (executeButton != null)
+            StartFade(0f, fadeOutDuration);
+        }
+
+        private void StartFade(float targetAlpha, float duration)
+        {
+            if (canvasGroup == null) return;
+
+            if (currentFadeRoutine != null) StopCoroutine(currentFadeRoutine);
+
+            currentFadeRoutine = StartCoroutine(FadeRoutine(targetAlpha, duration));
+        }
+
+        private IEnumerator FadeRoutine(float targetAlpha, float duration)
+        {
+            float startAlpha = canvasGroup.alpha;
+            float time = 0f;
+
+            if (targetAlpha > 0.5f)
             {
-                executeButton.interactable = false;
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
+            else
+            {
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
             }
 
-            if (itemIconImage != null)
+            while (time < duration)
             {
-                itemIconImage.gameObject.SetActive(false);
+                time += Time.deltaTime;
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, time / duration);
+                yield return null;
             }
+
+            canvasGroup.alpha = targetAlpha;
         }
 
         private void SetupButton()
         {
-            if (executeButton == null)
-            {
-                Debug.LogError("PopupManager: executeButton is NULL!");
-                return;
-            }
-
+            if (executeButton == null) return;
             executeButton.onClick.RemoveAllListeners();
-
             executeButton.onClick.AddListener(OnExecuteButtonClicked);
-
             executeButton.interactable = (onExecuteCallback != null);
         }
 
         private void OnExecuteButtonClicked()
         {
-            if (!InteractionLocker.IsOwner(ownerRef))
-            {
-                return;
-            }
-
             if (onExecuteCallback != null)
             {
                 onExecuteCallback.Invoke();
             }
-            else
-            {
-                Debug.LogWarning("PopupManager: onExecuteCallback is NULL!");
-            }
-
+            
             HidePopup(ownerRef);
         }
 
         private void SetButtonText(string text)
         {
             if (executeButtonText != null)
-            {
                 executeButtonText.text = string.IsNullOrEmpty(text) ? defaultButtonText : text;
-            }
         }
 
         private void SetIcon(Sprite icon)
         {
-            if (itemIconImage == null)
-            {
-                return;
-            }
-
-            if (icon == null)
-            {
-                itemIconImage.gameObject.SetActive(false);
-            }
-            else
-            {
-                itemIconImage.sprite = icon;
-                itemIconImage.gameObject.SetActive(true);
-            }
-        }
-
-        private void EnsureVisibleAndInteractive()
-        {
-            popupRoot.SetActive(true);
-
-            popupRoot.transform.SetAsLastSibling();
-
-            var cg = popupRoot.GetComponent<CanvasGroup>();
-            if (cg == null)
-            {
-                cg = popupRoot.AddComponent<CanvasGroup>();
-            }
-
-            cg.alpha = 1f;
-            cg.interactable = true;
-            cg.blocksRaycasts = true;
-
-            if (executeButton != null && EventSystem.current != null)
-            {
-                EventSystem.current.SetSelectedGameObject(executeButton.gameObject);
-            }
-        }
-
-        public bool IsVisible()
-        {
-            return popupRoot != null && popupRoot.activeSelf;
+            if (itemIconImage == null) return;
+            itemIconImage.gameObject.SetActive(icon != null);
+            if (icon != null) itemIconImage.sprite = icon;
         }
 
         public void ShowKeysCollectedPopup(int collected, int required, Action onOpen, object owner)
         {
             string msg = string.Format(keysMessageFormat, collected, required);
-
-            if (collected >= required)
-            {
-                ShowPopup(msg, onOpen, owner, "Open (E)", null);
-            }
-            else
-            {
-                ShowPopup(msg, null, owner, "OK", null);
-            }
+            if (collected >= required) ShowPopup(msg, onOpen, owner, "Open (E)", null);
+            else ShowPopup(msg, null, owner, "OK", null);
         }
     }
 }

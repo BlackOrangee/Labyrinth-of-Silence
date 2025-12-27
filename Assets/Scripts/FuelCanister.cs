@@ -6,33 +6,28 @@ namespace Assets.Scripts
     public class FuelCanister : MonoBehaviour, IInteractable
     {
         [Header("Settings")]
-        [Tooltip("Загальний запас палива в цій каністрі (наприклад, 200)")]
-        public float canisterCapacity = 200f;
+        [Tooltip("Поточний запас палива в цій каністрі (може бути більше 100)")]
+        [SerializeField] private float canisterCapacity = 200f;
         
+        [Tooltip("Що ми вважаємо за 100%? (Зазвичай це повний бак ліхтаря)")]
+        [SerializeField] private float standardRefuelAmount = 100f; 
+        
+        [SerializeField] private bool destroyOnEmpty = true;
+
         [Header("Audio")]
         [Tooltip("Звук заправки")]
-        public AudioClip refuelSound;
+        [SerializeField] private AudioClip refuelSound;
         
         [Range(0f, 1f)]
         [Tooltip("Гучність звуку заправки")]
-        public float soundVolume = 0.7f;
+        [SerializeField] private float soundVolume = 0.7f;
 
-        private float _maxCapacity;
-
-        private void Start()
-        {
-            _maxCapacity = canisterCapacity;
-        }
 
         public string GetInteractText()
         {
-            float percentage = 0f;
-            if (_maxCapacity > 0)
-            {
-                percentage = (canisterCapacity / _maxCapacity) * 100f;
-            }
+            float percentage = (canisterCapacity / standardRefuelAmount) * 100f;
 
-            return $"Press to Refuel (Canister: {Mathf.Round(percentage)}%)";
+            return $"Press [E] to pick kerosene (Left: {Mathf.RoundToInt(percentage)}%)";
         }
 
         public void Interact(GameObject actor)
@@ -44,17 +39,19 @@ namespace Assets.Scripts
             {
                 float currentLampFuel = lamp.GetCurrentFuel();
                 float maxLampFuel = lamp.GetMaxFuel();
+
                 float spaceInLamp = maxLampFuel - currentLampFuel;
 
                 if (spaceInLamp <= 1f) 
                 {
-                    Debug.Log("Lamp is already full.");
+                    Debug.Log("FuelCanister: Lamp is already full.");
                     return; 
                 }
 
                 float amountToTransfer = Mathf.Min(spaceInLamp, canisterCapacity);
 
                 lamp.Refuel(amountToTransfer);
+
                 canisterCapacity -= amountToTransfer;
 
                 Debug.Log($"Refueled: {amountToTransfer}. Remaining in canister: {canisterCapacity}");
@@ -64,10 +61,15 @@ namespace Assets.Scripts
                     AudioSource.PlayClipAtPoint(refuelSound, transform.position, soundVolume);
                 }
 
-                if (canisterCapacity <= 0.1f)
+                if (destroyOnEmpty && canisterCapacity <= 0.1f)
                 {
                     Destroy(gameObject);
                 }
+
+            }
+            else
+            {
+                Debug.LogWarning("FuelCanister: LampController not found!");
             }
         }
 

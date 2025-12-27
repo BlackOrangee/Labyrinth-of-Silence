@@ -8,35 +8,40 @@ namespace Assets.Scripts
     public class DoorTaskManager : MonoBehaviour
     {
         [Header("Door 1 UI (Green/Yellow)")]
-        public GameObject door1Panel; 
+        [SerializeField] private GameObject door1Panel; 
         
-        public TextMeshProUGUI txtGreenKey;
-        public Image iconGreenKey;
-        public GameObject lineGreenKey;
+        [SerializeField] private TextMeshProUGUI txtGreenKey;
+        [SerializeField] private Image iconGreenKey;
+        [SerializeField] private GameObject lineGreenKey;
 
-        public TextMeshProUGUI txtYellowKey;
-        public Image iconYellowKey;
-        public GameObject lineYellowKey;
+        [SerializeField] private TextMeshProUGUI txtYellowKey;
+        [SerializeField] private Image iconYellowKey;
+        [SerializeField] private GameObject lineYellowKey;
 
-        public GameObject strikeThroughLine1;
+        [SerializeField] private GameObject strikeThroughLine1;
 
         [Header("Door 2 UI (Blue/Pink)")]
-        public GameObject door2Panel;
+        [SerializeField] private GameObject door2Panel;
         
-        public TextMeshProUGUI txtBlueKey;
-        public Image iconBlueKey;
-        public GameObject lineBlueKey;
+        [SerializeField] private TextMeshProUGUI txtBlueKey;
+        [SerializeField] private Image iconBlueKey;
+        [SerializeField] private GameObject lineBlueKey;
 
-        public TextMeshProUGUI txtPinkKey;
-        public Image iconPinkKey;
-        public GameObject linePinkKey;
+        [SerializeField] private TextMeshProUGUI txtPinkKey;
+        [SerializeField] private Image iconPinkKey;
+        [SerializeField] private GameObject linePinkKey;
 
-        public GameObject strikeThroughLine2;
+        [SerializeField] private GameObject strikeThroughLine2;
 
         [Header("Settings")]
-        public Color inactiveColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-        public Color activeColor = Color.white;
-        public float delayBeforeHide = 2.0f;
+        [SerializeField] private Color inactiveColor = new Color(0.5f, 0.5f, 0.5f, 1f);
+        [SerializeField] private Color activeColor = Color.white;
+        
+        [Header("Animation Settings")]
+        [Tooltip("Скільки часу чекати перед початком зникнення (щоб гравець встиг прочитати)")]
+        [SerializeField] private float delayBeforeHide = 2.0f;
+        [Tooltip("Як довго триває саме плавне зникнення")]
+        [SerializeField] private float fadeDuration = 2.0f;
 
         private SimpleInventory inventory;
         private bool isDoor1Finished = false; 
@@ -49,18 +54,18 @@ namespace Assets.Scripts
             var player = GameObject.FindWithTag("Player");
             if (player != null) inventory = player.GetComponent<SimpleInventory>();
 
-            if(txtGreenKey) originalTxtGreen = txtGreenKey.text;
-            if(txtYellowKey) originalTxtYellow = txtYellowKey.text;
-            if(txtBlueKey) originalTxtBlue = txtBlueKey.text;
-            if(txtPinkKey) originalTxtPink = txtPinkKey.text;
+            if (txtGreenKey) originalTxtGreen = txtGreenKey.text;
+            if (txtYellowKey) originalTxtYellow = txtYellowKey.text;
+            if (txtBlueKey) originalTxtBlue = txtBlueKey.text;
+            if (txtPinkKey) originalTxtPink = txtPinkKey.text;
 
-            if(door1Panel) door1Panel.SetActive(false);
-            if(door2Panel) door2Panel.SetActive(false);
+            if (door1Panel) door1Panel.SetActive(false);
+            if (door2Panel) door2Panel.SetActive(false);
 
-            if(lineGreenKey) lineGreenKey.SetActive(false);
-            if(lineYellowKey) lineYellowKey.SetActive(false);
-            if(lineBlueKey) lineBlueKey.SetActive(false);
-            if(linePinkKey) linePinkKey.SetActive(false);
+            if (lineGreenKey) lineGreenKey.SetActive(false);
+            if (lineYellowKey) lineYellowKey.SetActive(false);
+            if (lineBlueKey) lineBlueKey.SetActive(false);
+            if (linePinkKey) linePinkKey.SetActive(false);
 
             SimpleInventory.OnInventoryChanged += UpdateUI;
         }
@@ -74,6 +79,7 @@ namespace Assets.Scripts
         {
             if (inventory == null) return;
 
+            // --- DOOR 1 LOGIC ---
             if (!isDoor1Finished)
             {
                 bool hasGreen = inventory.HasKey(KeyColorType.Green);
@@ -81,7 +87,7 @@ namespace Assets.Scripts
 
                 if (hasGreen || hasYellow) 
                 {
-                    if (!door1Panel.activeSelf) door1Panel.SetActive(true);
+                    ShowPanel(door1Panel);
                 }
 
                 UpdateSingleTask(txtGreenKey, iconGreenKey, lineGreenKey, hasGreen, originalTxtGreen);
@@ -91,10 +97,12 @@ namespace Assets.Scripts
                 {
                     isDoor1Finished = true;
                     if (strikeThroughLine1 != null) strikeThroughLine1.SetActive(true);
+
                     StartCoroutine(HidePanelRoutine(door1Panel));
                 }
             }
 
+            // --- DOOR 2 LOGIC ---
             if (!isDoor2Finished)
             {
                 bool hasBlue = inventory.HasKey(KeyColorType.Blue);
@@ -102,7 +110,7 @@ namespace Assets.Scripts
 
                 if (hasBlue || hasPink)
                 {
-                    if (!door2Panel.activeSelf) door2Panel.SetActive(true);
+                    ShowPanel(door2Panel);
                 }
 
                 UpdateSingleTask(txtBlueKey, iconBlueKey, lineBlueKey, hasBlue, originalTxtBlue);
@@ -112,8 +120,19 @@ namespace Assets.Scripts
                 {
                     isDoor2Finished = true;
                     if (strikeThroughLine2 != null) strikeThroughLine2.SetActive(true);
+                    
                     StartCoroutine(HidePanelRoutine(door2Panel));
                 }
+            }
+        }
+
+        private void ShowPanel(GameObject panel)
+        {
+            if (panel != null && !panel.activeSelf)
+            {
+                panel.SetActive(true);
+                var cg = panel.GetComponent<CanvasGroup>();
+                if (cg != null) cg.alpha = 1f;
             }
         }
 
@@ -121,19 +140,17 @@ namespace Assets.Scripts
         {
             if (textComp != null)
             {
+                textComp.text = originalText;
+
                 if (isCollected)
                 {
                     textComp.color = activeColor;
-                    textComp.text = originalText;
-                    
-                    if(lineObj != null) lineObj.SetActive(true);
+                    if (lineObj != null) lineObj.SetActive(true);
                 }
                 else
                 {
                     textComp.color = inactiveColor;
-                    textComp.text = originalText;
-                    
-                    if(lineObj != null) lineObj.SetActive(false);
+                    if (lineObj != null) lineObj.SetActive(false);
                 }
             }
             
@@ -146,8 +163,24 @@ namespace Assets.Scripts
         private IEnumerator HidePanelRoutine(GameObject panel)
         {
             yield return new WaitForSeconds(delayBeforeHide);
+
             if (panel != null)
             {
+                CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+
+                if (cg != null)
+                {
+                    float time = 0f;
+                    float startAlpha = cg.alpha;
+
+                    while (time < fadeDuration)
+                    {
+                        time += Time.deltaTime;
+                        cg.alpha = Mathf.Lerp(startAlpha, 0f, time / fadeDuration);
+                        yield return null;
+                    }
+                    cg.alpha = 0f;
+                }
                 panel.SetActive(false);
             }
         }
