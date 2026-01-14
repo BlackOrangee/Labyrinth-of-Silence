@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f349cf055872bdb45864c3dd91bbd6ce, type: 3}
+  m_Name: doc_3
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.NewspaperData
+  newspaperId: 0001B237
+  newspaperName: Document 3
+  newspaperImage: {fileID: 2101854192, guid: aff2db97d8814aa43a1632e4fc41630c, type: 3}
+  inventoryIcon: {fileID: -226433495, guid: e8641decadef2c44c9f60458e33516ee, type: 3}
+  description: Top secret experiment resume

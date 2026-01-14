@@ -8,6 +8,7 @@ namespace Assets.Scripts
     {
         private List<KeyColorType> collectedKeys = new List<KeyColorType>();
         private List<string> items = new List<string>();
+        private List<NewspaperData> collectedNewspapers = new List<NewspaperData>();
 
         public static event Action OnInventoryChanged;
 
@@ -74,10 +75,57 @@ namespace Assets.Scripts
             OnInventoryChanged?.Invoke();
         }
 
+        public void AddNewspaper(NewspaperData newspaperData)
+        {
+            if (newspaperData == null)
+            {
+                Debug.LogWarning("SimpleInventory: Cannot add null newspaper.");
+                return;
+            }
+
+            if (HasNewspaper(newspaperData.newspaperId))
+            {
+                Debug.Log($"SimpleInventory: Newspaper '{newspaperData.newspaperName}' already collected.");
+                return;
+            }
+
+            collectedNewspapers.Add(newspaperData);
+            Debug.Log($"SimpleInventory: Collected newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
+
+            OnInventoryChanged?.Invoke();
+        }
+
+        public bool HasNewspaper(string newspaperId)
+        {
+            if (string.IsNullOrEmpty(newspaperId))
+                return false;
+
+            return collectedNewspapers.Exists(n => n != null && n.newspaperId == newspaperId);
+        }
+
+        public List<NewspaperData> GetCollectedNewspapers()
+        {
+            return new List<NewspaperData>(collectedNewspapers);
+        }
+
+        public NewspaperData GetNewspaperById(string newspaperId)
+        {
+            if (string.IsNullOrEmpty(newspaperId))
+                return null;
+
+            return collectedNewspapers.Find(n => n != null && n.newspaperId == newspaperId);
+        }
+
+        public int GetCollectedNewspapersCount()
+        {
+            return collectedNewspapers.Count;
+        }
+
         public void ClearInventory()
         {
             collectedKeys.Clear();
             items.Clear();
+            collectedNewspapers.Clear();
             OnInventoryChanged?.Invoke();
         }
     }
