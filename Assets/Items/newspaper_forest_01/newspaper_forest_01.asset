@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f349cf055872bdb45864c3dd91bbd6ce, type: 3}
+  m_Name: newspaper_forest_01
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.NewspaperData
+  newspaperId: 0001AFB3
+  newspaperName: newspaper_forest_01
+  newspaperImage: {fileID: 353121426, guid: b8c5070fca475bd459bb034e51c45f24, type: 3}
+  inventoryIcon: {fileID: 88372273, guid: 4ed37f7509415a9499cd48d35f528fea, type: 3}
+  description: Mysterious Disappearance of People
