@@ -8,29 +8,27 @@ namespace Assets.Scripts
     public class PlayerHideController : MonoBehaviour
     {
         [Header("References")]
-        public CameraController mainCamController;
-        public PopupManager popupManager;
+        [SerializeField] private CameraController mainCamController;
+        [SerializeField] private PopupManager popupManager;
 
         [Header("Hiding Settings")]
-        public float mouseSensitivity = 2f;
-        public float maxLookAngle = 80f;
-        public float movementRange = 0.1f;
+        [SerializeField] private float mouseSensitivity = 2f;
+        [Tooltip("Наскільки далеко можна відійти від центру схованки")]
+        [SerializeField] private float movementRange = 0.5f; 
 
         private bool isHiding = false;
+        private bool isTransitioning = false;
+        
         private HidingSpot currentSpot;
-
         private CharacterController charController;
         private PlayerMovement playerMovement;
-
         private PlayerInteractor playerInteractor;
-        private ProximityInteractor proximityInteractor;
-        private RaycastInteractor raycastInteractor;
+        
+        private Transform cameraTransform;
 
         private float currentYRotation = 0f;
         private float currentXRotation = 0f;
         private Vector3 initialHidePos;
-
-        private bool isTransitioning = false;
 
         public bool IsHiding => isHiding;
 
@@ -38,13 +36,12 @@ namespace Assets.Scripts
         {
             charController = GetComponent<CharacterController>();
             playerMovement = GetComponent<PlayerMovement>();
-
             playerInteractor = GetComponent<PlayerInteractor>();
-            proximityInteractor = GetComponent<ProximityInteractor>();
-            raycastInteractor = GetComponent<RaycastInteractor>();
 
-            if (mainCamController == null) mainCamController = GetComponent<CameraController>();
+            if (mainCamController == null) mainCamController = GetComponentInChildren<CameraController>();
             if (popupManager == null) popupManager = FindFirstObjectByType<PopupManager>();
+            
+            if (Camera.main != null) cameraTransform = Camera.main.transform;
         }
 
         void Update()
@@ -53,10 +50,11 @@ namespace Assets.Scripts
 
             if (isHiding)
             {
-                if (Input.GetKeyDown(KeyCode.Escape))
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.E))
                 {
                     StartCoroutine(ExitHidingRoutine());
                 }
+
                 HandleHidingCamera();
                 HandleHidingMovement();
             }
@@ -65,44 +63,39 @@ namespace Assets.Scripts
         public void StartHiding(HidingSpot spot)
         {
             if (isHiding || isTransitioning) return;
-            isHiding = true;
             StartCoroutine(EnterHidingRoutine(spot));
         }
 
         private IEnumerator EnterHidingRoutine(HidingSpot spot)
         {
             isTransitioning = true;
+            isHiding = true;
             currentSpot = spot;
 
-            DisableAllInteractors();
+            TogglePlayerControl(false);
 
-            if (popupManager != null) popupManager.HidePopup(null);
+            if (popupManager != null)
+            {
+                popupManager.HidePopup(null);
+            }
 
-            yield return null;
-
-            if (charController) charController.enabled = false;
-            if (playerMovement) playerMovement.enabled = false;
-            if (mainCamController) mainCamController.enabled = false;
+            yield return new WaitForSeconds(0.1f);
 
             transform.position = spot.hidePoint.position;
             transform.rotation = spot.hidePoint.rotation;
             initialHidePos = spot.hidePoint.position;
 
-            currentYRotation = 0f;
+            currentYRotation = 0f; 
             currentXRotation = 0f;
-            Camera.main.transform.localRotation = Quaternion.identity;
+            
+            if(cameraTransform) cameraTransform.localRotation = Quaternion.identity;
 
             if (popupManager != null)
             {
-                popupManager.ShowPopup(
-                    $"Player in hiding spot: {spot.spotName}\nPress ESC to exit",
-                    null,
-                    this,
-                    "",
-                    null
-                );
+                popupManager.ShowPopup("Press [Esc] to exit", null, this, "", null);
             }
 
+            yield return new WaitForSeconds(0.4f);
             isTransitioning = false;
         }
 
@@ -113,63 +106,74 @@ namespace Assets.Scripts
 
             if (popupManager != null) popupManager.HidePopup(this);
 
-            yield return null;
+            Vector3 lookAngles = cameraTransform.eulerAngles;
+            float exitPitch = lookAngles.x;
+            float exitYaw = lookAngles.y;
 
             currentSpot.ExitHiding(this.gameObject);
 
-            if (charController) charController.enabled = true;
-            if (playerMovement) playerMovement.enabled = true;
-            if (mainCamController) mainCamController.enabled = true;
+            yield return null; 
 
-            Physics.SyncTransforms();
-            yield return null;
+            TogglePlayerControl(true);
+
+            if (mainCamController != null)
+            {
+                mainCamController.SetRotation(exitPitch, exitYaw);
+            }
 
             isHiding = false;
-
-            EnableAllInteractors();
-
             currentSpot = null;
             isTransitioning = false;
         }
 
-        private void DisableAllInteractors()
+        private void TogglePlayerControl(bool isActive)
         {
+            if (charController) charController.enabled = isActive;
+            if (playerMovement) playerMovement.enabled = isActive;
+            if (mainCamController) mainCamController.enabled = isActive;
+            
             if (playerInteractor)
             {
-                playerInteractor.ForceReset();
-                playerInteractor.enabled = false;
+                if (!isActive) playerInteractor.ForceReset();
+                playerInteractor.enabled = isActive;
             }
-
-            if (proximityInteractor) proximityInteractor.enabled = false;
-
-            if (raycastInteractor) raycastInteractor.enabled = false;
         }
-
-        private void EnableAllInteractors()
-        {
-            if (playerInteractor) playerInteractor.enabled = true;
-            if (proximityInteractor) proximityInteractor.enabled = true;
-            if (raycastInteractor) raycastInteractor.enabled = true;
-        }
-
-        public void StopHiding() { if (!isHiding || isTransitioning) return; StartCoroutine(ExitHidingRoutine()); }
 
         private void HandleHidingCamera()
         {
+            if (cameraTransform == null) return;
+
             float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
             float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
-            currentYRotation += mouseX; currentYRotation = Mathf.Clamp(currentYRotation, -maxLookAngle, maxLookAngle);
-            currentXRotation -= mouseY; currentXRotation = Mathf.Clamp(currentXRotation, -60f, 60f);
-            Camera.main.transform.localRotation = Quaternion.Euler(currentXRotation, currentYRotation, 0f);
+
+            currentYRotation += mouseX;
+            
+            currentXRotation -= mouseY;
+            currentXRotation = Mathf.Clamp(currentXRotation, -85f, 85f);
+
+            cameraTransform.localRotation = Quaternion.Euler(currentXRotation, currentYRotation, 0f);
         }
 
         private void HandleHidingMovement()
         {
-            float x = Input.GetAxis("Horizontal"); float z = Input.GetAxis("Vertical");
-            Vector3 moveDir = (transform.right * x + transform.forward * z).normalized;
-            Vector3 newPos = transform.position + moveDir * Time.deltaTime * 1.5f;
-            if (Vector3.Distance(newPos, initialHidePos) < movementRange) transform.position = newPos;
-            else transform.position = initialHidePos + (newPos - initialHidePos).normalized * movementRange;
+            float x = Input.GetAxis("Horizontal");
+            float z = Input.GetAxis("Vertical");
+
+            Vector3 forward = cameraTransform.forward;
+            Vector3 right = cameraTransform.right;
+            
+            forward.y = 0;
+            right.y = 0;
+            forward.Normalize();
+            right.Normalize();
+
+            Vector3 moveDir = (right * x + forward * z).normalized;
+            Vector3 newPos = transform.position + moveDir * Time.deltaTime * 2.0f;
+
+            if (Vector3.Distance(newPos, initialHidePos) < movementRange)
+            {
+                transform.position = newPos;
+            }
         }
     }
 }

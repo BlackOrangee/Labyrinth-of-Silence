@@ -4,13 +4,11 @@ namespace Assets.Scripts
 {
     public class CameraController : MonoBehaviour
     {
-        public Transform player;
-        public float mouseSensitivity = 100f;
-        public float yOffset = 0f;
-        public float xOffset = 0f;
+        [Header("Settings")]
+        [SerializeField] private float mouseSensitivity = 200f; 
+        [SerializeField] private Transform playerBody; 
 
         private float xRotation = 0f;
-        private float yRotation = 0f;
 
         [HideInInspector]
         public float crouchOffset = 0f;
@@ -18,23 +16,42 @@ namespace Assets.Scripts
         void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
+            if (playerBody == null)
+            {
+                playerBody = transform.parent;
+            }
         }
 
-        void LateUpdate()
+        void Update()
         {
             float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
             float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
-            yRotation += mouseX;
             xRotation -= mouseY;
-            xRotation = Mathf.Clamp(xRotation, -60f, 80f);
+            xRotation = Mathf.Clamp(xRotation, -80f, 80f);
 
-            player.rotation = Quaternion.Euler(0f, yRotation, 0f);
+            transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-            Vector3 cameraPos = player.position + new Vector3(xOffset, yOffset + crouchOffset, 0);
-            transform.position = cameraPos;
+            if (playerBody != null)
+            {
+                playerBody.Rotate(Vector3.up * mouseX);
+            }
+        }
+        public void SetRotation(float pitch, float yaw)
+        {
+            xRotation = pitch;
 
-            transform.rotation = Quaternion.Euler(xRotation, yRotation, 0f);
+            if (xRotation > 180) xRotation -= 360;
+            xRotation = Mathf.Clamp(xRotation, -80f, 80f);
+
+            transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            
+            if (playerBody != null)
+            {
+                playerBody.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
         }
     }
 }
