@@ -115,19 +115,19 @@ namespace Assets.Scripts
                 saveData.inventoryData.collectedKeys = new List<KeyColorType>(inventory.GetCollectedKeys());
             }
 
-            if (QuestTracker.Instance != null)
-            {
-                List<Quest> activeQuests = QuestTracker.Instance.GetAllQuests();
-                foreach (Quest quest in activeQuests)
-                {
-                    saveData.questsData.Add(new QuestData(quest));
-                }
-
-                if (activeQuests.Count > 0)
-                {
-                    saveData.currentQuest = activeQuests[0].description;
-                }
-            }
+            // if (QuestTracker.Instance != null)
+            // {
+            //     List<Quest> activeQuests = QuestTracker.Instance.GetAllQuests();
+            //     foreach (Quest quest in activeQuests)
+            //     {
+            //         saveData.questsData.Add(new QuestData(quest));
+            //     }
+            //
+            //     if (activeQuests.Count > 0)
+            //     {
+            //         saveData.currentQuest = activeQuests[0].description;
+            //     }
+            // }
 
             SaveAllSceneObjects(saveData);
 
@@ -238,7 +238,7 @@ namespace Assets.Scripts
 
                 foreach (string item in saveData.inventoryData.items)
                 {
-                    inventory.AddItem(item);
+                    // inventory.AddItem(item);
                 }
 
                 if (saveData.inventoryData.collectedKeys != null)
@@ -247,25 +247,25 @@ namespace Assets.Scripts
                 }
             }
 
-            if (QuestTracker.Instance != null)
-            {
-                QuestTracker.Instance.ClearAllQuests();
-
-                foreach (QuestData questData in saveData.questsData)
-                {
-                    QuestTracker.Instance.AddQuest(
-                        questData.questId,
-                        questData.description,
-                        questData.currentProgress,
-                        questData.targetProgress
-                    );
-
-                    if (questData.isCompleted)
-                    {
-                        QuestTracker.Instance.CompleteQuest(questData.questId);
-                    }
-                }
-            }
+            // if (QuestTracker.Instance != null)
+            // {
+            //     QuestTracker.Instance.ClearAllQuests();
+            //
+            //     foreach (QuestData questData in saveData.questsData)
+            //     {
+            //         QuestTracker.Instance.AddQuest(
+            //             questData.questId,
+            //             questData.description,
+            //             questData.currentProgress,
+            //             questData.targetProgress
+            //         );
+            //
+            //         if (questData.isCompleted)
+            //         {
+            //             QuestTracker.Instance.CompleteQuest(questData.questId);
+            //         }
+            //     }
+            // }
 
             RestoreAllSceneObjects(saveData);
 
@@ -393,14 +393,14 @@ namespace Assets.Scripts
         private void SaveComponentStates(GameObject obj, GameObjectState state)
         {
             DoorController door = obj.GetComponent<DoorController>();
-            if (door != null)
-            {
-                state.doorState = new DoorState
-                {
-                    isOpen = (bool)typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(door),
-                    currentRotationY = door.doorPivot != null ? door.doorPivot.localRotation.eulerAngles.y : 0f
-                };
-            }
+            // if (door != null)
+            // {
+            //     state.doorState = new DoorState
+            //     {
+            //         isOpen = (bool)typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(door),
+            //         currentRotationY = door.doorPivot != null ? door.doorPivot.localRotation.eulerAngles.y : 0f
+            //     };
+            // }
 
             EnemyAI enemy = obj.GetComponent<EnemyAI>();
             if (enemy != null)
@@ -510,16 +510,16 @@ namespace Assets.Scripts
         {
             if (state.doorState != null)
             {
-                DoorController door = obj.GetComponent<DoorController>();
-                if (door != null)
-                {
-                    typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(door, state.doorState.isOpen);
-
-                    if (door.doorPivot != null && state.doorState.isOpen)
-                    {
-                        door.doorPivot.localRotation = Quaternion.Euler(0, state.doorState.currentRotationY, 0);
-                    }
-                }
+                // DoorController door = obj.GetComponent<DoorController>();
+                // if (door != null)
+                // {
+                //     typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(door, state.doorState.isOpen);
+                //
+                //     if (door.doorPivot != null && state.doorState.isOpen)
+                //     {
+                //         door.doorPivot.localRotation = Quaternion.Euler(0, state.doorState.currentRotationY, 0);
+                //     }
+                // }
             }
 
             if (state.enemyState != null)
@@ -555,12 +555,12 @@ namespace Assets.Scripts
 
                     typeof(CollectItem).GetField("isCollected", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(collectItem, true);
 
-                    if (collectItem.destroyOnCollect)
-                    {
-                        Destroy(obj);
-                    }
-                    else
-                    {
+                    // if (collectItem.destroyOnCollect)
+                    // {
+                    //     Destroy(obj);
+                    // }
+                    // else
+                    // {
                         var renderer = obj.GetComponent<Renderer>();
                         if (renderer != null)
                         {
@@ -571,7 +571,7 @@ namespace Assets.Scripts
                         {
                             t.gameObject.SetActive(false);
                         }
-                    }
+                    // }
                 }
             }
 
