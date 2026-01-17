@@ -67,6 +67,11 @@ namespace Assets.Scripts
             if (lineBlueKey) lineBlueKey.SetActive(false);
             if (linePinkKey) linePinkKey.SetActive(false);
 
+            if(lineGreenKey) lineGreenKey.SetActive(false);
+            if(lineYellowKey) lineYellowKey.SetActive(false);
+            if(lineBlueKey) lineBlueKey.SetActive(false);
+            if(linePinkKey) linePinkKey.SetActive(false);
+
             SimpleInventory.OnInventoryChanged += UpdateUI;
         }
 
