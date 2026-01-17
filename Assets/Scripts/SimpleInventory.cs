@@ -8,6 +8,7 @@ namespace Assets.Scripts
     {
         [SerializeField]
         private List<KeyColorType> collectedKeys = new List<KeyColorType>();
+        private List<string> items = new List<string>();
 
         public static event Action OnInventoryChanged;
 
@@ -44,9 +45,30 @@ namespace Assets.Scripts
             return collectedKeys.Count;
         }
 
+        public List<string> GetItems()
+        {
+            return new List<string>(items);
+        }
+
+        public List<KeyColorType> GetCollectedKeys()
+        {
+            return new List<KeyColorType>(collectedKeys);
+        }
+
+        public void SetCollectedKeys(List<KeyColorType> keys)
+        {
+            collectedKeys.Clear();
+            if (keys != null)
+            {
+                collectedKeys.AddRange(keys);
+            }
+            OnInventoryChanged?.Invoke();
+        }
+
         public void ClearInventory()
         {
             collectedKeys.Clear();
+            items.Clear();
             OnInventoryChanged?.Invoke();
         }
     }

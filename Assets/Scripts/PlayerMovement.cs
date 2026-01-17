@@ -24,6 +24,13 @@ namespace Assets.Scripts
         private float footstepTimer = 0f;
         private Transform myTransform;
 
+        private float originalHeight;
+        private float targetHeight;
+        private bool isCrouching;
+
+        private CameraController cameraController;
+        private float currentCrouchOffset;
+
         void Start()
         {
             controller = GetComponent<CharacterController>();
@@ -43,6 +50,28 @@ namespace Assets.Scripts
             if (isGrounded && velocity.y < 0)
             {
                 velocity.y = -2f;
+            }
+
+            isCrouching = Input.GetKey(KeyCode.LeftControl);
+            targetHeight = isCrouching ? originalHeight * crouchHeightMultiplier : originalHeight;
+
+            if (Mathf.Abs(controller.height - targetHeight) > 0.01f)
+            {
+                float newHeight = Mathf.Lerp(controller.height, targetHeight, Time.deltaTime * crouchTransitionSpeed);
+
+                Vector3 center = controller.center;
+                float heightDifference = newHeight - controller.height;
+                center.y += heightDifference / 2f;
+
+                controller.height = newHeight;
+                controller.center = center;
+            }
+
+            if (cameraController != null)
+            {
+                float targetCrouchOffset = isCrouching ? crouchCameraOffset : 0f;
+                currentCrouchOffset = Mathf.Lerp(currentCrouchOffset, targetCrouchOffset, Time.deltaTime * crouchTransitionSpeed);
+                cameraController.crouchOffset = currentCrouchOffset;
             }
 
             float x = Input.GetAxis("Horizontal");

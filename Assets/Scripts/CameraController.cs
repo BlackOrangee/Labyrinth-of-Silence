@@ -10,6 +10,9 @@ namespace Assets.Scripts
 
         private float xRotation = 0f;
 
+        [HideInInspector]
+        public float crouchOffset = 0f;
+
         void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;
