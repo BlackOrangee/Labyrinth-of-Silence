@@ -189,13 +189,13 @@ namespace Assets.Scripts
         {
         }
 
-        public QuestData(Quest quest)
-        {
-            questId = quest.questId;
-            description = quest.description;
-            currentProgress = quest.currentProgress;
-            targetProgress = quest.targetProgress;
-            isCompleted = quest.isCompleted;
-        }
+        // public QuestData(Quest quest)
+        // {
+        //     questId = quest.questId;
+        //     description = quest.description;
+        //     currentProgress = quest.currentProgress;
+        //     targetProgress = quest.targetProgress;
+        //     isCompleted = quest.isCompleted;
+        // }
     }
 }
