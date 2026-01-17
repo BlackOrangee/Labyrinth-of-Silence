@@ -7,6 +7,8 @@ namespace Assets.Scripts
     {
         [Header("Ray Settings")]
         public float interactDistance = 3f;
+        public float rayRadius = 0.3f; 
+        public LayerMask interactLayers = ~0;
         public Camera cam;
 
         [Header("UI")]
@@ -14,7 +16,8 @@ namespace Assets.Scripts
 
         private PlayerHideController hideController;
         private IInteractable currentInteractable = null;
-        private GameObject currentGO = null;
+
+        private GameObject lastHitGO = null; 
 
         void Start()
         {
@@ -26,7 +29,7 @@ namespace Assets.Scripts
         public void ForceReset()
         {
             currentInteractable = null;
-            currentGO = null;
+            lastHitGO = null;
             if (popupManager != null) popupManager.HidePopup(this);
         }
 
@@ -43,26 +46,31 @@ namespace Assets.Scripts
             Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, interactDistance))
+            if (Physics.SphereCast(ray, rayRadius, out hit, interactDistance, interactLayers))
             {
                 GameObject hitGO = hit.collider.gameObject;
                 IInteractable interactable = hitGO.GetComponent<IInteractable>();
 
                 if (interactable != null)
                 {
+                    if (hitGO == lastHitGO && currentInteractable != null) 
+                    {
+                        return; 
+                    }
+
                     string msg = interactable.GetInteractText();
 
                     if (string.IsNullOrEmpty(msg))
                     {
                         ClearCurrent();
                     }
-                    else
+                    else 
                     {
                         currentInteractable = interactable;
-                        currentGO = hitGO;
-
-                        string buttonText = "Press E";
-                        if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Press E to Hide";
+                        lastHitGO = hitGO;
+                        
+                        string buttonText = "Press E"; 
+                        if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Hide (E)";
 
                         popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
                     }
@@ -85,10 +93,10 @@ namespace Assets.Scripts
 
         private void ClearCurrent()
         {
-            if (currentInteractable != null)
+            if (currentInteractable != null || lastHitGO != null)
             {
                 currentInteractable = null;
-                currentGO = null;
+                lastHitGO = null;
                 popupManager?.HidePopup(this);
             }
         }
@@ -97,15 +105,21 @@ namespace Assets.Scripts
 
         private void ExecuteCurrent()
         {
-            if (currentInteractable != null && currentGO != null)
+            if (currentInteractable != null && lastHitGO != null)
             {
                 var target = currentInteractable;
                 target.Interact(this.gameObject);
 
-                if (string.IsNullOrEmpty(target.GetInteractText()))
-                {
-                    ClearCurrent();
-                }
+                ClearCurrent();
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (cam != null)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(cam.transform.position + cam.transform.forward * interactDistance, rayRadius);
             }
         }
     }

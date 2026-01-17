@@ -6,6 +6,7 @@ namespace Assets.Scripts
 {
     public class SimpleInventory : MonoBehaviour
     {
+        [SerializeField]
         private List<KeyColorType> collectedKeys = new List<KeyColorType>();
         private List<string> items = new List<string>();
 
@@ -37,16 +38,6 @@ namespace Assets.Scripts
                     return false;
             }
             return true;
-        }
-
-        public void AddItem(string name)
-        {
-            if (!items.Contains(name))
-            {
-                items.Add(name);
-                Debug.Log($"SimpleInventory: Picked up generic item '{name}'.");
-                OnInventoryChanged?.Invoke();
-            }
         }
 
         public int GetCollectedKeysCount()

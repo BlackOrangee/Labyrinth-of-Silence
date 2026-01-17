@@ -5,19 +5,19 @@ namespace Assets.Scripts
     [RequireComponent(typeof(Collider))]
     public class CollectItem : MonoBehaviour, IInteractable
     {
-        [Header("Key Settings (New)")]
-        [Tooltip("Вибери колір ключа тут (Green, Yellow, Blue, Pink)")]
-        public KeyColorType keyColor = KeyColorType.None;
+        [Header("Key Settings")]
+        [Tooltip("Колір ключа (Green, Yellow, Blue, Pink)")]
+        [SerializeField] private KeyColorType keyColor = KeyColorType.None;
 
-        [Header("Visuals (Restored)")]
-        public string displayName = "Key";
-        [Tooltip("Іконка, яка відображається в Popup")]
-        public Sprite itemIcon;
-        public bool destroyOnCollect = true;
+        [Header("Visuals")]
+        [SerializeField] private string displayName = "Key";
+        [Tooltip("Іконка для UI")]
+        public Sprite itemIcon; 
+        [SerializeField] private bool destroyOnCollect = true;
 
         [Header("Audio")]
-        public AudioClip pickupSound;
-        [Range(0f, 1f)] public float pickupVolume = 1f;
+        [SerializeField] private AudioClip pickupSound;
+        [Range(0f, 1f)] [SerializeField] private float pickupVolume = 1f;
 
         private bool isCollected = false;
         private Collider cachedCollider;
@@ -30,7 +30,7 @@ namespace Assets.Scripts
         public string GetInteractText()
         {
             string nameToShow = keyColor != KeyColorType.None ? $"{keyColor} Key" : displayName;
-            return $"Press to take {nameToShow}";
+            return $"Press [E] to pick: {nameToShow}";
         }
 
         public void Interact(GameObject actor)
@@ -47,6 +47,10 @@ namespace Assets.Scripts
                 {
                     inv.AddKey(keyColor);
                 }
+            }
+            else
+            {
+                Debug.LogWarning("CollectItem: Player has no SimpleInventory component!");
             }
 
             if (pickupSound != null)
