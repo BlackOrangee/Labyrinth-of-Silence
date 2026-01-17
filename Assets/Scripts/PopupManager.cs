@@ -17,8 +17,8 @@ namespace Assets.Scripts
         public TextMeshProUGUI executeButtonText;
 
         [Header("Animation Settings")]
-        public float fadeInDuration = 0.2f;  // Як швидко з'являється (швидко)
-        public float fadeOutDuration = 2f; // Як довго зникає (2-3 секунди)
+        public float fadeInDuration = 0.2f;
+        public float fadeOutDuration = 2f;
 
         [Header("Default")]
         public string defaultMessage = "Press E to interact.";

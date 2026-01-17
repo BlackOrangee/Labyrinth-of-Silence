@@ -35,19 +35,15 @@ namespace Assets.Scripts
 
         void Start()
         {
-            // Початкове завдання при старті гри
             SetObjective(GameObjective.ExitLab);
         }
 
-        // --- ГОЛОВНИЙ МЕТОД ---
-        // Використовуй його в тригерах: MainObjectiveManager.Instance.SetObjective(GameObjective.ExploreBuilding);
         public void SetObjective(GameObjective objectiveType)
         {
             string textToShow = GetTextForObjective(objectiveType);
             UpdateUI(textToShow);
         }
 
-        // Тут ми перетворюємо "Ім'я" завдання на "Текст" на екрані
         private string GetTextForObjective(GameObjective type)
         {
             switch (type)
@@ -96,7 +92,7 @@ namespace Assets.Scripts
         }
 
         // --- ДЛЯ ТЕСТУВАННЯ (Context Menu) ---
-        // Можна натиснути на шестерню скрипта в Inspector і вибрати цей пункт
+        // Можеш натиснути на шестерню скрипта в Inspector і вибрати цей пункт
         [ContextMenu("Apply Debug Objective")]
         public void ApplyDebugObjective()
         {

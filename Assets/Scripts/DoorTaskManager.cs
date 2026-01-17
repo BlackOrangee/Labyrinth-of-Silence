@@ -67,11 +67,6 @@ namespace Assets.Scripts
             if (lineBlueKey) lineBlueKey.SetActive(false);
             if (linePinkKey) linePinkKey.SetActive(false);
 
-            if(lineGreenKey) lineGreenKey.SetActive(false);
-            if(lineYellowKey) lineYellowKey.SetActive(false);
-            if(lineBlueKey) lineBlueKey.SetActive(false);
-            if(linePinkKey) linePinkKey.SetActive(false);
-
             SimpleInventory.OnInventoryChanged += UpdateUI;
         }
 
@@ -136,7 +131,6 @@ namespace Assets.Scripts
             if (panel != null && !panel.activeSelf)
             {
                 panel.SetActive(true);
-
                 var cg = panel.GetComponent<CanvasGroup>();
                 if (cg != null) cg.alpha = 1f;
             }
@@ -182,13 +176,11 @@ namespace Assets.Scripts
                     while (time < fadeDuration)
                     {
                         time += Time.deltaTime;
-
                         cg.alpha = Mathf.Lerp(startAlpha, 0f, time / fadeDuration);
                         yield return null;
                     }
                     cg.alpha = 0f;
                 }
-
                 panel.SetActive(false);
             }
         }

@@ -7,10 +7,10 @@ namespace Assets.Scripts
     public class LampController : MonoBehaviour
     {
         [Header("References")]
-        public Light lampLight;           
-        public Light fillLight;           
-        public ParticleSystem fireEffect; 
-        
+        public Light lampLight;
+        public Light fillLight;
+        public ParticleSystem fireEffect;
+
         [Header("Old UI (Optional)")]
         public Slider fuelSlider;
         public TextMeshProUGUI fuelPercentageText;
@@ -21,12 +21,12 @@ namespace Assets.Scripts
         [Header("Fading & UI Settings")]
         [Range(0f, 1f)]
         public float fadeThreshold = 0.2f;
-        
+
         public Color normalTextColor = Color.green;
         public Color warningTextColor = Color.red;
 
         [Header("Main Light Intensity")]
-        public float dimIntensity = 3.0f;     
+        public float dimIntensity = 3.0f;
         public float brightIntensity = 5.0f;
         public float dimRange = 8f;
         public float brightRange = 10f;
@@ -36,8 +36,8 @@ namespace Assets.Scripts
         public float fillBrightIntensity = 1.0f;
 
         [Header("Fuel Consumption")]
-        public float dimBurnRate = 2f;        
-        public float brightBurnRate = 10f;    
+        public float dimBurnRate = 2f;
+        public float brightBurnRate = 10f;
 
         private float currentFuel;
         private int lightMode = 0;
@@ -53,7 +53,7 @@ namespace Assets.Scripts
             }
 
             UpdateLightState();
-            UpdateUI(); 
+            UpdateUI();
         }
 
         private void Update()
@@ -68,7 +68,7 @@ namespace Assets.Scripts
             if (Input.GetKeyDown(KeyCode.F))
             {
                 lightMode++;
-                if (lightMode > 2) lightMode = 0; 
+                if (lightMode > 2) lightMode = 0;
                 UpdateLightState();
             }
         }
@@ -132,7 +132,7 @@ namespace Assets.Scripts
             {
                 if (!isLightOn)
                 {
-                    fireEffect.Stop(); 
+                    fireEffect.Stop();
                     fireEffect.Clear();
                 }
                 else
@@ -140,7 +140,7 @@ namespace Assets.Scripts
                     if (!fireEffect.isPlaying) fireEffect.Play();
                     var main = fireEffect.main;
                     float targetSize = (lightMode == 2) ? 1.0f : 0.6f;
-                    main.startSizeMultiplier = targetSize * fadeFactor; 
+                    main.startSizeMultiplier = targetSize * fadeFactor;
                 }
             }
         }
@@ -156,7 +156,7 @@ namespace Assets.Scripts
             {
                 float fraction = currentFuel / maxFuel;
                 int percent = Mathf.RoundToInt(fraction * 100f);
-                
+
                 fuelPercentageText.text = $"{percent}%";
 
                 if (fraction <= fadeThreshold)
@@ -179,8 +179,8 @@ namespace Assets.Scripts
         {
             currentFuel += amount;
             if (currentFuel > maxFuel) currentFuel = maxFuel;
-            
-            UpdateUI(); 
+
+            UpdateUI();
             UpdateLightState();
         }
 
