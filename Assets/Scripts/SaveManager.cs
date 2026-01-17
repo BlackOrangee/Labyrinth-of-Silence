@@ -177,7 +177,8 @@ namespace Assets.Scripts
 
                 currentLoadData = saveData;
 
-                SceneManager.LoadScene(saveData.sceneName);
+                LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(saveData.sceneName);
+                SceneLoader.Instance.LoadScene(saveData.sceneName, config);
             }
             catch (Exception e)
             {
