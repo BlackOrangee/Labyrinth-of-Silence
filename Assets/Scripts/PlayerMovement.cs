@@ -24,13 +24,6 @@ namespace Assets.Scripts
         private float footstepTimer = 0f;
         private Transform myTransform;
 
-        private float originalHeight;
-        private float targetHeight;
-        private bool isCrouching;
-
-        private CameraController cameraController;
-        private float currentCrouchOffset;
-
         void Start()
         {
             controller = GetComponent<CharacterController>();

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 namespace Assets.Scripts
 {
@@ -8,19 +9,33 @@ namespace Assets.Scripts
     {
         public static GameHUDManager Instance;
 
-        [Header("Mind (Sanity) UI")]
-        public Image mindFillImage; 
+        [Header("MIND UI")]
+        public Image mindRingImage; 
+        public Image mindIconImage; 
+        public Image mindColorFill; 
         public TextMeshProUGUI mindText;
+        
+        [Header("Mind Settings")]
+        [Tooltip("Список картинок Мозку")]
+        public List<Sprite> mindRingSprites; 
+        public List<Sprite> mindIconSprites;
+        [Range(0f, 1f)] public float mindCriticalThreshold = 0.3f;
 
-        [Header("Fuel (Lamp) UI")]
-        public Image fuelFillImage; 
+        [Header("FUEL UI")]
+        public Image fuelRingImage; 
+        public Image fuelIconImage; 
+        public Image fuelColorFill; 
         public TextMeshProUGUI fuelText;
 
-        [Header("Text Settings")]
+        [Header("Fuel Settings")]
+        [Tooltip("Список картинок Лампи")]
+        public List<Sprite> fuelRingSprites; 
+        public List<Sprite> fuelIconSprites;
+        [Range(0f, 1f)] public float fuelCriticalThreshold = 0.2f;
+
+        [Header("Global Text Colors")]
         public Color normalTextColor = Color.white;
         public Color criticalTextColor = Color.red;
-        [Range(0f, 1f)]
-        public float criticalThreshold = 0.2f;
 
         private void Awake()
         {
@@ -28,30 +43,37 @@ namespace Assets.Scripts
             else Destroy(gameObject);
         }
 
-        public void UpdateFuelUI(float current, float max)
-        {
-            float percentage = Mathf.Clamp01(current / max);
-            UpdateStat(fuelFillImage, fuelText, percentage);
-        }
-
         public void UpdateMindUI(float current, float max)
         {
             float percentage = Mathf.Clamp01(current / max);
-            UpdateStat(mindFillImage, mindText, percentage);
+
+            UpdateText(mindText, percentage, mindCriticalThreshold);
+            
+            UpdateSprite(mindRingImage, percentage, mindRingSprites);
+            UpdateSprite(mindIconImage, percentage, mindIconSprites);
+
+            if (mindColorFill != null) mindColorFill.fillAmount = percentage;
         }
 
-        private void UpdateStat(Image fillImage, TextMeshProUGUI textMesh, float percentage)
+        public void UpdateFuelUI(float current, float max)
         {
-            if (fillImage != null)
-            {
-                fillImage.fillAmount = percentage;
-            }
+            float percentage = Mathf.Clamp01(current / max);
 
+            UpdateText(fuelText, percentage, fuelCriticalThreshold);
+
+            UpdateSprite(fuelRingImage, percentage, fuelRingSprites);
+            UpdateSprite(fuelIconImage, percentage, fuelIconSprites);
+
+            if (fuelColorFill != null) fuelColorFill.fillAmount = percentage;
+        }
+
+        private void UpdateText(TextMeshProUGUI textMesh, float percentage, float threshold)
+        {
             if (textMesh != null)
             {
                 textMesh.text = $"{Mathf.RoundToInt(percentage * 100)}%";
 
-                if (percentage <= criticalThreshold)
+                if (percentage <= threshold)
                 {
                     textMesh.color = criticalTextColor;
                 }
@@ -59,6 +81,15 @@ namespace Assets.Scripts
                 {
                     textMesh.color = normalTextColor;
                 }
+            }
+        }
+
+        private void UpdateSprite(Image targetImage, float percentage, List<Sprite> sprites)
+        {
+            if (targetImage != null && sprites != null && sprites.Count > 0)
+            {
+                int spriteIndex = Mathf.Clamp(Mathf.FloorToInt(percentage * (sprites.Count)), 0, sprites.Count - 1);
+                targetImage.sprite = sprites[spriteIndex];
             }
         }
     }
