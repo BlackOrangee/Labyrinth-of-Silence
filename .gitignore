@@ -97,10 +97,13 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
-.vsconfig
+
+# Custom exclude
+ignore.conf
 /.idea
+.vsconfig
+/.vscode
+/.plastic
 .DS_Store
-.zip
 Assets/.DS_Store
-.DS_Store
-.DS_Store
+.zip
