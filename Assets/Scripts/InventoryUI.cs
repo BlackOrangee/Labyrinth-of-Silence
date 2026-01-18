@@ -61,6 +61,13 @@ namespace Assets.Scripts
         [Tooltip("Inventory title text")]
         public Text titleText;
 
+        [Header("Collection Counter")]
+        [Tooltip("Text to display collection progress")]
+        public Text collectionCounterText;
+
+        [Tooltip("Newspaper database for getting total count")]
+        public NewspaperDatabase newspaperDatabase;
+
         [Header("Key Icons")]
         [Tooltip("Green key icon")]
         public Sprite greenKeyIcon;
@@ -137,6 +144,11 @@ namespace Assets.Scripts
             if (inventory != null)
             {
                 SimpleInventory.OnInventoryChanged += RefreshInventory;
+            }
+
+            if (newspaperDatabase == null)
+            {
+                newspaperDatabase = FindFirstObjectByType<NewspaperDatabase>();
             }
         }
 
@@ -291,6 +303,7 @@ namespace Assets.Scripts
             }
 
             UpdateTitle();
+            UpdateCollectionCounter();
         }
 
         /// <summary>
@@ -373,6 +386,31 @@ namespace Assets.Scripts
             }
 
             titleText.text = $"Inventory - {filterName} ({slots.Count})";
+        }
+
+        /// <summary>
+        /// Update collection counter display
+        /// </summary>
+        private void UpdateCollectionCounter()
+        {
+            if (collectionCounterText == null)
+                return;
+
+            if (inventory == null)
+            {
+                collectionCounterText.text = "Documents: 0/0";
+                return;
+            }
+
+            int collectedCount = inventory.GetCollectedNewspapersCount();
+            int totalCount = 0;
+
+            if (newspaperDatabase != null)
+            {
+                totalCount = newspaperDatabase.allNewspapers.Count;
+            }
+
+            collectionCounterText.text = $"Documents: {collectedCount}/{totalCount}";
         }
 
         /// <summary>
