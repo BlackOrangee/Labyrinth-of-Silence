@@ -1,71 +1,91 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
+using UnityEngine.SceneManagement; 
+using UnityEngine.UI; 
 
 namespace Assets.Scripts
 {
     /// <summary>
-    /// Enemy AI with vision, hearing and chase systems
-    /// Uses NavMesh for movement with obstacle avoidance
+    /// Enemy AI with vision, hearing, chase systems AND new Attack Mechanics
+    /// [FINAL POLISH] Fixed hiding logic, inactive controller error, and screen opacity
     /// </summary>
     public class EnemyAI : MonoBehaviour
     {
         [Header("References")]
         public Transform player;
+        
+        [Tooltip("Сюди перетягнути Animator з монстра")]
+        public Animator animator; 
+        
+        private LightDetector lightDetector; 
 
+        [Header("UI & Effects")]
+        [Tooltip("Червона панель (Image) на весь екран.")]
+        public Image damageOverlay; 
+        [Tooltip("Панель смерті (Game Over).")]
+        public GameObject deathScreenPanel;
+        [Tooltip("Звук удару / серцебиття")]
+        public AudioSource heartBeatAudio; 
+        
         [Header("Vision Settings")]
-        [Tooltip("Vision range")]
         public float visionRange = 15f;
-        [Tooltip("Field of view angle (in degrees)")]
         public float fieldOfViewAngle = 110f;
-        [Tooltip("Player layer for raycast")]
         public LayerMask playerLayer;
-        [Tooltip("Obstacle layer for line of sight check")]
-        public LayerMask obstacleLayer;
+        public LayerMask obstacleLayer; // [ВАЖЛИВО] Тут мають бути шари стін і меблів!
 
         [Header("Hearing Settings")]
-        [Tooltip("Hearing range")]
         public float hearingRange = 20f;
 
         [Header("Chase Settings")]
-        [Tooltip("Attack distance")]
-        public float attackRange = 2f;
-        [Tooltip("Chase speed")]
-        public float chaseSpeed = 5f;
-        [Tooltip("Patrol speed")]
-        public float patrolSpeed = 2.5f;
-        [Tooltip("Time before losing target (seconds)")]
+        public float attackRange = 2f; 
+        public float chaseSpeed = 5f; 
+        public float patrolSpeed = 2.5f; 
         public float loseTargetTime = 5f;
 
         [Header("Patrol Settings")]
-        [Tooltip("Patrol points")]
         public Transform[] patrolPoints;
-        [Tooltip("Wait time at each point")]
         public float waitTimeAtPoint = 2f;
 
         [Header("Search Settings")]
-        [Tooltip("Radius around last known position to search")]
         public float searchRadius = 8f;
-        [Tooltip("How long to search before giving up (seconds)")]
         public float searchDuration = 10f;
-        [Tooltip("Time between choosing new random points during search")]
         public float searchPointInterval = 3f;
 
-        [Header("Light Detection")]
-        [Tooltip("Enable light-based detection")]
-        public bool useLightDetection = true;
-        [Tooltip("Should light trigger chase behavior")]
-        public bool chaseOnLightDetection = true;
+        [Header("Death & Attack Mechanics")]
+        public float killDistance = 1.3f; 
+        public Transform faceTarget;
+        public float rotationTime = 0.4f;
 
-        [Header("Debug")]
+        [Tooltip("Скільки секунд треба бути ПОЗА ЗОРОМ монстра, щоб екран почав очищуватись")]
+        public float damageRecoveryTime = 4f; 
+        
+        [Tooltip("Час (в секундах), який монстр чекає після першого удару")]
+        public float stunTimeAfterHit = 3.5f; 
+
+        [Header("Physics & Impact")]
+        [Tooltip("Затримка перед почервонінням екрану (синхронізація з анімацією)")]
+        public float impactWaitTime = 1.0f; 
+        
+        [Tooltip("Сила відкидання гравця")]
+        public float knockbackForce = 8f; 
+
+        // [НОВЕ] Змінна безпеки. Якщо TRUE - монстр ігнорує гравця.
+        // Це знадобиться, коли ти напишеш скрипт "Interaction" для залазання в шафу.
+        [Tooltip("Якщо гравець сховався в шафі/під столом, став цю галочку в TRUE")]
+        public bool isPlayerHidden = false;
+
+        [Tooltip("Чи показувати дебаг лінії")]
         public bool showDebugGizmos = true;
-
+        
         public enum EnemyState
         {
             Patrol,
             Alert,
             Chase,
             Attack,
-            Search
+            Search,
+            ScriptedEvent
         }
         
         private EnemyState currentState = EnemyState.Patrol;
@@ -85,16 +105,32 @@ namespace Assets.Scripts
         private float halfFieldOfView;
         private Vector3 eyeOffset;
 
-        private LightDetector lightDetector;
-        private bool wasLightDetected = false;
+        private PlayerMovement playerMovement;
+        private CameraController playerCamera;
+        
+        private bool isEventActive = false; 
+        private int currentHits = 0; 
+        private float recoveryTimer = 0f; 
 
         void Start()
         {
             navAgent = GetComponent<NavMeshAgent>();
+            lightDetector = GetComponent<LightDetector>();
+
+            if (damageOverlay != null)
+            {
+                damageOverlay.gameObject.SetActive(true); 
+                damageOverlay.color = new Color(1, 0, 0, 0); 
+            }
+
+            if (deathScreenPanel != null)
+            {
+                deathScreenPanel.SetActive(false);
+            }
 
             if (navAgent == null)
             {
-                Debug.LogError("NavMeshAgent not found! Add NavMeshAgent component to the enemy.");
+                Debug.LogError("NavMeshAgent not found!");
                 enabled = false;
                 return;
             }
@@ -102,14 +138,20 @@ namespace Assets.Scripts
             if (player == null)
             {
                 GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-                if (playerObj != null)
-                {
-                    player = playerObj.transform;
-                }
-                else
-                {
-                    Debug.LogWarning("Player not found! Set 'Player' tag on the player object.");
-                }
+                if (playerObj != null) player = playerObj.transform;
+            }
+
+            if (player != null)
+            {
+                playerMovement = player.GetComponent<PlayerMovement>();
+                playerCamera = player.GetComponentInChildren<CameraController>();
+            }
+
+            if (faceTarget == null)
+            {
+                Transform head = transform.Find("mixamorig:Hips/mixamorig:Spine/mixamorig:Spine1/mixamorig:Spine2/mixamorig:Neck/mixamorig:Head");
+                if(head != null) faceTarget = head;
+                else faceTarget = transform; 
             }
 
             SoundManager.OnSoundEmitted += OnSoundHeard;
@@ -124,16 +166,9 @@ namespace Assets.Scripts
             attackRangeSqr = attackRange * attackRange;
             hearingRangeSqr = hearingRange * hearingRange;
             halfFieldOfView = fieldOfViewAngle * 0.5f;
-            eyeOffset = Vector3.up;
-
-            if (useLightDetection)
-            {
-                lightDetector = GetComponent<LightDetector>();
-                if (lightDetector == null)
-                {
-                    Debug.LogWarning($"[EnemyAI] Light detection enabled but no LightDetector component found on {gameObject.name}");
-                }
-            }
+            
+            // [ЗМІНА] Підняли точку очей вище, щоб він не дивився з підлоги (1.6м - це рівень голови)
+            eyeOffset = Vector3.up * 1.6f;
         }
         
         void OnDestroy()
@@ -143,14 +178,87 @@ namespace Assets.Scripts
         
         void Update()
         {
-            if (!player)
+            if (!player) return;
+            if (isEventActive) return;
+
+            // [НОВЕ] Перевірка: Якщо гравець сховався (isPlayerHidden) - ми його ігноруємо
+            if (isPlayerHidden)
             {
+                playerInSight = false; // Не бачимо
+                // Якщо монстр гнався, він переходить у режим пошуку або патруля
+                if (currentState == EnemyState.Chase || currentState == EnemyState.Attack)
+                {
+                    ChangeState(EnemyState.Search);
+                }
+                
+                // Швидке лікування, якщо ми в безпеці
+                if (currentHits > 0)
+                {
+                    currentHits = 0;
+                    if(heartBeatAudio) heartBeatAudio.Stop();
+                }
+                // Очищаємо екран
+                if (damageOverlay != null && damageOverlay.color.a > 0.01f)
+                    damageOverlay.color = Color.Lerp(damageOverlay.color, new Color(1, 0, 0, 0), Time.deltaTime * 2f);
+
+                UpdateAnimations();
+                // Виконуємо логіку руху (щоб він не завмер, а ходив навколо)
+                switch (currentState)
+                {
+                    case EnemyState.Patrol: PatrolBehavior(); break;
+                    case EnemyState.Search: SearchBehavior(); break;
+                    case EnemyState.Alert: AlertBehavior(); break;
+                    default: ChangeState(EnemyState.Search); break;
+                }
+                return; // Виходимо з Update, щоб не дійшло до коду атаки нижче
+            }
+
+            // --- Стандартна логіка (коли гравець НЕ сховався) ---
+
+            // Логіка відновлення
+            if (currentHits == 1)
+            {
+                if (playerInSight)
+                {
+                    recoveryTimer = damageRecoveryTime; 
+                }
+                else
+                {
+                    recoveryTimer -= Time.deltaTime;
+                    if (recoveryTimer <= 0)
+                    {
+                        Debug.Log("Гравець сховався і відновився!");
+                        currentHits = 0;
+                        if(heartBeatAudio != null) heartBeatAudio.Stop();
+                    }
+                }
+            }
+
+            // Плавне зникнення екрану
+            if (currentHits == 0 && damageOverlay != null && damageOverlay.color.a > 0.01f)
+            {
+                damageOverlay.color = Color.Lerp(damageOverlay.color, new Color(1, 0, 0, 0), Time.deltaTime * 1.0f);
+            }
+
+            UpdateAnimations();
+
+            // [НОВЕ] Перевірка для атаки:
+            // 1. Дистанція підходить?
+            float trueDistance = Vector3.Distance(transform.position, player.position);
+            
+            // 2. Чи є стіна/стіл між нами? (Захист від атаки крізь меблі)
+            // Ми пускаємо промінь від голови монстра до центру гравця.
+            bool isBlockedByObstacle = Physics.Linecast(transform.position + Vector3.up * 1.6f, player.position + Vector3.up, obstacleLayer);
+
+            // Атакуємо ТІЛЬКИ якщо близько І немає перешкод
+            if (trueDistance <= killDistance && !isBlockedByObstacle)
+            {
+                StartCoroutine(TriggerAttackSequence());
                 return;
             }
 
             CheckVision();
-            CheckLightDetection();
-
+            
             switch (currentState)
             {
                 case EnemyState.Patrol:
@@ -168,21 +276,153 @@ namespace Assets.Scripts
                 case EnemyState.Search:
                     SearchBehavior();
                     break;
+                case EnemyState.ScriptedEvent:
+                    break;
+            }
+        }
+
+        void UpdateAnimations()
+        {
+            if (animator != null)
+            {
+                animator.SetFloat("Speed", navAgent.velocity.magnitude);
             }
         }
         
-        #region Vision System
+        #region Core Behaviors
         
+        IEnumerator TriggerAttackSequence()
+        {
+            isEventActive = true;
+            ChangeState(EnemyState.ScriptedEvent);
+            
+            navAgent.isStopped = true;
+            navAgent.velocity = Vector3.zero;
+
+            // Блокуємо керування
+            if (playerMovement) playerMovement.SetMovementLock(true);
+            
+            if (playerCamera) 
+            {
+                StartCoroutine(playerCamera.ForceLookAtRoutine(faceTarget, rotationTime));
+            }
+
+            currentHits++;
+            Debug.Log($"УДАР! Всього ударів: {currentHits}");
+
+            if (animator) animator.SetTrigger("Attack");
+
+            // Чекаємо моменту удару
+            yield return new WaitForSeconds(impactWaitTime); 
+
+            if (currentHits == 1)
+            {
+                // --- 1 УДАР ---
+                Debug.Log("Поранення! (БАМ!)");
+                
+                // [ЗМІНА] Зробив екран прозорішим (0.3 замість 0.5), щоб не був таким густим
+                if (damageOverlay != null) 
+                {
+                    damageOverlay.gameObject.SetActive(true);
+                    damageOverlay.color = new Color(0.8f, 0, 0, 0.3f); 
+                }
+                
+                if (heartBeatAudio != null) heartBeatAudio.Play();
+
+                // [ЗМІНА] Виправлення помилки "inactive controller"
+                // Перевіряємо, чи контролер існує і чи він УВІМКНЕНИЙ перед тим, як штовхати
+                if (player != null)
+                {
+                    CharacterController controller = player.GetComponent<CharacterController>();
+                    
+                    if (controller != null && controller.enabled)
+                    {
+                        Vector3 pushDir = player.position - transform.position;
+                        pushDir.y = 0; 
+                        pushDir.Normalize();
+
+                        float timer = 0;
+                        while(timer < 0.2f) 
+                        {
+                            timer += Time.deltaTime;
+                            // Ще раз перевіряємо, чи контролер не вимкнувся в процесі
+                            if(controller != null && controller.enabled) 
+                            {
+                                controller.Move(pushDir * knockbackForce * Time.deltaTime);
+                            }
+                            yield return null;
+                        }
+                    }
+                }
+
+                recoveryTimer = damageRecoveryTime;
+
+                // Чекаємо завершення анімації
+                yield return new WaitForSeconds(1.3f); 
+
+                // Розблокування
+                if (playerMovement) playerMovement.SetMovementLock(false);
+                if (playerCamera) playerCamera.SetInputLock(false);
+                
+                Debug.Log("Монстр в ступорі...");
+                yield return new WaitForSeconds(stunTimeAfterHit);
+                
+                isEventActive = false;
+                ChangeState(EnemyState.Chase); 
+                navAgent.isStopped = false;
+            }
+            else
+            {
+                // --- 2 УДАР (СМЕРТЬ) ---
+                if (damageOverlay != null) 
+                    damageOverlay.color = new Color(0.6f, 0, 0, 1f);
+
+                yield return new WaitForSeconds(1.0f);
+
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+                if (deathScreenPanel != null)
+                {
+                    deathScreenPanel.SetActive(true);
+                }
+                else
+                {
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                }
+            }
+        }
+
+        #region Standard AI Logic
+
         void CheckVision()
         {
-            if (player == null)
+            if (player == null) return;
+
+            // [ПОКРАЩЕНО] Перевірка світла + Перевірка стін
+            if (lightDetector != null && lightDetector.IsLightDetected)
             {
-                return;
+                // LightDetector каже "світло є", але перевіримо ще раз фізично Linecast-ом
+                // Чи є пряма видимість між очима монстра і гравцем?
+                bool wallBetween = Physics.Linecast(transform.position + Vector3.up * 1.5f, player.position + Vector3.up, obstacleLayer);
+                
+                // Якщо стіни немає - значить точно бачимо
+                if (!wallBetween)
+                {
+                    lastKnownPlayerPosition = player.position;
+                    playerInSight = true; 
+
+                    if (currentState != EnemyState.Chase && currentState != EnemyState.Attack)
+                    {
+                        if(showDebugGizmos) Debug.Log("Викрито світлом! Починаю погоню.");
+                        ChangeState(EnemyState.Chase);
+                    }
+                    return; 
+                }
             }
 
             Vector3 eyePosition = transform.position + eyeOffset;
             Vector3 directionToPlayer = player.position - eyePosition;
-
             float distanceSqr = directionToPlayer.sqrMagnitude;
 
             if (distanceSqr > visionRangeSqr)
@@ -199,44 +439,17 @@ namespace Assets.Scripts
             }
 
             float distanceToPlayer = Mathf.Sqrt(distanceSqr);
-            Vector3 directionNormalized = directionToPlayer / distanceToPlayer;
-
             RaycastHit hit;
-            if (Physics.Raycast(eyePosition, directionNormalized, out hit, distanceToPlayer, playerLayer | obstacleLayer, QueryTriggerInteraction.Ignore))
+            // Перевірка зору звичайним рейкастом
+            if (Physics.Raycast(eyePosition, directionToPlayer.normalized, out hit, distanceToPlayer, playerLayer | obstacleLayer))
             {
-                if (showDebugGizmos)
-                {
-                    Debug.DrawRay(eyePosition, directionNormalized * hit.distance, Color.red, 0.1f);
-                }
-
                 if (hit.transform == player || hit.transform.IsChildOf(player))
                 {
                     playerInSight = true;
                     OnPlayerSpotted();
-
-                    if (showDebugGizmos)
-                    {
-                        Debug.Log($"Enemy sees player! Distance: {distanceToPlayer:F2}, Angle: {angle:F2}");
-                    }
                     return;
                 }
-                else
-                {
-                    if (showDebugGizmos)
-                    {
-                        Debug.Log($"Vision blocked by: {hit.transform.name}");
-                    }
-                }
             }
-            else
-            {
-                if (showDebugGizmos)
-                {
-                    Debug.DrawRay(eyePosition, directionNormalized * visionRange, Color.yellow, 0.1f);
-                    Debug.LogWarning("Raycast didn't hit anything! Check Player Layer and Obstacle Layer settings.");
-                }
-            }
-
             playerInSight = false;
         }
         
@@ -245,31 +458,22 @@ namespace Assets.Scripts
             lastKnownPlayerPosition = player.position;
             loseTargetTimer = 0f;
 
-            if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
+            if (currentState != EnemyState.Chase && currentState != EnemyState.Attack)
             {
-                Debug.Log($"[EnemyAI] Player spotted! Changing from {currentState} to Chase");
                 ChangeState(EnemyState.Chase);
             }
         }
         
-        #endregion
-        
-        #region Hearing System
-        
         void OnSoundHeard(Vector3 soundPosition, float soundIntensity, GameObject source)
         {
-            if (source == gameObject)
-            {
-                return;
-            }
+            if (source == gameObject) return;
+            // [НОВЕ] Якщо гравець сховався - монстр ігнорує звук
+            if (isPlayerHidden) return; 
 
-            float distanceSqr = (soundPosition - transform.position).sqrMagnitude;
-            float hearingRangeWithIntensity = hearingRange * soundIntensity;
-            float hearingRangeWithIntensitySqr = hearingRangeWithIntensity * hearingRangeWithIntensity;
-
-            if (distanceSqr <= hearingRangeWithIntensitySqr)
+            float distSqr = (soundPosition - transform.position).sqrMagnitude;
+            if (distSqr <= (hearingRange * soundIntensity) * (hearingRange * soundIntensity))
             {
-                if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
+                if (currentState == EnemyState.Patrol || currentState == EnemyState.Search)
                 {
                     lastKnownPlayerPosition = soundPosition;
                     ChangeState(EnemyState.Alert);
@@ -277,96 +481,29 @@ namespace Assets.Scripts
             }
         }
         
-        #endregion
-
-        #region Light Detection System
-
-        void CheckLightDetection()
-        {
-            if (!useLightDetection || lightDetector == null)
-            {
-                return;
-            }
-
-            bool isLightDetected = lightDetector.IsLightDetected;
-
-            if (isLightDetected && !wasLightDetected)
-            {
-                OnLightDetected();
-            }
-            else if (!isLightDetected && wasLightDetected)
-            {
-                OnLightLost();
-            }
-
-            wasLightDetected = isLightDetected;
-        }
-
-        void OnLightDetected()
-        {
-            if (!chaseOnLightDetection)
-            {
-                return;
-            }
-
-            if (!lightDetector.CanTriggerChase())
-            {
-                if (showDebugGizmos)
-                {
-                    Debug.Log("[EnemyAI] Light detected but intensity/range too low for chase");
-                }
-                return;
-            }
-
-            if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
-            {
-                lastKnownPlayerPosition = lightDetector.LastLightPosition;
-                Debug.Log($"[EnemyAI] Light detected! Changing from {currentState} to Chase");
-                ChangeState(EnemyState.Chase);
-            }
-        }
-
-        void OnLightLost()
-        {
-            if (currentState == EnemyState.Chase && !playerInSight)
-            {
-                lastKnownPlayerPosition = lightDetector.LastLightPosition;
-                Debug.Log($"[EnemyAI] Light lost - remembering position: {lastKnownPlayerPosition}");
-            }
-        }
-
-        #endregion
-
-        #region State Behaviors
-        
         void PatrolBehavior()
         {
-            if (patrolPoints == null || patrolPoints.Length == 0)
-            {
-                return;
-            }
+            navAgent.speed = patrolSpeed;
             
-            if (waitTimer > 0)
+            if (navAgent.remainingDistance < 0.5f && !navAgent.pathPending)
             {
                 waitTimer -= Time.deltaTime;
-                return;
-            }
-            
-            if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
-            {
-                waitTimer = waitTimeAtPoint;
-                GoToNextPatrolPoint();
+                if (waitTimer <= 0)
+                {
+                    waitTimer = waitTimeAtPoint;
+                    GoToNextPatrolPoint();
+                }
             }
         }
         
         void AlertBehavior()
         {
-            navAgent.speed = chaseSpeed;
+            navAgent.speed = patrolSpeed;
             navAgent.SetDestination(lastKnownPlayerPosition);
             
             if (!navAgent.pathPending && navAgent.remainingDistance < 1f)
             {
-                ChangeState(EnemyState.Patrol);
+                ChangeState(EnemyState.Search);
             }
         }
         
@@ -374,40 +511,19 @@ namespace Assets.Scripts
         {
             navAgent.speed = chaseSpeed;
 
-            bool hasVisualContact = playerInSight;
-            bool hasLightContact = useLightDetection && lightDetector != null && lightDetector.IsLightDetected && lightDetector.CanTriggerChase();
-
-            if (hasVisualContact || hasLightContact)
+            if (playerInSight)
             {
-                if (hasVisualContact)
-                {
-                    lastKnownPlayerPosition = player.position;
-                }
-                else if (hasLightContact)
-                {
-                    lastKnownPlayerPosition = lightDetector.LastLightPosition;
-                }
-
-                navAgent.SetDestination(lastKnownPlayerPosition);
+                navAgent.SetDestination(player.position);
+                lastKnownPlayerPosition = player.position;
                 loseTargetTimer = 0f;
-
-                if (hasVisualContact)
-                {
-                    float distanceSqr = (player.position - transform.position).sqrMagnitude;
-                    if (distanceSqr <= attackRangeSqr)
-                    {
-                        ChangeState(EnemyState.Attack);
-                    }
-                }
             }
             else
             {
                 navAgent.SetDestination(lastKnownPlayerPosition);
                 loseTargetTimer += Time.deltaTime;
 
-                if (loseTargetTimer >= loseTargetTime || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
+                if (loseTargetTimer >= loseTargetTime)
                 {
-                    Debug.Log("Lost player and light - starting search");
                     ChangeState(EnemyState.Search);
                 }
             }
@@ -415,26 +531,16 @@ namespace Assets.Scripts
         
         void AttackBehavior()
         {
-            navAgent.SetDestination(transform.position);
-
-            Vector3 directionToPlayer = player.position - transform.position;
-
-            Vector3 flatDirection = new Vector3(directionToPlayer.x, 0, directionToPlayer.z);
-            if (flatDirection.sqrMagnitude > 0.001f)
-            {
-                Quaternion lookRotation = Quaternion.LookRotation(flatDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
-            }
-
-            Debug.Log("Attacking player!");
-
-            float distanceSqr = directionToPlayer.sqrMagnitude;
-            if (distanceSqr > attackRangeSqr || !playerInSight)
+            Vector3 dir = player.position - transform.position;
+            dir.y = 0;
+            if (dir != Vector3.zero) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 5f);
+            
+            if (dir.sqrMagnitude > attackRangeSqr)
             {
                 ChangeState(EnemyState.Chase);
             }
         }
-
+        
         void SearchBehavior()
         {
             navAgent.speed = patrolSpeed;
@@ -443,50 +549,28 @@ namespace Assets.Scripts
 
             if (searchTimer >= searchDuration)
             {
-                Debug.Log("Search timeout - returning to patrol");
                 ChangeState(EnemyState.Patrol);
                 return;
             }
 
-            if (searchPointTimer >= searchPointInterval || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
+            if (searchPointTimer >= searchPointInterval || navAgent.remainingDistance < 0.5f)
             {
                 searchPointTimer = 0f;
-                Vector3 randomPoint = GetRandomPointAroundPosition(lastKnownPlayerPosition, searchRadius);
-
+                Vector3 randomPoint = lastKnownPlayerPosition + (Random.insideUnitSphere * searchRadius);
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(randomPoint, out hit, searchRadius, NavMesh.AllAreas))
                 {
-                    currentSearchPoint = hit.position;
-                    navAgent.SetDestination(currentSearchPoint);
-                    Debug.Log($"Moving to new search point around last known position");
+                    navAgent.SetDestination(hit.position);
                 }
             }
         }
 
-        Vector3 GetRandomPointAroundPosition(Vector3 center, float radius)
-        {
-            Vector2 randomCircle = Random.insideUnitCircle * radius;
-            Vector3 randomPoint = center + new Vector3(randomCircle.x, 0, randomCircle.y);
-            return randomPoint;
-        }
-
-        #endregion
-        
-        #region Helper Methods
-        
         void ChangeState(EnemyState newState)
         {
             if (currentState == newState) return;
-
-            Debug.Log($"Enemy state changed: {currentState} -> {newState}");
             currentState = newState;
 
-            if (newState == EnemyState.Patrol)
-            {
-                navAgent.speed = patrolSpeed;
-                loseTargetTimer = 0f;
-                GoToNextPatrolPoint();
-            }
+            if (newState == EnemyState.Patrol) GoToNextPatrolPoint();
             else if (newState == EnemyState.Search)
             {
                 searchTimer = 0f;
@@ -496,70 +580,34 @@ namespace Assets.Scripts
         
         void GoToNextPatrolPoint()
         {
-            if (patrolPoints == null || patrolPoints.Length == 0)
-            {
-                return;
-            }
-            
+            if (patrolPoints == null || patrolPoints.Length == 0) return;
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
+
+        #endregion 
         
         #endregion
-        
-        #region Debug Visualization
-        
+
         void OnDrawGizmos()
         {
-            if (!showDebugGizmos)
-            {
-                return;
-            }
-            
+            if (!showDebugGizmos) return;
+
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, visionRange);
-            
+            Vector3 left = Quaternion.Euler(0, -fieldOfViewAngle/2, 0) * transform.forward * visionRange;
+            Vector3 right = Quaternion.Euler(0, fieldOfViewAngle/2, 0) * transform.forward * visionRange;
+            Gizmos.DrawLine(transform.position, transform.position + left);
+            Gizmos.DrawLine(transform.position, transform.position + right);
+
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position, hearingRange);
-            
-            Vector3 forward = transform.forward * visionRange;
-            Vector3 rightBoundary = Quaternion.Euler(0, fieldOfViewAngle / 2f, 0) * forward;
-            Vector3 leftBoundary = Quaternion.Euler(0, -fieldOfViewAngle / 2f, 0) * forward;
-            
-            Gizmos.color = playerInSight ? Color.red : Color.green;
-            Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
-            Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
-            
+
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, attackRange);
-            
-            if (patrolPoints != null && patrolPoints.Length > 0)
-            {
-                Gizmos.color = Color.cyan;
-                for (int i = 0; i < patrolPoints.Length; i++)
-                {
-                    if (patrolPoints[i] != null)
-                    {
-                        Gizmos.DrawWireSphere(patrolPoints[i].position, 0.5f);
-                        if (i < patrolPoints.Length - 1 && patrolPoints[i + 1] != null)
-                        {
-                            Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[i + 1].position);
-                        }
-                    }
-                }
-                if (patrolPoints[patrolPoints.Length - 1] != null && patrolPoints[0] != null)
-                {
-                    Gizmos.DrawLine(patrolPoints[patrolPoints.Length - 1].position, patrolPoints[0].position);
-                }
-            }
-            
-            if (currentState != EnemyState.Patrol)
-            {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawWireSphere(lastKnownPlayerPosition, 1f);
-            }
+
+            Gizmos.color = Color.black; 
+            Gizmos.DrawWireSphere(transform.position, killDistance);
         }
-        
-        #endregion
     }
 }

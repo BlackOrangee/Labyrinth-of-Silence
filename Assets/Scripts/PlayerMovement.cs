@@ -24,6 +24,9 @@ namespace Assets.Scripts
         private float footstepTimer = 0f;
         private Transform myTransform;
 
+        // [НОВЕ] Прапорець для блокування руху (КРОК 5)
+        private bool isMovementLocked = false;
+
         void Start()
         {
             controller = GetComponent<CharacterController>();
@@ -32,8 +35,30 @@ namespace Assets.Scripts
 
         void Update()
         {
+            // [НОВЕ] Якщо заблоковано - імітуємо гравітацію (щоб не висів у повітрі), але не рухаємось
+            if (isMovementLocked) 
+            {
+                 // Можна залишити просту гравітацію, щоб тіло впало, якщо схопили в стрибку
+                 if (!controller.isGrounded)
+                 {
+                    velocity.y += gravity * Time.deltaTime;
+                    controller.Move(velocity * Time.deltaTime);
+                 }
+                 return;
+            }
+
             HandleMovement();
             HandleGravity();
+        }
+
+        // [НОВЕ] Метод, який викличе монстр, щоб зупинити тебе
+        public void SetMovementLock(bool locked)
+        {
+            isMovementLocked = locked;
+            if (locked)
+            {
+                velocity = Vector3.zero; // Скидаємо інерцію
+            }
         }
 
         private void HandleMovement()
@@ -44,28 +69,6 @@ namespace Assets.Scripts
             {
                 velocity.y = -2f;
             }
-
-            // isCrouching = Input.GetKey(KeyCode.LeftControl);
-            // targetHeight = isCrouching ? originalHeight * crouchHeightMultiplier : originalHeight;
-
-            // if (Mathf.Abs(controller.height - targetHeight) > 0.01f)
-            // {
-            //     float newHeight = Mathf.Lerp(controller.height, targetHeight, Time.deltaTime * crouchTransitionSpeed);
-            //
-            //     Vector3 center = controller.center;
-            //     float heightDifference = newHeight - controller.height;
-            //     center.y += heightDifference / 2f;
-            //
-            //     controller.height = newHeight;
-            //     controller.center = center;
-            // }
-
-            // if (cameraController != null)
-            // {
-            //     float targetCrouchOffset = isCrouching ? crouchCameraOffset : 0f;
-            //     currentCrouchOffset = Mathf.Lerp(currentCrouchOffset, targetCrouchOffset, Time.deltaTime * crouchTransitionSpeed);
-            //     cameraController.crouchOffset = currentCrouchOffset;
-            // }
 
             float x = Input.GetAxis("Horizontal");
             float z = Input.GetAxis("Vertical");
