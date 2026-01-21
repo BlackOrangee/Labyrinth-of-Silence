@@ -16,5 +16,11 @@ MonoBehaviour:
   newspaperName: Document 1
   newspaperImage: {fileID: 159176335, guid: bb6f69fbde95d9943ba893887363d390, type: 3}
   inventoryIcon: {fileID: 1277629717, guid: eb8ebf39c32585f4284d2209b8099a38, type: 3}
-  description: "\u0426\u0456\u043B\u043A\u043E\u043C \u0442\u0430\u0454\u043C\u043D\u0438\u0439
-    \u0435\u043A\u0441\u043F\u0435\u0440\u0438\u043C\u0435\u043D\u0442"
+  title: Top secret experiment resume
+  content: "\u0417\u0432\u0456\u0442 \u2116125\n\nToday, an experiment called \"-----------------------\"
+    was conducted. The essence of the experiment was to test how well the subjects
+    performed tasks and understood human language at different stages of infection,
+    and how their brains functioned.\n\n\nBacterium: Enterococus bacteria\n\nDevelopment
+    speed: 8 month\n\nMutations:   \"--------------------------------\"\n\nDevelopment
+    environment: Cold temperature (-30 - 0 ), humidity.\n\nGas: Oxygen, carbon dioxide;\n\n\t\t\t\t\t\t\tDr.John
+    Doe"
