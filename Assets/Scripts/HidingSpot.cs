@@ -1,32 +1,46 @@
 using UnityEngine;
+
 namespace Assets.Scripts
 {
+    public enum HidingSpotType
+    {
+        Closet,
+        Table 
+    }
+
     public class HidingSpot : MonoBehaviour, IInteractable
     {
-        [Header("Hiding Spot Settings")]
-        [Tooltip("Hiding spot name (e.g. 'Closet' or 'Table')")]
-        public string spotName = "Hiding Spot";
-        [Tooltip("Point where player appears on exit")]
+        [Header("General Settings")]
+        [Tooltip("Type of hiding spot")]
+        public HidingSpotType spotType = HidingSpotType.Closet;
+
+        [Tooltip("Name to display in UI")]
+        public string spotName = "Closet";
+
+        [Header("Positions")]
+        [Tooltip("Where player stands inside")]
+        public Transform hidePoint;
+        [Tooltip("Where player appears after exit")]
         public Transform exitPoint;
 
-        [Tooltip("Popup window manager")]
-        public PopupManager popupManager;
+        [Header("Wardrobe Specifics (Optional for Table)")]
+        public Transform leftDoorPivot;
+        public Transform rightDoorPivot;
+        [Tooltip("Angle to open doors when hiding (e.g. 20)")]
+        public float openAngle = 20f;
+        [Tooltip("Speed of door opening")]
+        public float doorSmoothness = 5f;
 
-        [Header("Sounds")]
-        [Tooltip("Sound when entering hiding spot")]
+        [Header("Audio")]
         public AudioClip enterSound;
-
-        [Tooltip("Sound when exiting hiding spot")]
         public AudioClip exitSound;
-
         [Range(0f, 1f)]
-        [Tooltip("Sound volume")]
         public float soundVolume = 0.5f;
 
-        private GameObject currentPlayer;
-        private PlayerHideController playerHideController;
         private AudioSource audioSource;
-        private bool isPlayerInside = false;
+        private bool isOccupied = false;
+
+        private PopupManager popupManager;
 
         void Awake()
         {
@@ -38,157 +52,111 @@ namespace Assets.Scripts
 
         void Start()
         {
-            if (popupManager == null)
+            popupManager = FindFirstObjectByType<PopupManager>();
+
+            if (hidePoint == null)
             {
-                popupManager = FindFirstObjectByType<PopupManager>();
+                GameObject hideObj = new GameObject("HidePoint_Ref");
+                hideObj.transform.SetParent(transform);
+                hideObj.transform.localPosition = Vector3.zero;
+                hidePoint = hideObj.transform;
             }
 
             if (exitPoint == null)
             {
-                CreateExitPoint();
+                GameObject exitObj = new GameObject("ExitPoint_Ref");
+                exitObj.transform.SetParent(transform);
+                exitObj.transform.localPosition = Vector3.forward * 1.5f;
+                exitPoint = exitObj.transform;
             }
         }
 
-        private void CreateExitPoint()
+        void Update()
         {
-            GameObject exitObj = new GameObject($"{spotName}_ExitPoint");
-            exitObj.transform.parent = transform;
-            exitObj.transform.position = transform.position + transform.forward * 1.5f;
-            exitPoint = exitObj.transform;
+            if (spotType == HidingSpotType.Closet && leftDoorPivot != null && rightDoorPivot != null)
+            {
+                float targetAngle = isOccupied ? openAngle : 0f;
+
+                Quaternion targetRotL = Quaternion.Euler(0, targetAngle, 0);
+
+                Quaternion targetRotR = Quaternion.Euler(0, -targetAngle, 0);
+
+                leftDoorPivot.localRotation = Quaternion.Slerp(leftDoorPivot.localRotation, targetRotL, Time.deltaTime * doorSmoothness);
+                rightDoorPivot.localRotation = Quaternion.Slerp(rightDoorPivot.localRotation, targetRotR, Time.deltaTime * doorSmoothness);
+            }
         }
 
-        #region IInteractable Implementation
-
+        #region IInteractable
         public string GetInteractText()
         {
-            return $"Press Enter to hide: {spotName}";
+            return $"Press E to hide: {spotName}";
         }
 
         public void Interact(GameObject actor)
         {
-            if (actor == null)
+            PlayerHideController controller = actor.GetComponent<PlayerHideController>();
+            if (controller != null && !controller.IsHiding)
             {
-                return;
+                EnterHiding(actor, controller);
             }
-
-            PlayerHideController hideController = actor.GetComponent<PlayerHideController>();
-
-            if (hideController == null)
-            {
-                return;
-            }
-
-            if (hideController.IsHiding)
-            {
-                return;
-            }
-
-            EnterHiding(actor, hideController);
         }
 
-        public void OnInteract(GameObject actor)
-        {
-            Interact(actor);
-        }
-
+        public void OnInteract(GameObject actor) => Interact(actor);
         #endregion
 
-        public void EnterHiding(GameObject player, PlayerHideController hideController)
+        public void EnterHiding(GameObject player, PlayerHideController controller)
         {
-            if (isPlayerInside)
-            {
-                return;
-            }
+            if (isOccupied) return;
 
-            currentPlayer = player;
-            playerHideController = hideController;
-            isPlayerInside = true;
-
-            hideController.EnterHiding(this);
+            isOccupied = true;
             PlaySound(enterSound);
+
+            controller.StartHiding(this);
         }
 
-        public void ExitHiding()
+        public void ExitHiding(GameObject player)
         {
-            if (!isPlayerInside || currentPlayer == null)
-            {
-                return;
-            }
+            if (!isOccupied) return;
 
-            if (exitPoint != null)
-            {
-                CharacterController controller = currentPlayer.GetComponent<CharacterController>();
-                if (controller != null)
-                {
-                    controller.enabled = false;
-                    currentPlayer.transform.position = exitPoint.position;
-                    currentPlayer.transform.rotation = exitPoint.rotation;
-                    controller.enabled = true;
-                }
-                else
-                {
-                    currentPlayer.transform.position = exitPoint.position;
-                    currentPlayer.transform.rotation = exitPoint.rotation;
-                }
-            }
-
+            isOccupied = false;
             PlaySound(exitSound);
 
-            if (popupManager != null && playerHideController != null)
-            {
-                StartCoroutine(ShowTemporaryMessage());
-            }
+            CharacterController cc = player.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+            
+            player.transform.position = exitPoint.position;
+            player.transform.rotation = exitPoint.rotation;
 
-            currentPlayer = null;
-            playerHideController = null;
-            isPlayerInside = false;
-        }
-
-        private System.Collections.IEnumerator ShowTemporaryMessage()
-        {
-            if (popupManager != null)
-            {
-                popupManager.ShowPopup(
-                    $"Player left hiding spot: {spotName}",
-                    null,
-                    this,
-                    "",
-                    null
-                );
-            }
-
-            yield return new WaitForSeconds(2f);
+            if (cc != null) cc.enabled = true;
 
             if (popupManager != null)
             {
-                popupManager.HidePopup(this);
+                popupManager.HidePopup(this); 
             }
         }
 
         private void PlaySound(AudioClip clip)
         {
             if (clip != null && audioSource != null)
-            {
                 audioSource.PlayOneShot(clip, soundVolume);
-            }
         }
 
         void OnDrawGizmos()
         {
+            if (hidePoint != null)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawWireSphere(hidePoint.position, 0.3f);
+                Gizmos.DrawIcon(hidePoint.position, "BuildSettings.SelectedIcon", true);
+            }
+
             if (exitPoint != null)
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireSphere(exitPoint.position, 0.3f);
                 Gizmos.DrawLine(transform.position, exitPoint.position);
-
-                Gizmos.color = Color.blue;
                 Gizmos.DrawRay(exitPoint.position, exitPoint.forward * 0.5f);
             }
-        }
-
-        public string GetSpotName()
-        {
-            return spotName;
         }
     }
 }

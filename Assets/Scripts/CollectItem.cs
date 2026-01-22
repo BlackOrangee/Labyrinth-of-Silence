@@ -1,96 +1,57 @@
 ﻿using UnityEngine;
 
 namespace Assets.Scripts
-
 {
-
     [RequireComponent(typeof(Collider))]
     public class CollectItem : MonoBehaviour, IInteractable
     {
-        [Header("CollectItem Settings")]
-        [Tooltip("Item name displayed in popup")]
-        public string displayName = "Item";
+        [Header("Key Settings (New)")]
+        [Tooltip("Вибери колір ключа тут (Green, Yellow, Blue, Pink)")]
+        public KeyColorType keyColor = KeyColorType.None;
 
-        [Tooltip("Item icon shown in popup")]
+        [Header("Visuals (Restored)")]
+        public string displayName = "Key";
+        [Tooltip("Іконка, яка відображається в Popup")]
         public Sprite itemIcon;
-
-        [Tooltip("Destroy object after collection")]
         public bool destroyOnCollect = true;
 
-        [Tooltip("Optional: play pickup sound")]
+        [Header("Audio")]
         public AudioClip pickupSound;
-
-        [Range(0f, 1f)]
-        public float pickupVolume = 1f;
+        [Range(0f, 1f)] public float pickupVolume = 1f;
 
         private bool isCollected = false;
-        private AudioSource audioSource;
         private Collider cachedCollider;
 
         private void Awake()
         {
             cachedCollider = GetComponent<Collider>();
-            if (cachedCollider == null)
-            {
-                Debug.LogWarning($"CollectItem ({name}): Collider not found. Add a Collider to the object.");
-            }
-
-            if (pickupSound != null)
-            {
-                audioSource = gameObject.AddComponent<AudioSource>();
-                audioSource.playOnAwake = false;
-                audioSource.clip = pickupSound;
-                audioSource.volume = pickupVolume;
-            }
         }
 
         public string GetInteractText()
         {
-            return $"Press button to pick up: {displayName}";
+            string nameToShow = keyColor != KeyColorType.None ? $"{keyColor} Key" : displayName;
+            return $"Press to take {nameToShow}";
         }
 
-        public void OnInteract(GameObject actor)
+        public void Interact(GameObject actor)
         {
-            if (isCollected)
-            {
-                Debug.Log($"CollectItem: {displayName} already collected - ignoring repeat call.");
-                return;
-            }
+            if (isCollected) return;
 
             isCollected = true;
+            if (cachedCollider != null) cachedCollider.enabled = false;
 
-            if (cachedCollider != null)
-            {
-                cachedCollider.enabled = false;
-            }
-
-            var inv = actor != null ? actor.GetComponent<SimpleInventory>() : null;
+            var inv = actor.GetComponent<SimpleInventory>();
             if (inv != null)
             {
-                inv.AddItem(displayName);
-                Debug.Log($"CollectItem: {displayName} added to player inventory.");
-
-                if (QuestTracker.Instance != null && QuestTracker.Instance.HasQuest("collect_keys"))
+                if (keyColor != KeyColorType.None)
                 {
-                    int currentKeys = inv.GetCollectedKeysCount();
-                    QuestTracker.Instance.UpdateQuest("collect_keys", currentKeys);
-                    Debug.Log($"CollectItem: updated 'collect_keys' quest progress to {currentKeys}");
+                    inv.AddKey(keyColor);
                 }
-            }
-            else
-            {
-                Debug.Log($"CollectItem: {displayName} picked up (inventory not found).");
             }
 
             if (pickupSound != null)
             {
-                GameObject soundHolder = new GameObject("PickupSoundHolder");
-                soundHolder.transform.position = transform.position;
-                AudioSource a = soundHolder.AddComponent<AudioSource>();
-                a.clip = pickupSound;
-                a.volume = pickupVolume;
-                a.Play();
-                Destroy(soundHolder, pickupSound.length + 0.1f);
+                AudioSource.PlayClipAtPoint(pickupSound, transform.position, pickupVolume);
             }
 
             if (destroyOnCollect)
@@ -99,31 +60,13 @@ namespace Assets.Scripts
             }
             else
             {
-                var renderer = GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.enabled = false;
-                }
-
-                foreach (Transform t in transform)
-                {
-                    t.gameObject.SetActive(false);
-                }
+                gameObject.SetActive(false);
             }
         }
 
-        public void Interact(GameObject actor)
+        public void OnInteract(GameObject actor)
         {
-            OnInteract(actor);
-        }
-
-        private void Reset()
-        {
-            Collider c = GetComponent<Collider>();
-            if (c != null)
-            {
-                c.isTrigger = false;
-            }
+            Interact(actor);
         }
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using UnityEngine.EventSystems;
+
 namespace Assets.Scripts
 {
     public class PopupManager : MonoBehaviour
@@ -14,8 +15,8 @@ namespace Assets.Scripts
         public Button executeButton;
         public TextMeshProUGUI executeButtonText;
         [Header("Default")]
-        public string defaultMessage = "Press the E button to pick up the item.";
-        public string defaultButtonText = "";
+        public string defaultMessage = "Press E to interact.";
+        public string defaultButtonText = "E";
 
         private const string keysMessageFormat = "Keys collected: {0} / {1}";
 
@@ -44,7 +45,7 @@ namespace Assets.Scripts
         {
             if (popupRoot != null && popupRoot.activeSelf && InteractionLocker.IsOwner(ownerRef))
             {
-                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                if (Input.GetKeyDown(KeyCode.E))
                 {
                     if (onExecuteCallback != null && executeButton != null && executeButton.interactable)
                     {
@@ -59,6 +60,12 @@ namespace Assets.Scripts
             if (popupRoot == null || messageText == null || executeButton == null)
             {
                 Debug.LogWarning("PopupManager: UI fields not configured or null; check Inspector.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(message))
+            {
+                HidePopup(owner);
                 return;
             }
 
@@ -80,7 +87,8 @@ namespace Assets.Scripts
             ownerRef = owner;
             onExecuteCallback = onExecute;
 
-            messageText.text = string.IsNullOrEmpty(message) ? defaultMessage : message;
+            messageText.text = message; 
+            
             SetButtonText(buttonText);
             SetIcon(icon);
 
@@ -223,7 +231,7 @@ namespace Assets.Scripts
 
             if (collected >= required)
             {
-                ShowPopup(msg, onOpen, owner, "Open", null);
+                ShowPopup(msg, onOpen, owner, "Open (E)", null);
             }
             else
             {
