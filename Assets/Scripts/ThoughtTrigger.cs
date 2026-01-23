@@ -2,6 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Trigger for showing character thoughts when player enters the zone
+/// [MODIFIED] Updated API calls to remove Obsolete warnings
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class ThoughtTrigger : MonoBehaviour
@@ -66,7 +67,9 @@ public class ThoughtTrigger : MonoBehaviour
 
     private void ShowThought()
     {
-        ThoughtUI thoughtUI = FindObjectOfType<ThoughtUI>();
+        // [ВИПРАВЛЕНО] Замінено застарілий метод на новий (швидший)
+        ThoughtUI thoughtUI = Object.FindFirstObjectByType<ThoughtUI>();
+        
         if (thoughtUI != null)
         {
             thoughtUI.ShowThought(thoughtText, displayDuration);

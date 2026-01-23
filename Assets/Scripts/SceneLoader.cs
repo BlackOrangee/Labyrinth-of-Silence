@@ -18,6 +18,7 @@ namespace Assets.Scripts
 
     /// <summary>
     /// Manages scene transitions with a loading screen
+    /// [MODIFIED] Updated API calls to remove Obsolete warnings
     /// </summary>
     public class SceneLoader : MonoBehaviour
     {
@@ -200,7 +201,9 @@ namespace Assets.Scripts
             {
                 Debug.LogWarning("[SceneLoader] LoadingScreen not found in scene! Creating dynamically...");
 
-                Canvas canvas = FindObjectOfType<Canvas>();
+                // [ВИПРАВЛЕНО] Замінено застарілий FindObjectOfType на FindFirstObjectByType
+                Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+                
                 if (canvas != null)
                 {
                     Image background = null;

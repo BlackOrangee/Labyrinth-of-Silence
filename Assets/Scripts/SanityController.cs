@@ -30,6 +30,8 @@ namespace Assets.Scripts
         public float rotationForce = 5f;
 
         [Header("Heartbeat Rhythm (Ритм)")]
+        // [ВАЖЛИВО] Встав сюди аудіокліп!
+        public AudioClip heartbeatClip; 
         public float startPulseSpeed = 1.0f;
         public float endPulseSpeed = 2.2f;
         public float pulseSharpness = 20f;
@@ -41,7 +43,7 @@ namespace Assets.Scripts
         public float scaleAmount = 0.3f;
         public float colorSplitStrength = 3.0f;
 
-        [Tooltip("Наскільки сильно звужується екран перед смертю (0.5 = половина, 1.0 = повна темрява)")]
+        [Tooltip("Наскільки сильно звужується екран перед смертю")]
         [Range(0f, 1f)] public float maxVignetteIntensity = 0.65f;
 
         [Header("References")]
@@ -70,6 +72,9 @@ namespace Assets.Scripts
         private Vector2 _currentShakePos;
         private ChromaticAberration _aberration;
         private Vignette _vignette;
+
+        // Змінна для блокування звуку ззовні
+        private bool _isHeartbeatMuted = false;
 
         private void Start()
         {
@@ -135,22 +140,38 @@ namespace Assets.Scripts
             if (_currentSanity <= 0) Die();
         }
 
+        // [ВИПРАВЛЕНО] Цей метод зупиняє звук миттєво, щоб не було накладання
+        public void SetHeartbeatMute(bool isMuted)
+        {
+            _isHeartbeatMuted = isMuted;
+            
+            if (isMuted && heartbeatSource != null)
+            {
+                // Миттєво зупиняємо будь-який звук серця
+                heartbeatSource.Stop();
+            }
+        }
+
         private void UpdatePsychosisEffects()
         {
             float insanityFactor = 1f - (_currentSanity / maxSanity);
 
+            // --- ЛОГІКА СЕРЦЕБИТТЯ ---
             float currentBPS = Mathf.Lerp(startPulseSpeed, endPulseSpeed, insanityFactor);
             float beatDuration = 1f / currentBPS;
             bool isBeat = false;
 
             if (Time.time - _lastBeatTime >= beatDuration) { _lastBeatTime = Time.time; isBeat = true; }
 
+            // Граємо звук, тільки якщо НЕМАЄ блокування (_isHeartbeatMuted == false)
+            if (isBeat && insanityFactor > 0.05f && heartbeatSource != null && heartbeatClip != null && !_isHeartbeatMuted)
+            {
+                heartbeatSource.PlayOneShot(heartbeatClip, 1f);
+            }
+
             float pulseWave = Mathf.Sin(((Time.time - _lastBeatTime) / beatDuration) * Mathf.PI);
             if (pulseWave < 0) pulseWave = 0;
             float impact = Mathf.Pow(pulseWave, pulseSharpness) * insanityFactor;
-
-            if (isBeat && insanityFactor > 0.05f && heartbeatSource != null)
-                heartbeatSource.PlayOneShot(heartbeatSource.clip, 1f);
 
             if (darknessCanvasGroup != null) darknessCanvasGroup.alpha = insanityFactor * 0.95f;
 
@@ -199,11 +220,8 @@ namespace Assets.Scripts
             if (_vignette != null)
             {
                 float baseVignette = insanityFactor * maxVignetteIntensity;
-
                 float pulseVignette = impact * 0.1f;
-
                 _vignette.intensity.value = baseVignette + pulseVignette;
-
                 _vignette.smoothness.value = 1.0f;
             }
         }
