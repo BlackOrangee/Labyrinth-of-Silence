@@ -35,7 +35,10 @@ public class PrefabReplacerAdvanced : EditorWindow
 
     private void ReplacePrefabs()
     {
-        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+        // [ВИПРАВЛЕНО] Використовуємо FindObjectsByType замість застарілого FindObjectsOfType
+        // FindObjectsSortMode.None працює швидше, бо не витрачає час на сортування списку
+        GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+        
         int count = 0;
 
         foreach (GameObject go in allObjects)

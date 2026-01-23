@@ -4,7 +4,7 @@ namespace Assets.Scripts
 {
     /// <summary>
     /// Detects light from the player's lamp for enemy AI.
-    /// [MODIFIED] Using Linecast for better wall detection and adapted to LampController
+    /// [MODIFIED] Updated API calls to remove Obsolete warnings (FindFirstObjectByType)
     /// </summary>
     public class LightDetector : MonoBehaviour
     {
@@ -62,7 +62,8 @@ namespace Assets.Scripts
 
         void FindLantern()
         {
-            lampController = FindObjectOfType<LampController>();
+            // [ВИПРАВЛЕНО] Використовуємо нову команду, щоб прибрати warning
+            lampController = Object.FindFirstObjectByType<LampController>();
 
             if (lampController != null)
             {
@@ -81,7 +82,6 @@ namespace Assets.Scripts
 
         void CheckForLight()
         {
-            // Перевірка: чи є лампа і чи вона увімкнена
             if (lampController == null || lanternLight == null || !lampController.IsLightOn())
             {
                 isLightDetected = false;
@@ -90,13 +90,11 @@ namespace Assets.Scripts
             }
 
             Vector3 lightPosition = lanternLight.transform.position;
-            // [НОВЕ] Піднімаємо точку очей монстра (наприклад, 1.6м), щоб перевірка йшла не від п'ят
             Vector3 enemyEyePosition = transform.position + Vector3.up * 1.6f; 
             
             float distance = Vector3.Distance(lightPosition, enemyEyePosition);
             float effectiveRange = lanternLight.range * softEdgeMultiplier;
 
-            // 1. Перевірка Дистанції
             if (distance > effectiveRange)
             {
                 isLightDetected = false;
@@ -104,18 +102,12 @@ namespace Assets.Scripts
                 return;
             }
 
-            // 2. Перевірка Перешкод (Linecast)
-            // Ми проводимо лінію від очей монстра до лампи.
-            // Якщо лінія вдаряється у щось (стіна, стіл) - світло перекрито.
             if (Physics.Linecast(enemyEyePosition, lightPosition, out RaycastHit hit, obstacleLayer))
             {
-                // Переконуємось, що ми не влучили в самого себе або в гравця (якщо вони випадково на шарі перешкод)
-                // Якщо влучили в об'єкт, який не є лампою і не є частиною гравця -> це перешкода
                 if (hit.transform.root != lampController.transform.root)
                 {
                     if (showDebugGizmos)
                     {
-                        // Червона лінія - світло заблоковане
                         Debug.DrawLine(enemyEyePosition, hit.point, Color.red, checkInterval);
                     }
 
@@ -127,11 +119,9 @@ namespace Assets.Scripts
 
             if (showDebugGizmos)
             {
-                // Зелена лінія - світло проходить
                 Debug.DrawLine(enemyEyePosition, lightPosition, Color.green, checkInterval);
             }
 
-            // 3. Розрахунок Яскравості
             currentLightLevel = CalculateLightLevel(distance, lanternLight.intensity, effectiveRange);
 
             bool wasDetected = isLightDetected;

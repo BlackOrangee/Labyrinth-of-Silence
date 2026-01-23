@@ -8,14 +8,14 @@ namespace Assets.Scripts
 
         void Start()
         {
-            // Знаходимо монстра на сцені автоматично
-            enemy = FindObjectOfType<EnemyAI>();
+            // [ВИПРАВЛЕНО] Використовуємо нову команду FindFirstObjectByType
+            enemy = Object.FindFirstObjectByType<EnemyAI>();
         }
 
         // Коли гравець заходить у зону під столом
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player")) // Переконайся, що у гравця тег "Player"
+            if (other.CompareTag("Player")) 
             {
                 if (enemy != null)
                 {

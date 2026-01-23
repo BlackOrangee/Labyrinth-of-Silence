@@ -8,7 +8,7 @@ namespace Assets.Scripts
 {
     /// <summary>
     /// Enemy AI with vision, hearing, chase systems AND new Attack Mechanics
-    /// [FINAL POLISH] Fixed hiding logic, inactive controller error, and screen opacity
+    /// [FINAL FIX] Includes Auto-Find SanityController to prevent sound overlap
     /// </summary>
     public class EnemyAI : MonoBehaviour
     {
@@ -19,6 +19,10 @@ namespace Assets.Scripts
         public Animator animator; 
         
         private LightDetector lightDetector; 
+
+        // [НОВЕ] Посилання на контролер розуму, щоб вимикати звук психозу
+        [Tooltip("Перетягни сюди об'єкт Player, на якому висить SanityController")]
+        public SanityController sanityController;
 
         [Header("UI & Effects")]
         [Tooltip("Червона панель (Image) на весь екран.")]
@@ -32,7 +36,7 @@ namespace Assets.Scripts
         public float visionRange = 15f;
         public float fieldOfViewAngle = 110f;
         public LayerMask playerLayer;
-        public LayerMask obstacleLayer; // [ВАЖЛИВО] Тут мають бути шари стін і меблів!
+        public LayerMask obstacleLayer; 
 
         [Header("Hearing Settings")]
         public float hearingRange = 20f;
@@ -70,8 +74,7 @@ namespace Assets.Scripts
         [Tooltip("Сила відкидання гравця")]
         public float knockbackForce = 8f; 
 
-        // [НОВЕ] Змінна безпеки. Якщо TRUE - монстр ігнорує гравця.
-        // Це знадобиться, коли ти напишеш скрипт "Interaction" для залазання в шафу.
+        // Змінна безпеки. Якщо TRUE - монстр ігнорує гравця.
         [Tooltip("Якщо гравець сховався в шафі/під столом, став цю галочку в TRUE")]
         public bool isPlayerHidden = false;
 
@@ -116,6 +119,21 @@ namespace Assets.Scripts
         {
             navAgent = GetComponent<NavMeshAgent>();
             lightDetector = GetComponent<LightDetector>();
+
+            // [ВИПРАВЛЕНО] Автоматичний пошук SanityController
+            // Це гарантує, що ми зможемо вимкнути звук психозу, навіть якщо забули про Inspector
+            if (sanityController == null)
+            {
+                if (player != null)
+                {
+                    sanityController = player.GetComponent<SanityController>();
+                }
+                else
+                {
+                    // Пробуємо знайти за типом
+                    sanityController = Object.FindFirstObjectByType<SanityController>();
+                }
+            }
 
             if (damageOverlay != null)
             {
@@ -167,7 +185,6 @@ namespace Assets.Scripts
             hearingRangeSqr = hearingRange * hearingRange;
             halfFieldOfView = fieldOfViewAngle * 0.5f;
             
-            // [ЗМІНА] Підняли точку очей вище, щоб він не дивився з підлоги (1.6м - це рівень голови)
             eyeOffset = Vector3.up * 1.6f;
         }
         
@@ -181,28 +198,29 @@ namespace Assets.Scripts
             if (!player) return;
             if (isEventActive) return;
 
-            // [НОВЕ] Перевірка: Якщо гравець сховався (isPlayerHidden) - ми його ігноруємо
+            // Логіка Схованки
             if (isPlayerHidden)
             {
-                playerInSight = false; // Не бачимо
-                // Якщо монстр гнався, він переходить у режим пошуку або патруля
+                playerInSight = false; 
+                
                 if (currentState == EnemyState.Chase || currentState == EnemyState.Attack)
                 {
                     ChangeState(EnemyState.Search);
                 }
                 
-                // Швидке лікування, якщо ми в безпеці
                 if (currentHits > 0)
                 {
                     currentHits = 0;
                     if(heartBeatAudio) heartBeatAudio.Stop();
+                    // [ВИПРАВЛЕНО] Якщо ми вилікувались в схованці - вмикаємо назад психоз
+                    if(sanityController != null) sanityController.SetHeartbeatMute(false);
                 }
-                // Очищаємо екран
+                
                 if (damageOverlay != null && damageOverlay.color.a > 0.01f)
                     damageOverlay.color = Color.Lerp(damageOverlay.color, new Color(1, 0, 0, 0), Time.deltaTime * 2f);
 
                 UpdateAnimations();
-                // Виконуємо логіку руху (щоб він не завмер, а ходив навколо)
+                
                 switch (currentState)
                 {
                     case EnemyState.Patrol: PatrolBehavior(); break;
@@ -210,12 +228,11 @@ namespace Assets.Scripts
                     case EnemyState.Alert: AlertBehavior(); break;
                     default: ChangeState(EnemyState.Search); break;
                 }
-                return; // Виходимо з Update, щоб не дійшло до коду атаки нижче
+                return; 
             }
 
-            // --- Стандартна логіка (коли гравець НЕ сховався) ---
+            // --- Звичайна логіка ---
 
-            // Логіка відновлення
             if (currentHits == 1)
             {
                 if (playerInSight)
@@ -230,11 +247,12 @@ namespace Assets.Scripts
                         Debug.Log("Гравець сховався і відновився!");
                         currentHits = 0;
                         if(heartBeatAudio != null) heartBeatAudio.Stop();
+                        // [ВИПРАВЛЕНО] Відновилися - повертаємо звук психозу
+                        if(sanityController != null) sanityController.SetHeartbeatMute(false);
                     }
                 }
             }
 
-            // Плавне зникнення екрану
             if (currentHits == 0 && damageOverlay != null && damageOverlay.color.a > 0.01f)
             {
                 damageOverlay.color = Color.Lerp(damageOverlay.color, new Color(1, 0, 0, 0), Time.deltaTime * 1.0f);
@@ -242,15 +260,9 @@ namespace Assets.Scripts
 
             UpdateAnimations();
 
-            // [НОВЕ] Перевірка для атаки:
-            // 1. Дистанція підходить?
             float trueDistance = Vector3.Distance(transform.position, player.position);
-            
-            // 2. Чи є стіна/стіл між нами? (Захист від атаки крізь меблі)
-            // Ми пускаємо промінь від голови монстра до центру гравця.
             bool isBlockedByObstacle = Physics.Linecast(transform.position + Vector3.up * 1.6f, player.position + Vector3.up, obstacleLayer);
 
-            // Атакуємо ТІЛЬКИ якщо близько І немає перешкод
             if (trueDistance <= killDistance && !isBlockedByObstacle)
             {
                 StartCoroutine(TriggerAttackSequence());
@@ -261,23 +273,12 @@ namespace Assets.Scripts
             
             switch (currentState)
             {
-                case EnemyState.Patrol:
-                    PatrolBehavior();
-                    break;
-                case EnemyState.Alert:
-                    AlertBehavior();
-                    break;
-                case EnemyState.Chase:
-                    ChaseBehavior();
-                    break;
-                case EnemyState.Attack:
-                    AttackBehavior();
-                    break;
-                case EnemyState.Search:
-                    SearchBehavior();
-                    break;
-                case EnemyState.ScriptedEvent:
-                    break;
+                case EnemyState.Patrol: PatrolBehavior(); break;
+                case EnemyState.Alert: AlertBehavior(); break;
+                case EnemyState.Chase: ChaseBehavior(); break;
+                case EnemyState.Attack: AttackBehavior(); break;
+                case EnemyState.Search: SearchBehavior(); break;
+                case EnemyState.ScriptedEvent: break;
             }
         }
 
@@ -299,7 +300,9 @@ namespace Assets.Scripts
             navAgent.isStopped = true;
             navAgent.velocity = Vector3.zero;
 
-            // Блокуємо керування
+            // [ВИПРАВЛЕНО] Глушимо психоз перед початком атаки
+            if(sanityController != null) sanityController.SetHeartbeatMute(true);
+
             if (playerMovement) playerMovement.SetMovementLock(true);
             
             if (playerCamera) 
@@ -312,7 +315,6 @@ namespace Assets.Scripts
 
             if (animator) animator.SetTrigger("Attack");
 
-            // Чекаємо моменту удару
             yield return new WaitForSeconds(impactWaitTime); 
 
             if (currentHits == 1)
@@ -320,7 +322,6 @@ namespace Assets.Scripts
                 // --- 1 УДАР ---
                 Debug.Log("Поранення! (БАМ!)");
                 
-                // [ЗМІНА] Зробив екран прозорішим (0.3 замість 0.5), щоб не був таким густим
                 if (damageOverlay != null) 
                 {
                     damageOverlay.gameObject.SetActive(true);
@@ -329,8 +330,6 @@ namespace Assets.Scripts
                 
                 if (heartBeatAudio != null) heartBeatAudio.Play();
 
-                // [ЗМІНА] Виправлення помилки "inactive controller"
-                // Перевіряємо, чи контролер існує і чи він УВІМКНЕНИЙ перед тим, як штовхати
                 if (player != null)
                 {
                     CharacterController controller = player.GetComponent<CharacterController>();
@@ -345,11 +344,7 @@ namespace Assets.Scripts
                         while(timer < 0.2f) 
                         {
                             timer += Time.deltaTime;
-                            // Ще раз перевіряємо, чи контролер не вимкнувся в процесі
-                            if(controller != null && controller.enabled) 
-                            {
-                                controller.Move(pushDir * knockbackForce * Time.deltaTime);
-                            }
+                            if(controller.enabled) controller.Move(pushDir * knockbackForce * Time.deltaTime);
                             yield return null;
                         }
                     }
@@ -357,10 +352,8 @@ namespace Assets.Scripts
 
                 recoveryTimer = damageRecoveryTime;
 
-                // Чекаємо завершення анімації
                 yield return new WaitForSeconds(1.3f); 
 
-                // Розблокування
                 if (playerMovement) playerMovement.SetMovementLock(false);
                 if (playerCamera) playerCamera.SetInputLock(false);
                 
@@ -374,6 +367,11 @@ namespace Assets.Scripts
             else
             {
                 // --- 2 УДАР (СМЕРТЬ) ---
+                
+                if (heartBeatAudio != null) heartBeatAudio.Stop();
+                // Глушимо психоз назавжди, бо ми мертві
+                if(sanityController != null) sanityController.SetHeartbeatMute(true);
+
                 if (damageOverlay != null) 
                     damageOverlay.color = new Color(0.6f, 0, 0, 1f);
 
@@ -399,14 +397,10 @@ namespace Assets.Scripts
         {
             if (player == null) return;
 
-            // [ПОКРАЩЕНО] Перевірка світла + Перевірка стін
             if (lightDetector != null && lightDetector.IsLightDetected)
             {
-                // LightDetector каже "світло є", але перевіримо ще раз фізично Linecast-ом
-                // Чи є пряма видимість між очима монстра і гравцем?
                 bool wallBetween = Physics.Linecast(transform.position + Vector3.up * 1.5f, player.position + Vector3.up, obstacleLayer);
                 
-                // Якщо стіни немає - значить точно бачимо
                 if (!wallBetween)
                 {
                     lastKnownPlayerPosition = player.position;
@@ -440,7 +434,6 @@ namespace Assets.Scripts
 
             float distanceToPlayer = Mathf.Sqrt(distanceSqr);
             RaycastHit hit;
-            // Перевірка зору звичайним рейкастом
             if (Physics.Raycast(eyePosition, directionToPlayer.normalized, out hit, distanceToPlayer, playerLayer | obstacleLayer))
             {
                 if (hit.transform == player || hit.transform.IsChildOf(player))
@@ -467,7 +460,6 @@ namespace Assets.Scripts
         void OnSoundHeard(Vector3 soundPosition, float soundIntensity, GameObject source)
         {
             if (source == gameObject) return;
-            // [НОВЕ] Якщо гравець сховався - монстр ігнорує звук
             if (isPlayerHidden) return; 
 
             float distSqr = (soundPosition - transform.position).sqrMagnitude;
