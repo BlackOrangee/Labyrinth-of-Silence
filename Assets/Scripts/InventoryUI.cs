@@ -109,7 +109,6 @@ namespace Assets.Scripts
 
             instance = this;
 
-            // Validation: ensure script is not on the same GameObject as inventoryPanel
             if (inventoryPanel != null && inventoryPanel == gameObject)
             {
                 Debug.LogError("[InventoryUI] Script should be attached to the Canvas, not to the inventoryPanel itself! Please move this script to the parent Canvas.");
@@ -290,7 +289,10 @@ namespace Assets.Scripts
             {
                 foreach (KeyColorType key in keys)
                 {
-                    CreateKeySlot(key);
+                    if (!key.IsVirtual())
+                    {
+                        CreateKeySlot(key);
+                    }
                 }
             }
 
@@ -410,7 +412,7 @@ namespace Assets.Scripts
                 totalCount = newspaperDatabase.allNewspapers.Count;
             }
 
-            collectionCounterText.text = $"Documents: {collectedCount}/{totalCount}";
+            collectionCounterText.text = $"Documents  {collectedCount}/{totalCount}";
         }
 
         /// <summary>
