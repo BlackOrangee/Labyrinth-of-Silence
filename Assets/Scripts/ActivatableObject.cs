@@ -92,13 +92,11 @@ namespace Assets.Scripts
                 audioSource = gameObject.AddComponent<AudioSource>();
             }
 
-            // Save original material
             if (targetRenderer != null)
             {
                 originalMaterial = targetRenderer.material;
             }
 
-            // Initial state - everything disabled
             SetVisualState(false);
         }
 
@@ -119,7 +117,6 @@ namespace Assets.Scripts
 
         public void Interact(GameObject actor)
         {
-            // Already activated check
             if (isActivated && oneTimeActivation)
             {
                 PlaySound(alreadyActivatedSound);
@@ -127,13 +124,11 @@ namespace Assets.Scripts
                 return;
             }
 
-            // Get inventory
             if (playerInventory == null)
             {
                 playerInventory = actor.GetComponent<SimpleInventory>();
             }
 
-            // Check requirements
             if (requireKey)
             {
                 if (playerInventory == null || !playerInventory.HasKey(requiredKey))
@@ -144,7 +139,6 @@ namespace Assets.Scripts
                 }
             }
 
-            // Activate
             Activate();
         }
 
@@ -160,26 +154,21 @@ namespace Assets.Scripts
         {
             isActivated = true;
 
-            // Give virtual key to player
             if (playerInventory != null && keyToGive != KeyColorType.None)
             {
                 playerInventory.AddKey(keyToGive);
                 Debug.Log($"[ActivatableObject] {objectName} activated! Gave key: {keyToGive}");
             }
 
-            // Visual feedback
             SetVisualState(true);
 
-            // Audio feedback
             PlaySound(activationSound);
 
-            // Animation
             if (animator != null && !string.IsNullOrEmpty(activationTrigger))
             {
                 animator.SetTrigger(activationTrigger);
             }
 
-            // Message
             ShowMessage(activationMessage);
         }
 
@@ -200,7 +189,6 @@ namespace Assets.Scripts
                 }
             }
 
-            // Enable objects
             if (objectsToEnable != null)
             {
                 foreach (GameObject obj in objectsToEnable)
@@ -212,7 +200,6 @@ namespace Assets.Scripts
                 }
             }
 
-            // Disable objects
             if (objectsToDisable != null)
             {
                 foreach (GameObject obj in objectsToDisable)
@@ -224,7 +211,6 @@ namespace Assets.Scripts
                 }
             }
 
-            // Change material
             if (active && targetRenderer != null)
             {
                 if (activatedMaterial != null)
@@ -232,7 +218,6 @@ namespace Assets.Scripts
                     targetRenderer.material = activatedMaterial;
                 }
 
-                // Enable emission
                 if (enableEmission)
                 {
                     Material mat = targetRenderer.material;
@@ -261,7 +246,6 @@ namespace Assets.Scripts
             if (!string.IsNullOrEmpty(message))
             {
                 Debug.Log($"[ActivatableObject] {message}");
-                // TODO: Integrate with your notification/message system if available
             }
         }
 
@@ -286,7 +270,6 @@ namespace Assets.Scripts
 
         private void OnDrawGizmos()
         {
-            // Visual indicator in editor
             if (isActivated)
             {
                 Gizmos.color = Color.green;
