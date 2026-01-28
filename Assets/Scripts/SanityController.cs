@@ -18,11 +18,11 @@ namespace Assets.Scripts
         [Header("DEATH AUDIO")]
         public AnimationCurve fallCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         public AudioClip bodyFallClip;
-        [Range(0f, 1f)] public float bodyFallVolume = 0.8f;
+        [Range(0f, 1f)] public float bodyFallVolume = 1.0f;
         public AudioClip lanternDropClip;
-        [Range(0f, 1f)] public float lanternVolume = 1.0f;
+        [Range(0f, 1f)] public float lanternVolume = 0.3f;
         public AudioClip lastBreathClip;
-        [Range(0f, 1f)] public float breathVolume = 0.6f;
+        [Range(0f, 1f)] public float breathVolume = 0.8f;
 
         [Header("LAMP PHYSICS")]
         public float dropForwardForce = 2f;
@@ -309,7 +309,25 @@ namespace Assets.Scripts
                 yield return null;
             }
 
-            if (deathPanel != null) deathPanel.SetActive(true);
+            // -НОВЕ- Виправлена логіка активації відео (спочатку вмикаємо об'єкт, потім готуємо)
+            if (deathPanel != null)
+            {
+                CanvasGroup cg = deathPanel.GetComponent<CanvasGroup>();
+                if (cg != null) cg.alpha = 0f; // -НОВЕ- Ховаємо панель через прозорість
+
+                deathPanel.SetActive(true); // -НОВЕ- Вмикаємо об'єкт, щоб VideoPlayer став активним
+
+                VideoPlayer vp = deathPanel.GetComponentInChildren<VideoPlayer>();
+                if (vp != null)
+                {
+                    vp.Prepare(); // -НОВЕ- Тепер Prepare спрацює без помилки
+                    while (!vp.isPrepared) yield return null; 
+                    vp.Play(); 
+                }
+
+                if (cg != null) cg.alpha = 1f; // -НОВЕ- Тільки зараз показуємо гравцеві
+            }
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
