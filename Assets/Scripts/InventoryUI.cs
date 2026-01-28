@@ -65,8 +65,37 @@ namespace Assets.Scripts
         [Tooltip("Text to display collection progress")]
         public Text collectionCounterText;
 
+        [Tooltip("Text to display keys collection progress")]
+        public Text keysCounterText;
+
         [Tooltip("Newspaper database for getting total count")]
         public NewspaperDatabase newspaperDatabase;
+
+        [Tooltip("Total number of collectible keys (non-virtual)")]
+        public int totalCollectibleKeys = 4;
+
+        [Header("Preview Panel")]
+        [Tooltip("Image to display preview of selected item")]
+        public Image previewImage;
+
+        [Tooltip("Button to open full details view")]
+        public Button detailsButton;
+
+        [Header("Description Panel")]
+        [Tooltip("Description panel container to show/hide")]
+        public GameObject descriptionPanel;
+
+        [Tooltip("Text for item name in description panel")]
+        public Text descriptionNameText;
+
+        [Tooltip("Text for item title in description panel")]
+        public Text descriptionTitleText;
+
+        [Tooltip("Text for item content in description panel")]
+        public Text descriptionContentText;
+
+        [Tooltip("Maximum length for description preview text")]
+        public int maxDescriptionLength = 150;
 
         [Header("Key Icons")]
         [Tooltip("Green key icon")]
@@ -97,6 +126,8 @@ namespace Assets.Scripts
         private bool isOpen = false;
         private float fadeTimer = 0f;
         private bool isFading = false;
+        private NewspaperData selectedNewspaper = null;
+        private InventorySlot selectedSlot = null;
 
         private void Awake()
         {
@@ -128,6 +159,9 @@ namespace Assets.Scripts
 
             if (filterItemsButton != null)
                 filterItemsButton.onClick.AddListener(() => SetFilter(InventoryFilter.Items));
+
+            if (detailsButton != null)
+                detailsButton.onClick.AddListener(OnDetailsButtonClicked);
 
             if (inventoryPanel != null)
                 inventoryPanel.SetActive(false);
@@ -280,6 +314,7 @@ namespace Assets.Scripts
             if (inventory == null || slotsContainer == null)
                 return;
 
+            ClearSelection();
             ClearSlots();
 
             List<KeyColorType> keys = inventory.GetCollectedKeys();
@@ -306,6 +341,7 @@ namespace Assets.Scripts
 
             UpdateTitle();
             UpdateCollectionCounter();
+            UpdateKeysCounter();
         }
 
         /// <summary>
@@ -416,6 +452,46 @@ namespace Assets.Scripts
         }
 
         /// <summary>
+        /// Update keys counter display
+        /// </summary>
+        private void UpdateKeysCounter()
+        {
+            if (keysCounterText == null)
+                return;
+
+            if (inventory == null)
+            {
+                keysCounterText.text = "Keys       0/0";
+                return;
+            }
+
+            int collectedKeysCount = GetNonVirtualKeysCount();
+            keysCounterText.text = $"Keys       {collectedKeysCount}/{totalCollectibleKeys}";
+        }
+
+        /// <summary>
+        /// Get count of non-virtual keys
+        /// </summary>
+        private int GetNonVirtualKeysCount()
+        {
+            if (inventory == null)
+                return 0;
+
+            List<KeyColorType> keys = inventory.GetCollectedKeys();
+            int count = 0;
+
+            foreach (KeyColorType key in keys)
+            {
+                if (!key.IsVirtual())
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
         /// Get key icon by type
         /// </summary>
         private Sprite GetKeyIcon(KeyColorType keyType)
@@ -452,6 +528,145 @@ namespace Assets.Scripts
                     return "Pink Key";
                 default:
                     return "Unknown Key";
+            }
+        }
+
+        /// <summary>
+        /// Clear current selection
+        /// </summary>
+        private void ClearSelection()
+        {
+            if (selectedSlot != null)
+            {
+                selectedSlot.SetSelected(false);
+            }
+
+            selectedNewspaper = null;
+            selectedSlot = null;
+
+            UpdatePreview();
+            UpdateDescriptionPanel();
+        }
+
+        /// <summary>
+        /// Select a newspaper to preview
+        /// </summary>
+        public void SelectNewspaper(NewspaperData newspaper, InventorySlot slot = null)
+        {
+            // Deselect previous slot
+            if (selectedSlot != null)
+            {
+                selectedSlot.SetSelected(false);
+            }
+
+            selectedNewspaper = newspaper;
+            selectedSlot = slot;
+
+            // Select new slot
+            if (selectedSlot != null)
+            {
+                selectedSlot.SetSelected(true);
+            }
+
+            UpdatePreview();
+            UpdateDescriptionPanel();
+        }
+
+        /// <summary>
+        /// Update preview image based on selected newspaper
+        /// </summary>
+        private void UpdatePreview()
+        {
+            if (previewImage == null)
+                return;
+
+            if (selectedNewspaper != null && selectedNewspaper.newspaperImage != null)
+            {
+                previewImage.sprite = selectedNewspaper.newspaperImage;
+                previewImage.color = Color.white;
+                previewImage.enabled = true;
+            }
+            else
+            {
+                previewImage.sprite = null;
+                previewImage.enabled = false;
+            }
+        }
+
+        /// <summary>
+        /// Update description panel with selected newspaper info
+        /// </summary>
+        private void UpdateDescriptionPanel()
+        {
+            if (selectedNewspaper != null)
+            {
+                if (descriptionPanel != null)
+                {
+                    descriptionPanel.SetActive(true);
+                }
+
+                if (descriptionNameText != null)
+                {
+                    descriptionNameText.text = selectedNewspaper.newspaperName;
+                }
+
+                if (descriptionTitleText != null)
+                {
+                    descriptionTitleText.text = selectedNewspaper.title;
+                }
+
+                if (descriptionContentText != null)
+                {
+                    string content = selectedNewspaper.content;
+                    if (!string.IsNullOrEmpty(content) && content.Length > maxDescriptionLength)
+                    {
+                        content = content.Substring(0, maxDescriptionLength) + "...";
+                    }
+                    descriptionContentText.text = content;
+                }
+            }
+            else
+            {
+                if (descriptionPanel != null)
+                {
+                    descriptionPanel.SetActive(false);
+                }
+
+                if (descriptionNameText != null)
+                {
+                    descriptionNameText.text = "";
+                }
+
+                if (descriptionTitleText != null)
+                {
+                    descriptionTitleText.text = "";
+                }
+
+                if (descriptionContentText != null)
+                {
+                    descriptionContentText.text = "";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handle details button click - opens full newspaper view
+        /// </summary>
+        private void OnDetailsButtonClicked()
+        {
+            if (selectedNewspaper == null)
+            {
+                Debug.LogWarning("[InventoryUI] No newspaper selected to view details");
+                return;
+            }
+
+            if (NewspaperUI.Instance != null)
+            {
+                NewspaperUI.Instance.ShowNewspaper(selectedNewspaper);
+            }
+            else
+            {
+                Debug.LogError("[InventoryUI] NewspaperUI instance not found");
             }
         }
 
