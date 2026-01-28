@@ -3,13 +3,10 @@ using UnityEngine.AI;
 using System.Collections;
 using UnityEngine.SceneManagement; 
 using UnityEngine.UI; 
+using UnityEngine.Video; 
 
 namespace Assets.Scripts
 {
-    /// <summary>
-    /// Enemy AI with vision, hearing, chase systems AND new Attack Mechanics
-    /// [FINAL FIX] Includes Auto-Find SanityController to prevent sound overlap
-    /// </summary>
     public class EnemyAI : MonoBehaviour
     {
         [Header("References")]
@@ -20,16 +17,12 @@ namespace Assets.Scripts
         
         private LightDetector lightDetector; 
 
-        // [НОВЕ] Посилання на контролер розуму, щоб вимикати звук психозу
         [Tooltip("Перетягни сюди об'єкт Player, на якому висить SanityController")]
         public SanityController sanityController;
 
         [Header("UI & Effects")]
-        [Tooltip("Червона панель (Image) на весь екран.")]
         public Image damageOverlay; 
-        [Tooltip("Панель смерті (Game Over).")]
         public GameObject deathScreenPanel;
-        [Tooltip("Звук удару / серцебиття")]
         public AudioSource heartBeatAudio; 
         
         [Header("Vision Settings")]
@@ -43,8 +36,8 @@ namespace Assets.Scripts
 
         [Header("Chase Settings")]
         public float attackRange = 2f; 
-        public float chaseSpeed = 5f; 
-        public float patrolSpeed = 2.5f; 
+        public float chaseSpeed = 3.8f; 
+        public float patrolSpeed = 1.5f; 
         public float loseTargetTime = 5f;
 
         [Header("Patrol Settings")]
@@ -61,24 +54,19 @@ namespace Assets.Scripts
         public Transform faceTarget;
         public float rotationTime = 0.4f;
 
-        [Tooltip("Скільки секунд треба бути ПОЗА ЗОРОМ монстра, щоб екран почав очищуватись")]
         public float damageRecoveryTime = 4f; 
         
         [Tooltip("Час (в секундах), який монстр чекає після першого удару")]
         public float stunTimeAfterHit = 3.5f; 
 
         [Header("Physics & Impact")]
-        [Tooltip("Затримка перед почервонінням екрану (синхронізація з анімацією)")]
         public float impactWaitTime = 1.0f; 
-        
-        [Tooltip("Сила відкидання гравця")]
         public float knockbackForce = 8f; 
+        public float playerLockDuration = 1.3f;
 
-        // Змінна безпеки. Якщо TRUE - монстр ігнорує гравця.
         [Tooltip("Якщо гравець сховався в шафі/під столом, став цю галочку в TRUE")]
         public bool isPlayerHidden = false;
 
-        [Tooltip("Чи показувати дебаг лінії")]
         public bool showDebugGizmos = true;
         
         public enum EnemyState
@@ -120,19 +108,10 @@ namespace Assets.Scripts
             navAgent = GetComponent<NavMeshAgent>();
             lightDetector = GetComponent<LightDetector>();
 
-            // [ВИПРАВЛЕНО] Автоматичний пошук SanityController
-            // Це гарантує, що ми зможемо вимкнути звук психозу, навіть якщо забули про Inspector
             if (sanityController == null)
             {
-                if (player != null)
-                {
-                    sanityController = player.GetComponent<SanityController>();
-                }
-                else
-                {
-                    // Пробуємо знайти за типом
-                    sanityController = Object.FindFirstObjectByType<SanityController>();
-                }
+                if (player != null) sanityController = player.GetComponent<SanityController>();
+                else sanityController = Object.FindFirstObjectByType<SanityController>();
             }
 
             if (damageOverlay != null)
@@ -141,10 +120,7 @@ namespace Assets.Scripts
                 damageOverlay.color = new Color(1, 0, 0, 0); 
             }
 
-            if (deathScreenPanel != null)
-            {
-                deathScreenPanel.SetActive(false);
-            }
+            if (deathScreenPanel != null) deathScreenPanel.SetActive(false);
 
             if (navAgent == null)
             {
@@ -196,6 +172,8 @@ namespace Assets.Scripts
         void Update()
         {
             if (!player) return;
+            
+            // Якщо йде івент атаки, ми виходимо з Update
             if (isEventActive) return;
 
             // Логіка Схованки
@@ -212,7 +190,6 @@ namespace Assets.Scripts
                 {
                     currentHits = 0;
                     if(heartBeatAudio) heartBeatAudio.Stop();
-                    // [ВИПРАВЛЕНО] Якщо ми вилікувались в схованці - вмикаємо назад психоз
                     if(sanityController != null) sanityController.SetHeartbeatMute(false);
                 }
                 
@@ -247,7 +224,6 @@ namespace Assets.Scripts
                         Debug.Log("Гравець сховався і відновився!");
                         currentHits = 0;
                         if(heartBeatAudio != null) heartBeatAudio.Stop();
-                        // [ВИПРАВЛЕНО] Відновилися - повертаємо звук психозу
                         if(sanityController != null) sanityController.SetHeartbeatMute(false);
                     }
                 }
@@ -286,11 +262,10 @@ namespace Assets.Scripts
         {
             if (animator != null)
             {
-                animator.SetFloat("Speed", navAgent.velocity.magnitude);
+                float currentSpeed = navAgent.isStopped ? 0f : navAgent.velocity.magnitude;
+                animator.SetFloat("Speed", currentSpeed);
             }
         }
-        
-        #region Core Behaviors
         
         IEnumerator TriggerAttackSequence()
         {
@@ -299,8 +274,9 @@ namespace Assets.Scripts
             
             navAgent.isStopped = true;
             navAgent.velocity = Vector3.zero;
+            
+            if (animator != null) animator.SetFloat("Speed", 0f);
 
-            // [ВИПРАВЛЕНО] Глушимо психоз перед початком атаки
             if(sanityController != null) sanityController.SetHeartbeatMute(true);
 
             if (playerMovement) playerMovement.SetMovementLock(true);
@@ -333,7 +309,6 @@ namespace Assets.Scripts
                 if (player != null)
                 {
                     CharacterController controller = player.GetComponent<CharacterController>();
-                    
                     if (controller != null && controller.enabled)
                     {
                         Vector3 pushDir = player.position - transform.position;
@@ -352,24 +327,28 @@ namespace Assets.Scripts
 
                 recoveryTimer = damageRecoveryTime;
 
-                yield return new WaitForSeconds(1.3f); 
+                yield return new WaitForSeconds(playerLockDuration); 
 
                 if (playerMovement) playerMovement.SetMovementLock(false);
                 if (playerCamera) playerCamera.SetInputLock(false);
                 
                 Debug.Log("Монстр в ступорі...");
+                
+                navAgent.isStopped = true; 
+                if (animator != null) animator.SetFloat("Speed", 0f);
+
                 yield return new WaitForSeconds(stunTimeAfterHit);
                 
+                // Повернення в гру
                 isEventActive = false;
+                navAgent.isStopped = false; 
                 ChangeState(EnemyState.Chase); 
-                navAgent.isStopped = false;
+                navAgent.SetDestination(player.position); 
             }
             else
             {
                 // --- 2 УДАР (СМЕРТЬ) ---
-                
                 if (heartBeatAudio != null) heartBeatAudio.Stop();
-                // Глушимо психоз назавжди, бо ми мертві
                 if(sanityController != null) sanityController.SetHeartbeatMute(true);
 
                 if (damageOverlay != null) 
@@ -382,7 +361,20 @@ namespace Assets.Scripts
 
                 if (deathScreenPanel != null)
                 {
-                    deathScreenPanel.SetActive(true);
+                    CanvasGroup cg = deathScreenPanel.GetComponent<CanvasGroup>();
+                    if (cg != null) cg.alpha = 0f; 
+
+                    deathScreenPanel.SetActive(true); 
+
+                    VideoPlayer vp = deathScreenPanel.GetComponentInChildren<VideoPlayer>();
+                    if (vp != null)
+                    {
+                        vp.Prepare(); 
+                        while (!vp.isPrepared) yield return null;
+                        vp.Play();
+                    }
+
+                    if (cg != null) cg.alpha = 1f; 
                 }
                 else
                 {
@@ -390,8 +382,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
-        #region Standard AI Logic
 
         void CheckVision()
         {
@@ -408,7 +398,6 @@ namespace Assets.Scripts
 
                     if (currentState != EnemyState.Chase && currentState != EnemyState.Attack)
                     {
-                        if(showDebugGizmos) Debug.Log("Викрито світлом! Починаю погоню.");
                         ChangeState(EnemyState.Chase);
                     }
                     return; 
@@ -576,10 +565,6 @@ namespace Assets.Scripts
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
-
-        #endregion 
-        
-        #endregion
 
         void OnDrawGizmos()
         {
