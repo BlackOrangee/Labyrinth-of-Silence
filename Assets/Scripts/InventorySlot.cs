@@ -41,6 +41,9 @@ namespace Assets.Scripts
         [Tooltip("Color for filled slot")]
         public Color filledColor = new Color(1f, 1f, 1f, 1f);
 
+        [Tooltip("Color for selected slot")]
+        public Color selectedColor = new Color(1f, 1f, 0.5f, 1f);
+
         [Tooltip("Icon color when slot is empty")]
         public Color emptyIconColor = new Color(1f, 1f, 1f, 0f);
 
@@ -48,6 +51,7 @@ namespace Assets.Scripts
         private KeyColorType keyData;
         private NewspaperData newspaperData;
         private ItemData itemData;
+        private bool isSelected = false;
 
         private void Awake()
         {
@@ -223,9 +227,13 @@ namespace Assets.Scripts
             if (newspaperData == null)
                 return;
 
-            if (NewspaperUI.Instance != null)
+            if (InventoryUI.Instance != null)
             {
-                NewspaperUI.Instance.ShowNewspaper(newspaperData);
+                InventoryUI.Instance.SelectNewspaper(newspaperData, this);
+            }
+            else
+            {
+                Debug.LogError("[InventorySlot] InventoryUI instance not found");
             }
         }
 
@@ -238,6 +246,37 @@ namespace Assets.Scripts
             // {
             //     PopupManager.Instance.ShowPopup(itemData.description, null, this, "Close", itemData.inventoryIcon);
             // }
+        }
+
+        /// <summary>
+        /// Set slot as selected
+        /// </summary>
+        public void SetSelected(bool selected)
+        {
+            isSelected = selected;
+            UpdateVisualState();
+        }
+
+        /// <summary>
+        /// Update visual state based on selection
+        /// </summary>
+        private void UpdateVisualState()
+        {
+            if (backgroundImage == null)
+                return;
+
+            if (slotType == InventorySlotType.Empty)
+            {
+                backgroundImage.color = emptyColor;
+            }
+            else if (isSelected)
+            {
+                backgroundImage.color = selectedColor;
+            }
+            else
+            {
+                backgroundImage.color = filledColor;
+            }
         }
 
         public InventorySlotType GetSlotType()
