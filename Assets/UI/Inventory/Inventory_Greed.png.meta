@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: e1e54bedad8fdbc448011874dd14a380
+guid: 92418e41923580f45a61cc5d810d7f8b
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,14 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u0412\u0438\u043A\u0442\u043E\u0440\u0438\u044F \u043C\u0435\u043D\u044E
-        \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 (1)_0"
+      name: Inventory_Greed_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 4390
-        height: 2470
+        width: 1680
+        height: 840
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -113,8 +112,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 0308683e8cc325543afa6bbec9d909cc
-      internalID: 131380387
+      spriteID: d338f411822a73649a7009294197d659
+      internalID: -36949040
       vertices: []
       indices: 
       edges: []
@@ -123,7 +122,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a2d14eb7ffbe8f1438e74a5dc94ce807
+    spriteID: 5099badac194693409612b14fbcd5287
     internalID: 0
     vertices: []
     indices: 
@@ -133,7 +132,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u0412\u0438\u043A\u0442\u043E\u0440\u0438\u044F \u043C\u0435\u043D\u044E \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 (1)_0": 131380387
+      Inventory_Greed_0: -36949040
+      Inventory_Greed_1: 565690368
+      Inventory_Greed_2: -1707219079
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
