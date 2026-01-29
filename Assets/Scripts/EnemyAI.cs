@@ -11,13 +11,8 @@ namespace Assets.Scripts
     {
         [Header("References")]
         public Transform player;
-        
-        [Tooltip("Сюди перетягнути Animator з монстра")]
         public Animator animator; 
-        
         private LightDetector lightDetector; 
-
-        [Tooltip("Перетягни сюди об'єкт Player, на якому висить SanityController")]
         public SanityController sanityController;
 
         [Header("UI & Effects")]
@@ -42,11 +37,11 @@ namespace Assets.Scripts
 
         [Header("Patrol Settings")]
         public Transform[] patrolPoints;
-        public float waitTimeAtPoint = 2f;
+        public float waitTimeAtPoint = 1f;
 
         [Header("Search Settings")]
         public float searchRadius = 8f;
-        public float searchDuration = 10f;
+        public float searchDuration = 3f;
         public float searchPointInterval = 3f;
 
         [Header("Death & Attack Mechanics")]
@@ -55,41 +50,27 @@ namespace Assets.Scripts
         public float rotationTime = 0.4f;
 
         public float damageRecoveryTime = 4f; 
-        
-        [Tooltip("Час (в секундах), який монстр чекає після першого удару")]
         public float stunTimeAfterHit = 3.5f; 
 
         [Header("Physics & Impact")]
-        public float impactWaitTime = 1.0f; 
+        public float impactWaitTime = 0.5f; // [FIX] Зменшив час до удару, щоб було динамічніше
         public float knockbackForce = 8f; 
         public float playerLockDuration = 1.3f;
 
-        [Tooltip("Якщо гравець сховався в шафі/під столом, став цю галочку в TRUE")]
         public bool isPlayerHidden = false;
-
         public bool showDebugGizmos = true;
         
-        public enum EnemyState
-        {
-            Patrol,
-            Alert,
-            Chase,
-            Attack,
-            Search,
-            ScriptedEvent
-        }
+        public enum EnemyState { Patrol, Alert, Chase, Attack, Search, ScriptedEvent }
         
         private EnemyState currentState = EnemyState.Patrol;
         private NavMeshAgent navAgent;
         private int currentPatrolIndex = 0;
-        private float waitTimer = 3f;
+        private float waitTimer = 0f; 
         private float loseTargetTimer = 0f;
         private Vector3 lastKnownPlayerPosition;
         private bool playerInSight = false;
         private float searchTimer = 0f;
-        private float searchPointTimer = 0f;
-        private Vector3 currentSearchPoint;
-
+        
         private float visionRangeSqr;
         private float attackRangeSqr;
         private float hearingRangeSqr;
@@ -106,6 +87,10 @@ namespace Assets.Scripts
         void Start()
         {
             navAgent = GetComponent<NavMeshAgent>();
+            // [FIX] Вимикаємо авто-гальмування і авто-поворот, щоб контролювати це самим
+            navAgent.autoBraking = true; 
+            navAgent.updateRotation = true; 
+
             lightDetector = GetComponent<LightDetector>();
 
             if (sanityController == null)
@@ -122,12 +107,7 @@ namespace Assets.Scripts
 
             if (deathScreenPanel != null) deathScreenPanel.SetActive(false);
 
-            if (navAgent == null)
-            {
-                Debug.LogError("NavMeshAgent not found!");
-                enabled = false;
-                return;
-            }
+            if (navAgent == null) { enabled = false; return; }
 
             if (player == null)
             {
@@ -151,16 +131,14 @@ namespace Assets.Scripts
             SoundManager.OnSoundEmitted += OnSoundHeard;
 
             navAgent.speed = patrolSpeed;
-            if (patrolPoints != null && patrolPoints.Length > 0)
-            {
-                GoToNextPatrolPoint();
-            }
+            waitTimer = waitTimeAtPoint;
+
+            if (patrolPoints != null && patrolPoints.Length > 0) GoToNextPatrolPoint();
 
             visionRangeSqr = visionRange * visionRange;
             attackRangeSqr = attackRange * attackRange;
             hearingRangeSqr = hearingRange * hearingRange;
             halfFieldOfView = fieldOfViewAngle * 0.5f;
-            
             eyeOffset = Vector3.up * 1.6f;
         }
         
@@ -172,19 +150,12 @@ namespace Assets.Scripts
         void Update()
         {
             if (!player) return;
-            
-            // Якщо йде івент атаки, ми виходимо з Update
             if (isEventActive) return;
 
-            // Логіка Схованки
             if (isPlayerHidden)
             {
                 playerInSight = false; 
-                
-                if (currentState == EnemyState.Chase || currentState == EnemyState.Attack)
-                {
-                    ChangeState(EnemyState.Search);
-                }
+                if (currentState == EnemyState.Chase || currentState == EnemyState.Attack) ChangeState(EnemyState.Search);
                 
                 if (currentHits > 0)
                 {
@@ -208,20 +179,15 @@ namespace Assets.Scripts
                 return; 
             }
 
-            // --- Звичайна логіка ---
-
+            // Відновлення
             if (currentHits == 1)
             {
-                if (playerInSight)
-                {
-                    recoveryTimer = damageRecoveryTime; 
-                }
+                if (playerInSight) recoveryTimer = damageRecoveryTime; 
                 else
                 {
                     recoveryTimer -= Time.deltaTime;
                     if (recoveryTimer <= 0)
                     {
-                        Debug.Log("Гравець сховався і відновився!");
                         currentHits = 0;
                         if(heartBeatAudio != null) heartBeatAudio.Stop();
                         if(sanityController != null) sanityController.SetHeartbeatMute(false);
@@ -274,17 +240,20 @@ namespace Assets.Scripts
             
             navAgent.isStopped = true;
             navAgent.velocity = Vector3.zero;
-            
-            if (animator != null) animator.SetFloat("Speed", 0f);
+            // [FIX] Вимикаємо авто-поворот, щоб він не крутився сам
+            navAgent.updateRotation = false;
+
+            if (animator != null) 
+            {
+                animator.SetFloat("Speed", 0f);
+                // [FIX] Вмикаємо Root Motion, щоб удар мав фізичну вагу
+                animator.applyRootMotion = true; 
+            }
 
             if(sanityController != null) sanityController.SetHeartbeatMute(true);
-
             if (playerMovement) playerMovement.SetMovementLock(true);
             
-            if (playerCamera) 
-            {
-                StartCoroutine(playerCamera.ForceLookAtRoutine(faceTarget, rotationTime));
-            }
+            if (playerCamera) StartCoroutine(playerCamera.ForceLookAtRoutine(faceTarget, rotationTime));
 
             currentHits++;
             Debug.Log($"УДАР! Всього ударів: {currentHits}");
@@ -295,17 +264,15 @@ namespace Assets.Scripts
 
             if (currentHits == 1)
             {
-                // --- 1 УДАР ---
-                Debug.Log("Поранення! (БАМ!)");
-                
+                // 1 УДАР
                 if (damageOverlay != null) 
                 {
                     damageOverlay.gameObject.SetActive(true);
                     damageOverlay.color = new Color(0.8f, 0, 0, 0.3f); 
                 }
-                
                 if (heartBeatAudio != null) heartBeatAudio.Play();
 
+                // Відкидання
                 if (player != null)
                 {
                     CharacterController controller = player.GetComponent<CharacterController>();
@@ -326,33 +293,33 @@ namespace Assets.Scripts
                 }
 
                 recoveryTimer = damageRecoveryTime;
-
                 yield return new WaitForSeconds(playerLockDuration); 
 
                 if (playerMovement) playerMovement.SetMovementLock(false);
                 if (playerCamera) playerCamera.SetInputLock(false);
-                
-                Debug.Log("Монстр в ступорі...");
                 
                 navAgent.isStopped = true; 
                 if (animator != null) animator.SetFloat("Speed", 0f);
 
                 yield return new WaitForSeconds(stunTimeAfterHit);
                 
-                // Повернення в гру
-                isEventActive = false;
+                // [FIX] Повертаємо керування агенту
+                if (animator != null) animator.applyRootMotion = false;
+                navAgent.updateRotation = true;
                 navAgent.isStopped = false; 
+                
+                isEventActive = false;
                 ChangeState(EnemyState.Chase); 
                 navAgent.SetDestination(player.position); 
             }
             else
             {
-                // --- 2 УДАР (СМЕРТЬ) ---
+                // 2 УДАР (СМЕРТЬ)
+                if (GlobalSoundManager.Instance != null) GlobalSoundManager.Instance.FadeOutAllSounds(1f);
                 if (heartBeatAudio != null) heartBeatAudio.Stop();
                 if(sanityController != null) sanityController.SetHeartbeatMute(true);
 
-                if (damageOverlay != null) 
-                    damageOverlay.color = new Color(0.6f, 0, 0, 1f);
+                if (damageOverlay != null) damageOverlay.color = new Color(0.6f, 0, 0, 1f);
 
                 yield return new WaitForSeconds(1.0f);
 
@@ -363,17 +330,9 @@ namespace Assets.Scripts
                 {
                     CanvasGroup cg = deathScreenPanel.GetComponent<CanvasGroup>();
                     if (cg != null) cg.alpha = 0f; 
-
                     deathScreenPanel.SetActive(true); 
-
                     VideoPlayer vp = deathScreenPanel.GetComponentInChildren<VideoPlayer>();
-                    if (vp != null)
-                    {
-                        vp.Prepare(); 
-                        while (!vp.isPrepared) yield return null;
-                        vp.Play();
-                    }
-
+                    if (vp != null) { vp.Prepare(); while (!vp.isPrepared) yield return null; vp.Play(); }
                     if (cg != null) cg.alpha = 1f; 
                 }
                 else
@@ -383,47 +342,44 @@ namespace Assets.Scripts
             }
         }
 
+        #region Standard AI Logic
+
         void CheckVision()
         {
             if (player == null) return;
 
+            float distanceSqr = (player.position - transform.position).sqrMagnitude;
+
+            // [FIX] АБСОЛЮТНИЙ ЗІР НА 2.5 МЕТРИ (Щоб не був сліпим впритул)
+            if (distanceSqr < 6.25f) // 2.5 * 2.5
+            {
+                lastKnownPlayerPosition = player.position;
+                playerInSight = true;
+                OnPlayerSpotted();
+                return;
+            }
+
             if (lightDetector != null && lightDetector.IsLightDetected)
             {
                 bool wallBetween = Physics.Linecast(transform.position + Vector3.up * 1.5f, player.position + Vector3.up, obstacleLayer);
-                
                 if (!wallBetween)
                 {
                     lastKnownPlayerPosition = player.position;
                     playerInSight = true; 
-
-                    if (currentState != EnemyState.Chase && currentState != EnemyState.Attack)
-                    {
-                        ChangeState(EnemyState.Chase);
-                    }
+                    if (currentState != EnemyState.Chase && currentState != EnemyState.Attack) ChangeState(EnemyState.Chase);
                     return; 
                 }
             }
 
             Vector3 eyePosition = transform.position + eyeOffset;
             Vector3 directionToPlayer = player.position - eyePosition;
-            float distanceSqr = directionToPlayer.sqrMagnitude;
 
-            if (distanceSqr > visionRangeSqr)
-            {
-                playerInSight = false;
-                return;
-            }
+            if (distanceSqr > visionRangeSqr) { playerInSight = false; return; }
 
             float angle = Vector3.Angle(transform.forward, directionToPlayer);
-            if (angle > halfFieldOfView)
-            {
-                playerInSight = false;
-                return;
-            }
+            if (angle > halfFieldOfView) { playerInSight = false; return; }
 
-            float distanceToPlayer = Mathf.Sqrt(distanceSqr);
-            RaycastHit hit;
-            if (Physics.Raycast(eyePosition, directionToPlayer.normalized, out hit, distanceToPlayer, playerLayer | obstacleLayer))
+            if (Physics.Raycast(eyePosition, directionToPlayer.normalized, out RaycastHit hit, Mathf.Sqrt(distanceSqr), playerLayer | obstacleLayer))
             {
                 if (hit.transform == player || hit.transform.IsChildOf(player))
                 {
@@ -439,11 +395,7 @@ namespace Assets.Scripts
         {
             lastKnownPlayerPosition = player.position;
             loseTargetTimer = 0f;
-
-            if (currentState != EnemyState.Chase && currentState != EnemyState.Attack)
-            {
-                ChangeState(EnemyState.Chase);
-            }
+            if (currentState != EnemyState.Chase && currentState != EnemyState.Attack) ChangeState(EnemyState.Chase);
         }
         
         void OnSoundHeard(Vector3 soundPosition, float soundIntensity, GameObject source)
@@ -465,8 +417,7 @@ namespace Assets.Scripts
         void PatrolBehavior()
         {
             navAgent.speed = patrolSpeed;
-            
-            if (navAgent.remainingDistance < 0.5f && !navAgent.pathPending)
+            if (!navAgent.pathPending && navAgent.remainingDistance <= 0.8f)
             {
                 waitTimer -= Time.deltaTime;
                 if (waitTimer <= 0)
@@ -481,17 +432,12 @@ namespace Assets.Scripts
         {
             navAgent.speed = patrolSpeed;
             navAgent.SetDestination(lastKnownPlayerPosition);
-            
-            if (!navAgent.pathPending && navAgent.remainingDistance < 1f)
-            {
-                ChangeState(EnemyState.Search);
-            }
+            if (!navAgent.pathPending && navAgent.remainingDistance < 1f) ChangeState(EnemyState.Search);
         }
         
         void ChaseBehavior()
         {
             navAgent.speed = chaseSpeed;
-
             if (playerInSight)
             {
                 navAgent.SetDestination(player.position);
@@ -502,11 +448,7 @@ namespace Assets.Scripts
             {
                 navAgent.SetDestination(lastKnownPlayerPosition);
                 loseTargetTimer += Time.deltaTime;
-
-                if (loseTargetTimer >= loseTargetTime)
-                {
-                    ChangeState(EnemyState.Search);
-                }
+                if (loseTargetTimer >= loseTargetTime) ChangeState(EnemyState.Search);
             }
         }
         
@@ -514,36 +456,21 @@ namespace Assets.Scripts
         {
             Vector3 dir = player.position - transform.position;
             dir.y = 0;
-            if (dir != Vector3.zero) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 5f);
+            // [FIX] Ручний плавний поворот, коли NavMesh поворот вимкнено
+            if (dir != Vector3.zero) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 8f);
             
-            if (dir.sqrMagnitude > attackRangeSqr)
-            {
-                ChangeState(EnemyState.Chase);
-            }
+            if (dir.sqrMagnitude > attackRangeSqr) ChangeState(EnemyState.Chase);
         }
         
         void SearchBehavior()
         {
-            navAgent.speed = patrolSpeed;
+            navAgent.isStopped = true;
+            if (animator) animator.SetFloat("Speed", 0f);
+
             searchTimer += Time.deltaTime;
-            searchPointTimer += Time.deltaTime;
+            // Просто стоїмо і слухаємо, без обертання
 
-            if (searchTimer >= searchDuration)
-            {
-                ChangeState(EnemyState.Patrol);
-                return;
-            }
-
-            if (searchPointTimer >= searchPointInterval || navAgent.remainingDistance < 0.5f)
-            {
-                searchPointTimer = 0f;
-                Vector3 randomPoint = lastKnownPlayerPosition + (Random.insideUnitSphere * searchRadius);
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(randomPoint, out hit, searchRadius, NavMesh.AllAreas))
-                {
-                    navAgent.SetDestination(hit.position);
-                }
-            }
+            if (searchTimer >= searchDuration) ChangeState(EnemyState.Patrol);
         }
 
         void ChangeState(EnemyState newState)
@@ -551,40 +478,38 @@ namespace Assets.Scripts
             if (currentState == newState) return;
             currentState = newState;
 
-            if (newState == EnemyState.Patrol) GoToNextPatrolPoint();
+            if (newState == EnemyState.Patrol) 
+            {
+                navAgent.isStopped = false; 
+                navAgent.updateRotation = true; // [FIX] Повертаємо контроль
+                navAgent.ResetPath();
+                navAgent.speed = patrolSpeed; 
+                loseTargetTimer = 0f;
+                waitTimer = 0f;
+                GoToNextPatrolPoint(); 
+            }
             else if (newState == EnemyState.Search)
             {
                 searchTimer = 0f;
-                searchPointTimer = 0f;
             }
         }
         
         void GoToNextPatrolPoint()
         {
             if (patrolPoints == null || patrolPoints.Length == 0) return;
+            if (currentPatrolIndex >= patrolPoints.Length) currentPatrolIndex = 0;
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
 
+        #endregion 
+        
         void OnDrawGizmos()
         {
             if (!showDebugGizmos) return;
-
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, visionRange);
-            Vector3 left = Quaternion.Euler(0, -fieldOfViewAngle/2, 0) * transform.forward * visionRange;
-            Vector3 right = Quaternion.Euler(0, fieldOfViewAngle/2, 0) * transform.forward * visionRange;
-            Gizmos.DrawLine(transform.position, transform.position + left);
-            Gizmos.DrawLine(transform.position, transform.position + right);
-
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(transform.position, hearingRange);
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, attackRange);
-
-            Gizmos.color = Color.black; 
-            Gizmos.DrawWireSphere(transform.position, killDistance);
+            Gizmos.color = Color.yellow; Gizmos.DrawWireSphere(transform.position, visionRange);
+            Gizmos.color = Color.red; Gizmos.DrawWireSphere(transform.position, attackRange);
+            Gizmos.color = Color.black; Gizmos.DrawWireSphere(transform.position, killDistance);
         }
     }
 }
