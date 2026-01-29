@@ -226,13 +226,27 @@ namespace Assets.Scripts
             }
         }
 
-        private void Die()
+private void Die()
         {
+            if (_isDead) return; // Про всяк випадок, щоб не викликати двічі
             _isDead = true;
+
+            // [НОВЕ] --- ГЛУШИМО ВЕСЬ СВІТ ---
+            // Викликаємо наш менеджер, щоб він плавно скрутив гучність всієї гри в нуль за 2 секунди
+            if (GlobalSoundManager.Instance != null)
+            {
+                GlobalSoundManager.Instance.FadeOutAllSounds(2f);
+            }
+            // --------------------------------
+
+            // Зупиняємо локальні звуки
             if (heartbeatSource != null) heartbeatSource.Stop();
             if (glitchVideoPlayer != null) glitchVideoPlayer.Stop();
+            
+            // Вимикаємо керування
             if (playerMovementScript != null) playerMovementScript.enabled = false;
 
+            // --- ТВОЯ ЛОГІКА ПАДІННЯ ЛІХТАРЯ (Залишаємо без змін) ---
             if (lampController != null)
             {
                 lampController.transform.SetParent(null);
@@ -244,6 +258,7 @@ namespace Assets.Scripts
                     if (lampCol != null) lampCol.isTrigger = false;
                     lampRb.isKinematic = false;
                     lampRb.useGravity = true;
+                    
                     if (playerCollider != null && lampCol != null)
                         Physics.IgnoreCollision(playerCollider, lampCol);
 
@@ -252,6 +267,7 @@ namespace Assets.Scripts
                     lampRb.AddTorque(Random.insideUnitSphere * rotationForce, ForceMode.Impulse);
                 }
             }
+            
             StartCoroutine(CameraDropEffect());
         }
 

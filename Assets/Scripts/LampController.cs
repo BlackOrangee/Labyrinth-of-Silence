@@ -13,10 +13,20 @@ namespace Assets.Scripts
 
         [Header("Audio")]
         public AudioSource lampAudioSource;
-        public AudioClip turnOnSound;
-        public AudioClip turnOffSound;
-        public AudioClip burningSoundLoop; 
-        public AudioClip emptyClickSound;  
+
+        // [СТАРЕ] Старі змінні для звуків
+        // public AudioClip turnOnSound;
+        // public AudioClip turnOffSound;
+        // public AudioClip emptyClickSound;
+        
+        // [НОВЕ] --- ADVANCED AUDIO SYSTEM (Sound Profiles) ---
+        [Header("Advanced Audio (Sound Profiles)")]
+        public SoundProfile turnOnProfile;   // Профіль для ввімкнення
+        public SoundProfile turnOffProfile;  // Профіль для вимкнення
+        public SoundProfile emptyClickProfile; // Клік, коли немає пального
+        // -----------------------------------------------------
+
+        public AudioClip burningSoundLoop; // Луп залишаємо як є, він простий
 
         [Header("Old UI (Optional)")]
         public Slider fuelSlider;
@@ -33,24 +43,14 @@ namespace Assets.Scripts
         public Color warningTextColor = Color.red;
 
         [Header("Main Light Intensity")]
-        // [ЗМІНЕНО] Зменшив тьмяне світло, щоб воно було "інтимним" і економило ресурси ока
         public float dimIntensity = 20f; 
-        
-        // [ЗМІНЕНО] Значно підняв яскраве світло, щоб різниця була очевидною (було 5, стало 8)
         public float brightIntensity = 40f; 
-        
-        // [ЗМІНЕНО] Зменшив радіус тьмяного світла (світить тільки під ноги)
         public float dimRange = 10f; 
-        
-        // [ЗМІНЕНО] Збільшив радіус яскравого світла (освітлює пів кімнати)
         public float brightRange = 20f; 
-        
         public float lightChangeSpeed = 5f; 
 
         [Header("Fill Light Intensity (Soft Glow)")]
-        // [ЗМІНЕНО] Зробив заповнююче світло слабшим у тьмяному режимі
         public float fillDimIntensity = 0.2f; 
-        // [ЗМІНЕНО] І сильнішим у яскравому
         public float fillBrightIntensity = 1.5f; 
 
         [Header("Flame Flicker Effect")] 
@@ -65,7 +65,6 @@ namespace Assets.Scripts
         private float currentFuel;
         private int lightMode = 0; // 0 = Off, 1 = Dim, 2 = Bright
         
-        // Внутрішні змінні для плавного переходу
         private float targetMainIntensity;
         private float targetMainRange;
         private float targetFillIntensity;
@@ -80,7 +79,6 @@ namespace Assets.Scripts
                 fuelSlider.value = currentFuel;
             }
 
-            // Налаштування аудіо
             if (lampAudioSource != null)
             {
                 lampAudioSource.loop = true;
@@ -88,10 +86,8 @@ namespace Assets.Scripts
                 lampAudioSource.clip = burningSoundLoop;
             }
 
-            // Ініціалізація стану
             UpdateLightTargets();
             
-            // Застосовуємо миттєво при старті
             if (lampLight != null) { lampLight.intensity = targetMainIntensity; lampLight.range = targetMainRange; }
             if (fillLight != null) { fillLight.intensity = targetFillIntensity; }
             
@@ -114,8 +110,15 @@ namespace Assets.Scripts
                 if (currentFuel <= 0 && lightMode == 0)
                 {
                     Debug.Log("Click! No fuel.");
-                    if (emptyClickSound) AudioSource.PlayClipAtPoint(emptyClickSound, transform.position);
-                    else if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+                    
+                    // [СТАРЕ]
+                    // if (emptyClickSound) AudioSource.PlayClipAtPoint(emptyClickSound, transform.position);
+                    // else if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+
+                    // [НОВЕ] Граємо звук "пустишки" через просунуту систему
+                    if (emptyClickProfile != null) emptyClickProfile.Play(lampAudioSource);
+                    else if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
+
                     return; 
                 }
 
@@ -129,11 +132,21 @@ namespace Assets.Scripts
                     if (lightMode == 0) // Вимкнення
                     {
                         lampAudioSource.Stop(); 
-                        if(turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+                        
+                        // [СТАРЕ]
+                        // if(turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+                        
+                        // [НОВЕ] Звук вимкнення
+                        if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
                     }
                     else if (oldMode == 0) // Увімкнення
                     {
-                        if(turnOnSound) AudioSource.PlayClipAtPoint(turnOnSound, transform.position);
+                        // [СТАРЕ]
+                        // if(turnOnSound) AudioSource.PlayClipAtPoint(turnOnSound, transform.position);
+                        
+                        // [НОВЕ] Звук увімкнення
+                        if (turnOnProfile != null) turnOnProfile.Play(lampAudioSource);
+
                         if(burningSoundLoop) lampAudioSource.Play(); 
                     }
                 }
@@ -167,12 +180,18 @@ namespace Assets.Scripts
             lightMode = 0;
             
             if (lampAudioSource != null) lampAudioSource.Stop();
-            if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+            
+            // [СТАРЕ]
+            // if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
+            
+            // [НОВЕ]
+            if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
             
             Debug.Log("Fuel empty! Lamp turned off.");
             UpdateLightTargets();
         }
 
+        // ... Далі код без змін ...
         private void UpdateLightTargets()
         {
             if (currentFuel <= 0)
@@ -200,11 +219,9 @@ namespace Assets.Scripts
 
             if (isLightOn)
             {
-                // [ПОЯСНЕННЯ] Тут ми вибираємо цільову інтенсивність залежно від режиму
                 float baseIntensity = (lightMode == 2) ? brightIntensity : dimIntensity;
                 targetMainIntensity = baseIntensity * fadeFactor;
                 
-                // [ПОЯСНЕННЯ] Дальність теж змінюється, це додає ефекту "розширення" світла
                 targetMainRange = (lightMode == 2) ? brightRange : dimRange;
 
                 float baseFill = (lightMode == 2) ? fillBrightIntensity : fillDimIntensity;
@@ -214,7 +231,6 @@ namespace Assets.Scripts
                 {
                     if (!fireEffect.isPlaying) fireEffect.Play();
                     var main = fireEffect.main;
-                    // Вогонь стає більшим у яскравому режимі
                     float targetSize = (lightMode == 2) ? 1.0f : 0.6f;
                     main.startSizeMultiplier = targetSize * fadeFactor;
                 }
