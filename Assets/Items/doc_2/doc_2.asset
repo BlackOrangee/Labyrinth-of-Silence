@@ -16,4 +16,9 @@ MonoBehaviour:
   newspaperName: Document 2
   newspaperImage: {fileID: 679882388, guid: 86809b6c867bb274880442f42fb48ae8, type: 3}
   inventoryIcon: {fileID: -1511442142, guid: a23a2b1c215aa8f48bfb738dd71699aa, type: 3}
-  description: REPORT
+  title: REPORT
+  content: "Name of the vaccine:  Enterococus bacteria\n \nBest example:\nMark Mayer,
+    object No. 214\n\nObject No. 214 has been thoroughly tested and has been removed
+    from the administrative department. All organs are functioning, brain activity
+    is normal. The object shows aggression. To avoid expenses, it was decided to
+    handcuff him with metal handcuffs.\n\n\nDO NOT BE CLOSER THAN 3 METERS"

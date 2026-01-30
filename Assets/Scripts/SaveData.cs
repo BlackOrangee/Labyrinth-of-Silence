@@ -168,11 +168,13 @@ namespace Assets.Scripts
     {
         public List<string> items;
         public List<KeyColorType> collectedKeys;
+        public List<string> collectedNewspaperIds;
 
         public InventoryData()
         {
             items = new List<string>();
             collectedKeys = new List<KeyColorType>();
+            collectedNewspaperIds = new List<string>();
         }
     }
 
