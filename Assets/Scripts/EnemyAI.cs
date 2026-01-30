@@ -34,13 +34,19 @@ namespace Assets.Scripts
         [Tooltip("Patrol speed")]
         public float patrolSpeed = 2.5f;
         [Tooltip("Time before losing target (seconds)")]
-        public float loseTargetTime = 5f;
+        public float loseTargetTime = 8f;
+        [Tooltip("Time to look around at destination before giving up")]
+        public float lookAroundTime = 3f;
 
         [Header("Patrol Settings")]
         [Tooltip("Patrol points")]
         public Transform[] patrolPoints;
         [Tooltip("Wait time at each point")]
         public float waitTimeAtPoint = 2f;
+
+        [Header("Alert Settings")]
+        [Tooltip("Time to look around in alert mode before returning to patrol")]
+        public float alertLookAroundTime = 4f;
 
         [Header("Search Settings")]
         [Tooltip("Radius around last known position to search")]
@@ -78,6 +84,10 @@ namespace Assets.Scripts
         private float searchTimer = 0f;
         private float searchPointTimer = 0f;
         private Vector3 currentSearchPoint;
+        private float lookAroundTimer = 0f;
+        private bool reachedLastKnownPosition = false;
+        private float alertLookTimer = 0f;
+        private bool reachedAlertPosition = false;
 
         private float visionRangeSqr;
         private float attackRangeSqr;
@@ -202,7 +212,7 @@ namespace Assets.Scripts
             Vector3 directionNormalized = directionToPlayer / distanceToPlayer;
 
             RaycastHit hit;
-            if (Physics.Raycast(eyePosition, directionNormalized, out hit, distanceToPlayer, playerLayer | obstacleLayer, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(eyePosition, directionNormalized, out hit, distanceToPlayer, ~0, QueryTriggerInteraction.Ignore))
             {
                 if (showDebugGizmos)
                 {
@@ -224,7 +234,7 @@ namespace Assets.Scripts
                 {
                     if (showDebugGizmos)
                     {
-                        Debug.Log($"Vision blocked by: {hit.transform.name}");
+                        Debug.Log($"Vision blocked by: {hit.transform.name} (Layer: {LayerMask.LayerToName(hit.transform.gameObject.layer)})");
                     }
                 }
             }
@@ -233,7 +243,6 @@ namespace Assets.Scripts
                 if (showDebugGizmos)
                 {
                     Debug.DrawRay(eyePosition, directionNormalized * visionRange, Color.yellow, 0.1f);
-                    Debug.LogWarning("Raycast didn't hit anything! Check Player Layer and Obstacle Layer settings.");
                 }
             }
 
@@ -273,6 +282,14 @@ namespace Assets.Scripts
                 {
                     lastKnownPlayerPosition = soundPosition;
                     ChangeState(EnemyState.Alert);
+                }
+                else if (currentState == EnemyState.Chase && !playerInSight)
+                {
+                    lastKnownPlayerPosition = soundPosition;
+                    loseTargetTimer = 0f;
+                    reachedLastKnownPosition = false;
+                    lookAroundTimer = 0f;
+                    Debug.Log("Heard sound while chasing - updating target position");
                 }
             }
         }
@@ -363,10 +380,23 @@ namespace Assets.Scripts
         {
             navAgent.speed = chaseSpeed;
             navAgent.SetDestination(lastKnownPlayerPosition);
-            
-            if (!navAgent.pathPending && navAgent.remainingDistance < 1f)
+
+            if (!navAgent.pathPending && navAgent.remainingDistance < 1.5f)
             {
-                ChangeState(EnemyState.Patrol);
+                if (!reachedAlertPosition)
+                {
+                    reachedAlertPosition = true;
+                    alertLookTimer = 0f;
+                    Debug.Log("Reached alert position - looking around");
+                }
+
+                alertLookTimer += Time.deltaTime;
+
+                if (alertLookTimer >= alertLookAroundTime)
+                {
+                    Debug.Log("Finished alert investigation - returning to patrol");
+                    ChangeState(EnemyState.Patrol);
+                }
             }
         }
         
@@ -390,6 +420,8 @@ namespace Assets.Scripts
 
                 navAgent.SetDestination(lastKnownPlayerPosition);
                 loseTargetTimer = 0f;
+                lookAroundTimer = 0f;
+                reachedLastKnownPosition = false;
 
                 if (hasVisualContact)
                 {
@@ -403,11 +435,31 @@ namespace Assets.Scripts
             else
             {
                 navAgent.SetDestination(lastKnownPlayerPosition);
+
+                if (!navAgent.pathPending && navAgent.remainingDistance < 1.5f)
+                {
+                    if (!reachedLastKnownPosition)
+                    {
+                        reachedLastKnownPosition = true;
+                        lookAroundTimer = 0f;
+                        Debug.Log("Reached last known position - looking around");
+                    }
+
+                    lookAroundTimer += Time.deltaTime;
+
+                    if (lookAroundTimer >= lookAroundTime)
+                    {
+                        Debug.Log("Finished looking around - starting search");
+                        ChangeState(EnemyState.Search);
+                        return;
+                    }
+                }
+
                 loseTargetTimer += Time.deltaTime;
 
-                if (loseTargetTimer >= loseTargetTime || (!navAgent.pathPending && navAgent.remainingDistance < 1f))
+                if (loseTargetTimer >= loseTargetTime)
                 {
-                    Debug.Log("Lost player and light - starting search");
+                    Debug.Log("Lost player and light for too long - starting search");
                     ChangeState(EnemyState.Search);
                 }
             }
@@ -485,12 +537,29 @@ namespace Assets.Scripts
             {
                 navAgent.speed = patrolSpeed;
                 loseTargetTimer = 0f;
-                GoToNextPatrolPoint();
+                lookAroundTimer = 0f;
+                reachedLastKnownPosition = false;
+                alertLookTimer = 0f;
+                reachedAlertPosition = false;
+                GoToNearestPatrolPoint();
             }
             else if (newState == EnemyState.Search)
             {
                 searchTimer = 0f;
                 searchPointTimer = 0f;
+                lookAroundTimer = 0f;
+                reachedLastKnownPosition = false;
+            }
+            else if (newState == EnemyState.Chase)
+            {
+                loseTargetTimer = 0f;
+                lookAroundTimer = 0f;
+                reachedLastKnownPosition = false;
+            }
+            else if (newState == EnemyState.Alert)
+            {
+                alertLookTimer = 0f;
+                reachedAlertPosition = false;
             }
         }
         
@@ -500,7 +569,37 @@ namespace Assets.Scripts
             {
                 return;
             }
-            
+
+            navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
+            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+        }
+
+        void GoToNearestPatrolPoint()
+        {
+            if (patrolPoints == null || patrolPoints.Length == 0)
+            {
+                return;
+            }
+
+            int nearestIndex = 0;
+            float nearestDistanceSqr = float.MaxValue;
+
+            for (int i = 0; i < patrolPoints.Length; i++)
+            {
+                if (patrolPoints[i] == null)
+                {
+                    continue;
+                }
+
+                float distanceSqr = (patrolPoints[i].position - transform.position).sqrMagnitude;
+                if (distanceSqr < nearestDistanceSqr)
+                {
+                    nearestDistanceSqr = distanceSqr;
+                    nearestIndex = i;
+                }
+            }
+
+            currentPatrolIndex = nearestIndex;
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }

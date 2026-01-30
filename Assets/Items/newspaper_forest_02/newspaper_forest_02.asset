@@ -16,4 +16,14 @@ MonoBehaviour:
   newspaperName: newspaper_forest_02
   newspaperImage: {fileID: 858602195, guid: 14ca4dd559832b546bad5da44b77eedd, type: 3}
   inventoryIcon: {fileID: -1165703332, guid: 38f882828fb28384391cf1eb2f930a1c, type: 3}
-  description: Evacuation of the city
+  title: Evacuation of the city
+  content: 'April 3, 1950
+
+
+    Due to numerous complaints and requests from residents,
+    it was decided to evacuate the remaining residents and seal the city indefinitely.
+
+
+    After
+    three months of complaints and frequent disappearances, the local mayor''s office
+    decided to evacuate the remaining citizens.'

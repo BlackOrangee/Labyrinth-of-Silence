@@ -16,4 +16,12 @@ MonoBehaviour:
   newspaperName: Document 3
   newspaperImage: {fileID: 2101854192, guid: aff2db97d8814aa43a1632e4fc41630c, type: 3}
   inventoryIcon: {fileID: -226433495, guid: e8641decadef2c44c9f60458e33516ee, type: 3}
-  description: Top secret experiment resume
+  title: Top secret experiment resume
+  content: "\u2116:  0994\n\nRisks:\n\nHigh mortality rate\n\nMutations:\n\nThree
+    times the original size of the subject, \nbloating, skin color and strength change
+    (Similar to \"--------------------------------\"), and limb and head shape change.
+    The subject stops understanding human speech and becomes uncontrollable. Especially
+    dangerous\n\nResults\n\nThe object remains in a stable state. Easily transferred
+    all stages, but began to show aggression. It is necessary to close the ego further
+    from others. In no case do not approach him closer than 3 meters without protection
+    or with other subjects!"
