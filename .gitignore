@@ -107,3 +107,4 @@ ignore.conf
 .DS_Store
 Assets/.DS_Store
 .zip
+/Assets/_Recovery

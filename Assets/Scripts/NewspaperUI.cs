@@ -51,6 +51,12 @@ namespace Assets.Scripts
         [Tooltip("Image component to display the newspaper")]
         public Image newspaperImage;
 
+        [Tooltip("Text component for newspaper title")]
+        public Text titleText;
+
+        [Tooltip("Text component for newspaper content")]
+        public Text contentText;
+
         [Tooltip("Close button to hide the newspaper")]
         public Button closeButton;
 
@@ -82,6 +88,7 @@ namespace Assets.Scripts
         private bool isShowing = false;
         private NewspaperData currentNewspaper;
         private AudioSource audioSource;
+        private bool wasInventoryOpenBefore = false;
         #endregion
 
         #region Initialization
@@ -137,8 +144,26 @@ namespace Assets.Scripts
                 HideNewspaper();
             }
 
+            wasInventoryOpenBefore = InventoryUI.Instance != null && InventoryUI.Instance.IsOpen();
+
+            if (wasInventoryOpenBefore && InventoryUI.Instance != null)
+            {
+                InventoryUI.Instance.CloseInventory();
+            }
+
             currentNewspaper = newspaperData;
             newspaperImage.sprite = newspaperData.newspaperImage;
+
+            // Set title and content
+            if (titleText != null)
+            {
+                titleText.text = newspaperData.title;
+            }
+
+            if (contentText != null)
+            {
+                contentText.text = newspaperData.content;
+            }
 
             if (fadeCoroutine != null)
             {
@@ -148,6 +173,8 @@ namespace Assets.Scripts
             fadeCoroutine = StartCoroutine(ShowNewspaperCoroutine());
 
             PlaySound(openSound);
+
+            Time.timeScale = 0f;
 
             Debug.Log($"NewspaperUI: Showing newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
         }
@@ -170,6 +197,13 @@ namespace Assets.Scripts
             fadeCoroutine = StartCoroutine(HideNewspaperCoroutine());
 
             PlaySound(closeSound);
+
+            Time.timeScale = 1f;
+
+            if (wasInventoryOpenBefore && InventoryUI.Instance != null)
+            {
+                InventoryUI.Instance.OpenInventory();
+            }
 
             Debug.Log("NewspaperUI: Hiding newspaper.");
         }
@@ -198,7 +232,7 @@ namespace Assets.Scripts
                 float elapsedTime = 0f;
                 while (elapsedTime < fadeInDuration)
                 {
-                    elapsedTime += Time.deltaTime;
+                    elapsedTime += Time.unscaledDeltaTime;
                     canvasGroup.alpha = Mathf.Clamp01(elapsedTime / fadeInDuration);
                     yield return null;
                 }
@@ -217,7 +251,7 @@ namespace Assets.Scripts
 
                 while (elapsedTime < fadeOutDuration)
                 {
-                    elapsedTime += Time.deltaTime;
+                    elapsedTime += Time.unscaledDeltaTime;
                     canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsedTime / fadeOutDuration);
                     yield return null;
                 }
@@ -267,9 +301,12 @@ namespace Assets.Scripts
         #region Input Handling
         private void Update()
         {
-            if (isShowing && Input.GetKeyDown(KeyCode.Escape))
+            if (isShowing)
             {
-                HideNewspaper();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    HideNewspaper();
+                }
             }
         }
         #endregion
@@ -285,6 +322,16 @@ namespace Assets.Scripts
             if (newspaperImage == null)
             {
                 Debug.LogWarning("NewspaperUI: newspaperImage is not assigned! Assign the Image component in the inspector.");
+            }
+
+            if (titleText == null)
+            {
+                Debug.LogWarning("NewspaperUI: titleText is not assigned! Assign the TextMeshProUGUI component for title in the inspector.");
+            }
+
+            if (contentText == null)
+            {
+                Debug.LogWarning("NewspaperUI: contentText is not assigned! Assign the TextMeshProUGUI component for content in the inspector.");
             }
 
             if (closeButton == null)

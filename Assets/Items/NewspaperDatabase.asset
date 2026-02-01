@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7884fda6926f99e46868a1a10500213c, type: 3}
+  m_Name: NewspaperDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.NewspaperDatabase
+  allNewspapers:
+  - {fileID: 11400000, guid: 84e46298a8b2ca04382810b1013d105f, type: 2}
+  - {fileID: 11400000, guid: 7c6347d6082afd54b981e3cad15feeb6, type: 2}
+  - {fileID: 11400000, guid: e2ca9500579e2c94a9e7c585f0778a7b, type: 2}
+  - {fileID: 11400000, guid: 5445372d3abfa0d4c954ad5bc2d19fdd, type: 2}
+  - {fileID: 11400000, guid: c02788fde2c07a44b8b2292aef5e843d, type: 2}
+  - {fileID: 11400000, guid: 610366fa90b52ae4fa4911b22c7a602c, type: 2}
+  - {fileID: 11400000, guid: a0883fcddf967ad438a726710b3d1912, type: 2}

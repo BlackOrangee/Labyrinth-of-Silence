@@ -66,6 +66,10 @@ namespace Assets.Scripts
         [Tooltip("Time to look around in alert mode before returning to patrol")]
         public float alertLookAroundTime = 4f;
 
+        [Header("Alert Settings")]
+        [Tooltip("Time to look around in alert mode before returning to patrol")]
+        public float alertLookAroundTime = 4f;
+
         [Header("Search Settings")]
         [Tooltip("Radius around last known position to search")]
         public float searchRadius = 8f;

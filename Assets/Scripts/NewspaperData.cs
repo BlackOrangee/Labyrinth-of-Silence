@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Assets.Scripts
 {
@@ -21,9 +22,12 @@ namespace Assets.Scripts
         [Tooltip("Small icon for inventory display")]
         public Sprite inventoryIcon;
 
-        [Header("Optional")]
-        [Tooltip("Additional description or content")]
-        [TextArea(3, 5)]
-        public string description;
+        [Tooltip("Title of the newspaper")]
+        public string title;
+
+        [FormerlySerializedAs("description")]
+        [Tooltip("Description of the newspaper")]
+        [TextArea(30, 5)]
+        public string content;
     }
 }

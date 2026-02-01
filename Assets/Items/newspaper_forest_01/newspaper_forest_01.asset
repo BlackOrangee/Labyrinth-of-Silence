@@ -16,4 +16,14 @@ MonoBehaviour:
   newspaperName: newspaper_forest_01
   newspaperImage: {fileID: 353121426, guid: b8c5070fca475bd459bb034e51c45f24, type: 3}
   inventoryIcon: {fileID: 88372273, guid: 4ed37f7509415a9499cd48d35f528fea, type: 3}
-  description: Mysterious Disappearance of People
+  title: Mysterious Disappearance of People
+  content: "January 12, 1950\n\nThere have been an increasing number of cases of
+    people going missing in the city of ***. As of ***, *** people have gone missing.
+    Residents are complaining about the lack of action from the city government.
+    \r\n\r\n As a reminder, in early spring of this year, there were reports of unknown
+    incidents that led to the disappearance of people. Since then, no action has
+    been taken, and no one has been found.\n\nWe have spoken to the families of the
+    missing people. It would be possible to assume that these are just coincidences,
+    but there have been too many victims. \n\nAmong the missing is a married couple
+    with children. Their neighbors claim that they saw the couple the day before
+    their disappearance, as they were planning an evening walk and never returned."
