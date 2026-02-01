@@ -42,6 +42,10 @@ namespace Assets.Scripts
         [Tooltip("Screenshot height")]
         public int screenshotHeight = 180;
 
+        [Header("Databases")]
+        [Tooltip("Database containing all newspapers in the game")]
+        public NewspaperDatabase newspaperDatabase;
+
         private string saveFolderPath => Path.Combine(Application.persistentDataPath, "Saves");
         private string screenshotFolderPath => Path.Combine(Application.persistentDataPath, "Screenshots");
 
@@ -113,6 +117,16 @@ namespace Assets.Scripts
             {
                 saveData.inventoryData.items = new List<string>(inventory.GetItems());
                 saveData.inventoryData.collectedKeys = new List<KeyColorType>(inventory.GetCollectedKeys());
+
+                List<NewspaperData> newspapers = inventory.GetCollectedNewspapers();
+                saveData.inventoryData.collectedNewspaperIds = new List<string>();
+                foreach (NewspaperData newspaper in newspapers)
+                {
+                    if (newspaper != null)
+                    {
+                        saveData.inventoryData.collectedNewspaperIds.Add(newspaper.newspaperId);
+                    }
+                }
             }
 
             // if (QuestTracker.Instance != null)
@@ -244,6 +258,15 @@ namespace Assets.Scripts
                 if (saveData.inventoryData.collectedKeys != null)
                 {
                     inventory.SetCollectedKeys(saveData.inventoryData.collectedKeys);
+                }
+
+                if (saveData.inventoryData.collectedNewspaperIds != null && newspaperDatabase != null)
+                {
+                    List<NewspaperData> newspapers = newspaperDatabase.GetNewspapersByIds(saveData.inventoryData.collectedNewspaperIds);
+                    foreach (NewspaperData newspaper in newspapers)
+                    {
+                        inventory.AddNewspaper(newspaper);
+                    }
                 }
             }
 

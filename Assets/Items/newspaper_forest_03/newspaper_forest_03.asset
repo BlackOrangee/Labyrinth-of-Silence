@@ -16,4 +16,11 @@ MonoBehaviour:
   newspaperName: newspaper_forest_03
   newspaperImage: {fileID: -293713386, guid: bfd9ddcbcc3d4b042b3b713c64eb9b1c, type: 3}
   inventoryIcon: {fileID: 1281796708, guid: 81f826500e7c26144a1b6471c01e8ddc, type: 3}
-  description: Monster in the town
+  title: Monster in the town
+  content: "March ***, 19***\n\nWe've received information that a monster has appeared
+    in the city, which is likely the cause of the disappearances.\n\nThis happened
+    on March ***. Residents saw a figure that did not look like a human, with chains
+    on its arms. It is unknown where the creature came from or where it went. Description:
+    Approximate height of ***, large claws, and chains on its arms. \r\n\r\n This
+    is all we have been able to find out so far. We will keep you updated on the
+    situation."
