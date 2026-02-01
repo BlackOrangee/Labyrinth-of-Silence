@@ -18,11 +18,11 @@ namespace Assets.Scripts
         [Header("DEATH AUDIO")]
         public AnimationCurve fallCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
         public AudioClip bodyFallClip;
-        [Range(0f, 1f)] public float bodyFallVolume = 0.8f;
+        [Range(0f, 1f)] public float bodyFallVolume = 1.0f;
         public AudioClip lanternDropClip;
-        [Range(0f, 1f)] public float lanternVolume = 1.0f;
+        [Range(0f, 1f)] public float lanternVolume = 0.3f;
         public AudioClip lastBreathClip;
-        [Range(0f, 1f)] public float breathVolume = 0.6f;
+        [Range(0f, 1f)] public float breathVolume = 0.8f;
 
         [Header("LAMP PHYSICS")]
         public float dropForwardForce = 2f;
@@ -30,6 +30,8 @@ namespace Assets.Scripts
         public float rotationForce = 5f;
 
         [Header("Heartbeat Rhythm (Ритм)")]
+        // [ВАЖЛИВО] Встав сюди аудіокліп!
+        public AudioClip heartbeatClip; 
         public float startPulseSpeed = 1.0f;
         public float endPulseSpeed = 2.2f;
         public float pulseSharpness = 20f;
@@ -41,7 +43,7 @@ namespace Assets.Scripts
         public float scaleAmount = 0.3f;
         public float colorSplitStrength = 3.0f;
 
-        [Tooltip("Наскільки сильно звужується екран перед смертю (0.5 = половина, 1.0 = повна темрява)")]
+        [Tooltip("Наскільки сильно звужується екран перед смертю")]
         [Range(0f, 1f)] public float maxVignetteIntensity = 0.65f;
 
         [Header("References")]
@@ -70,6 +72,9 @@ namespace Assets.Scripts
         private Vector2 _currentShakePos;
         private ChromaticAberration _aberration;
         private Vignette _vignette;
+
+        // Змінна для блокування звуку ззовні
+        private bool _isHeartbeatMuted = false;
 
         private void Start()
         {
@@ -135,22 +140,38 @@ namespace Assets.Scripts
             if (_currentSanity <= 0) Die();
         }
 
+        // [ВИПРАВЛЕНО] Цей метод зупиняє звук миттєво, щоб не було накладання
+        public void SetHeartbeatMute(bool isMuted)
+        {
+            _isHeartbeatMuted = isMuted;
+            
+            if (isMuted && heartbeatSource != null)
+            {
+                // Миттєво зупиняємо будь-який звук серця
+                heartbeatSource.Stop();
+            }
+        }
+
         private void UpdatePsychosisEffects()
         {
             float insanityFactor = 1f - (_currentSanity / maxSanity);
 
+            // --- ЛОГІКА СЕРЦЕБИТТЯ ---
             float currentBPS = Mathf.Lerp(startPulseSpeed, endPulseSpeed, insanityFactor);
             float beatDuration = 1f / currentBPS;
             bool isBeat = false;
 
             if (Time.time - _lastBeatTime >= beatDuration) { _lastBeatTime = Time.time; isBeat = true; }
 
+            // Граємо звук, тільки якщо НЕМАЄ блокування (_isHeartbeatMuted == false)
+            if (isBeat && insanityFactor > 0.05f && heartbeatSource != null && heartbeatClip != null && !_isHeartbeatMuted)
+            {
+                heartbeatSource.PlayOneShot(heartbeatClip, 1f);
+            }
+
             float pulseWave = Mathf.Sin(((Time.time - _lastBeatTime) / beatDuration) * Mathf.PI);
             if (pulseWave < 0) pulseWave = 0;
             float impact = Mathf.Pow(pulseWave, pulseSharpness) * insanityFactor;
-
-            if (isBeat && insanityFactor > 0.05f && heartbeatSource != null)
-                heartbeatSource.PlayOneShot(heartbeatSource.clip, 1f);
 
             if (darknessCanvasGroup != null) darknessCanvasGroup.alpha = insanityFactor * 0.95f;
 
@@ -199,22 +220,33 @@ namespace Assets.Scripts
             if (_vignette != null)
             {
                 float baseVignette = insanityFactor * maxVignetteIntensity;
-
                 float pulseVignette = impact * 0.1f;
-
                 _vignette.intensity.value = baseVignette + pulseVignette;
-
                 _vignette.smoothness.value = 1.0f;
             }
         }
 
-        private void Die()
+private void Die()
         {
+            if (_isDead) return; // Про всяк випадок, щоб не викликати двічі
             _isDead = true;
+
+            // [НОВЕ] --- ГЛУШИМО ВЕСЬ СВІТ ---
+            // Викликаємо наш менеджер, щоб він плавно скрутив гучність всієї гри в нуль за 2 секунди
+            if (GlobalSoundManager.Instance != null)
+            {
+                GlobalSoundManager.Instance.FadeOutAllSounds(2f);
+            }
+            // --------------------------------
+
+            // Зупиняємо локальні звуки
             if (heartbeatSource != null) heartbeatSource.Stop();
             if (glitchVideoPlayer != null) glitchVideoPlayer.Stop();
+            
+            // Вимикаємо керування
             if (playerMovementScript != null) playerMovementScript.enabled = false;
 
+            // --- ТВОЯ ЛОГІКА ПАДІННЯ ЛІХТАРЯ (Залишаємо без змін) ---
             if (lampController != null)
             {
                 lampController.transform.SetParent(null);
@@ -226,6 +258,7 @@ namespace Assets.Scripts
                     if (lampCol != null) lampCol.isTrigger = false;
                     lampRb.isKinematic = false;
                     lampRb.useGravity = true;
+                    
                     if (playerCollider != null && lampCol != null)
                         Physics.IgnoreCollision(playerCollider, lampCol);
 
@@ -234,6 +267,7 @@ namespace Assets.Scripts
                     lampRb.AddTorque(Random.insideUnitSphere * rotationForce, ForceMode.Impulse);
                 }
             }
+            
             StartCoroutine(CameraDropEffect());
         }
 
@@ -291,7 +325,25 @@ namespace Assets.Scripts
                 yield return null;
             }
 
-            if (deathPanel != null) deathPanel.SetActive(true);
+            // -НОВЕ- Виправлена логіка активації відео (спочатку вмикаємо об'єкт, потім готуємо)
+            if (deathPanel != null)
+            {
+                CanvasGroup cg = deathPanel.GetComponent<CanvasGroup>();
+                if (cg != null) cg.alpha = 0f; // -НОВЕ- Ховаємо панель через прозорість
+
+                deathPanel.SetActive(true); // -НОВЕ- Вмикаємо об'єкт, щоб VideoPlayer став активним
+
+                VideoPlayer vp = deathPanel.GetComponentInChildren<VideoPlayer>();
+                if (vp != null)
+                {
+                    vp.Prepare(); // -НОВЕ- Тепер Prepare спрацює без помилки
+                    while (!vp.isPrepared) yield return null; 
+                    vp.Play(); 
+                }
+
+                if (cg != null) cg.alpha = 1f; // -НОВЕ- Тільки зараз показуємо гравцеві
+            }
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
