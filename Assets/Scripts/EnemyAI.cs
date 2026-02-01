@@ -109,7 +109,6 @@ namespace Assets.Scripts
             Search,
             ScriptedEvent
         }
-
         private EnemyState currentState = EnemyState.Patrol;
         private NavMeshAgent navAgent;
         private int currentPatrolIndex = 0;
@@ -124,13 +123,11 @@ namespace Assets.Scripts
         private bool reachedLastKnownPosition = false;
         private float alertLookTimer = 0f;
         private bool reachedAlertPosition = false;
-
         private float visionRangeSqr;
         private float attackRangeSqr;
         private float hearingRangeSqr;
         private float halfFieldOfView;
         private Vector3 eyeOffset;
-
         private PlayerMovement playerMovement;
         private CameraController playerCamera;
 
@@ -353,7 +350,6 @@ namespace Assets.Scripts
                     break;
             }
         }
-
         void UpdateAnimations()
         {
             if (animator != null)
@@ -524,7 +520,6 @@ namespace Assets.Scripts
         }
 
         #region Vision System
-
         void CheckVision()
         {
             if (player == null)
@@ -618,7 +613,6 @@ namespace Assets.Scripts
 
             playerInSight = false;
         }
-
         void OnPlayerSpotted()
         {
             lastKnownPlayerPosition = player.position;
@@ -634,7 +628,6 @@ namespace Assets.Scripts
         #endregion
 
         #region Hearing System
-
         void OnSoundHeard(Vector3 soundPosition, float soundIntensity, GameObject source)
         {
             if (source == gameObject)
@@ -672,8 +665,6 @@ namespace Assets.Scripts
         #endregion
 
         #region State Behaviors
-
-
         void PatrolBehavior()
         {
             if (patrolPoints == null || patrolPoints.Length == 0)
@@ -693,7 +684,6 @@ namespace Assets.Scripts
                 GoToNextPatrolPoint();
             }
         }
-
         void AlertBehavior()
         {
             navAgent.speed = chaseSpeed;
@@ -717,8 +707,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
-
         void ChaseBehavior()
         {
             navAgent.speed = chaseSpeed;
@@ -783,8 +771,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
-
         void AttackBehavior()
         {
             navAgent.SetDestination(transform.position);
@@ -806,8 +792,6 @@ namespace Assets.Scripts
                 ChangeState(EnemyState.Chase);
             }
         }
-
-
         void SearchBehavior()
         {
             navAgent.speed = patrolSpeed;
@@ -835,7 +819,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
         Vector3 GetRandomPointAroundPosition(Vector3 center, float radius)
         {
             Vector2 randomCircle = Random.insideUnitCircle * radius;
@@ -846,8 +829,6 @@ namespace Assets.Scripts
         #endregion
 
         #region Helper Methods
-
-
         void ChangeState(EnemyState newState)
         {
             if (currentState == newState)
@@ -890,8 +871,6 @@ namespace Assets.Scripts
                 reachedAlertPosition = false;
             }
         }
-
-
         void GoToNextPatrolPoint()
         {
             if (patrolPoints == null || patrolPoints.Length == 0)
@@ -902,7 +881,6 @@ namespace Assets.Scripts
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
-
         void GoToNearestPatrolPoint()
         {
             if (patrolPoints == null || patrolPoints.Length == 0)
@@ -936,8 +914,6 @@ namespace Assets.Scripts
         #endregion
 
         #region Debug Visualization 
-
-
         void OnDrawGizmos()
         {
             if (!showDebugGizmos)
