@@ -14,19 +14,12 @@ namespace Assets.Scripts
         [Header("Audio")]
         public AudioSource lampAudioSource;
 
-        // [СТАРЕ] Старі змінні для звуків
-        // public AudioClip turnOnSound;
-        // public AudioClip turnOffSound;
-        // public AudioClip emptyClickSound;
-        
-        // [НОВЕ] --- ADVANCED AUDIO SYSTEM (Sound Profiles) ---
         [Header("Advanced Audio (Sound Profiles)")]
-        public SoundProfile turnOnProfile;   // Профіль для ввімкнення
-        public SoundProfile turnOffProfile;  // Профіль для вимкнення
-        public SoundProfile emptyClickProfile; // Клік, коли немає пального
-        // -----------------------------------------------------
+        public SoundProfile turnOnProfile;
+        public SoundProfile turnOffProfile;
+        public SoundProfile emptyClickProfile;
 
-        public AudioClip burningSoundLoop; // Луп залишаємо як є, він простий
+        public AudioClip burningSoundLoop;
 
         [Header("Old UI (Optional)")]
         public Slider fuelSlider;
@@ -63,7 +56,7 @@ namespace Assets.Scripts
         public float brightBurnRate = 10f;
 
         private float currentFuel;
-        private int lightMode = 0; // 0 = Off, 1 = Dim, 2 = Bright
+        private int lightMode = 0;
         
         private float targetMainIntensity;
         private float targetMainRange;
@@ -106,16 +99,10 @@ namespace Assets.Scripts
         {
             if (Input.GetKeyDown(KeyCode.F))
             {
-                // Перевірка пального ПЕРЕД перемиканням
                 if (currentFuel <= 0 && lightMode == 0)
                 {
                     Debug.Log("Click! No fuel.");
                     
-                    // [СТАРЕ]
-                    // if (emptyClickSound) AudioSource.PlayClipAtPoint(emptyClickSound, transform.position);
-                    // else if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
-
-                    // [НОВЕ] Граємо звук "пустишки" через просунуту систему
                     if (emptyClickProfile != null) emptyClickProfile.Play(lampAudioSource);
                     else if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
 
@@ -126,25 +113,16 @@ namespace Assets.Scripts
                 lightMode++;
                 if (lightMode > 2) lightMode = 0;
 
-                // Аудіо
                 if (lampAudioSource != null)
                 {
-                    if (lightMode == 0) // Вимкнення
+                    if (lightMode == 0)
                     {
                         lampAudioSource.Stop(); 
-                        
-                        // [СТАРЕ]
-                        // if(turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
-                        
-                        // [НОВЕ] Звук вимкнення
+
                         if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
                     }
-                    else if (oldMode == 0) // Увімкнення
+                    else if (oldMode == 0)
                     {
-                        // [СТАРЕ]
-                        // if(turnOnSound) AudioSource.PlayClipAtPoint(turnOnSound, transform.position);
-                        
-                        // [НОВЕ] Звук увімкнення
                         if (turnOnProfile != null) turnOnProfile.Play(lampAudioSource);
 
                         if(burningSoundLoop) lampAudioSource.Play(); 
@@ -180,18 +158,12 @@ namespace Assets.Scripts
             lightMode = 0;
             
             if (lampAudioSource != null) lampAudioSource.Stop();
-            
-            // [СТАРЕ]
-            // if (turnOffSound) AudioSource.PlayClipAtPoint(turnOffSound, transform.position);
-            
-            // [НОВЕ]
+
             if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
             
             Debug.Log("Fuel empty! Lamp turned off.");
             UpdateLightTargets();
         }
-
-        // ... Далі код без змін ...
         private void UpdateLightTargets()
         {
             if (currentFuel <= 0)

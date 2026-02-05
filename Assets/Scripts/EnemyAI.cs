@@ -22,6 +22,8 @@ namespace Assets.Scripts
         [Tooltip("Sanity controller reference")]
         public SanityController sanityController;
 
+        private MonsterAudio audioSystem;
+
         [Header("UI & Effects")]
         [Tooltip("Damage overlay image")]
         public Image damageOverlay;
@@ -61,10 +63,6 @@ namespace Assets.Scripts
         public Transform[] patrolPoints;
         [Tooltip("Wait time at each point")]
         public float waitTimeAtPoint = 1f;
-
-        [Header("Alert Settings")]
-        [Tooltip("Time to look around in alert mode before returning to patrol")]
-        public float alertLookAroundTime = 4f;
 
         [Header("Alert Settings")]
         [Tooltip("Time to look around in alert mode before returning to patrol")]
@@ -142,6 +140,8 @@ namespace Assets.Scripts
         void Start()
         {
             navAgent = GetComponent<NavMeshAgent>();
+
+            audioSystem = GetComponent<MonsterAudio>();
 
             navAgent.autoBraking = true;
             navAgent.updateRotation = true;
@@ -363,7 +363,7 @@ namespace Assets.Scripts
             }
         }
         
-        IEnumerator TriggerAttackSequence()
+IEnumerator TriggerAttackSequence()
         {
             isEventActive = true;
             ChangeState(EnemyState.ScriptedEvent);
@@ -402,6 +402,11 @@ namespace Assets.Scripts
             }
 
             yield return new WaitForSeconds(impactWaitTime);
+
+            if (audioSystem != null) 
+            {
+                audioSystem.PlayScream();
+            }
 
             if (currentHits == 1)
             {
@@ -622,6 +627,11 @@ namespace Assets.Scripts
             lastKnownPlayerPosition = player.position;
             loseTargetTimer = 0f;
 
+            if (audioSystem != null)
+            {
+                audioSystem.PlaySpotSound();
+            }
+
             if (currentState == EnemyState.Patrol || currentState == EnemyState.Alert || currentState == EnemyState.Search)
             {
                 Debug.Log($"[EnemyAI] Player spotted! Changing from {currentState} to Chase");
@@ -713,6 +723,7 @@ namespace Assets.Scripts
         }
         void ChaseBehavior()
         {
+            navAgent.isStopped = false;
             navAgent.speed = chaseSpeed;
 
             bool hasVisualContact = playerInSight;
