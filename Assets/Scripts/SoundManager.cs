@@ -10,13 +10,6 @@ namespace Assets.Scripts
     public class SoundManager : MonoBehaviour
     {
         public static SoundManager Instance { get; private set; }
-
-        /// <summary>
-        /// Sound emission event
-        /// Vector3 - sound position
-        /// float - sound intensity (0-1, affects hearing range)
-        /// GameObject - sound source
-        /// </summary>
         public static event Action<Vector3, float, GameObject> OnSoundEmitted;
 
         [Header("Debug")]
@@ -37,13 +30,6 @@ namespace Assets.Scripts
                 Destroy(gameObject);
             }
         }
-
-        /// <summary>
-        /// Emit sound in the world
-        /// </summary>
-        /// <param name="position">Sound source position</param>
-        /// <param name="intensity">Sound intensity (0-1). 1 = maximum range</param>
-        /// <param name="source">Game object sound source</param>
         public static void EmitSound(Vector3 position, float intensity, GameObject source)
         {
             if (intensity > 1f)
