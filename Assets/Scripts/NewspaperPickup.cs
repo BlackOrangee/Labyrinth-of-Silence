@@ -42,15 +42,27 @@ namespace Assets.Scripts
 
         public string GetInteractText()
         {
+            if (isPickedUp)
+            {
+                return "";
+            }
+
             if (newspaperData != null)
             {
-                string localizedName = newspaperData.GetLocalizedName();
-                if (!string.IsNullOrEmpty(localizedName))
+                try
                 {
-                    return $"Press to read {localizedName}";
+                    string localizedName = newspaperData.GetLocalizedName();
+                    if (!string.IsNullOrEmpty(localizedName))
+                    {
+                        return $"Press [E] to read {localizedName}";
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"NewspaperPickup: Error getting localized name - {ex.Message}");
                 }
             }
-            return "Press to read Newspaper";
+            return "Press [E] to read Newspaper";
         }
 
         public void Interact(GameObject actor)

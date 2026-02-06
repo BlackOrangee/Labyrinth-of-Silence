@@ -175,6 +175,11 @@ namespace Assets.Scripts
 
         private void Start()
         {
+            if (InteractionLocker.IsLocked)
+            {
+                InteractionLocker.ForceRelease();
+            }
+
             inventory = FindFirstObjectByType<SimpleInventory>();
 
             if (inventory != null)
@@ -727,6 +732,21 @@ namespace Assets.Scripts
         public bool IsOpen()
         {
             return isOpen;
+        }
+
+        /// <summary>
+        /// Helper method to get full path of GameObject in hierarchy
+        /// </summary>
+        private string GetGameObjectPath(GameObject obj)
+        {
+            string path = obj.name;
+            Transform parent = obj.transform.parent;
+            while (parent != null)
+            {
+                path = parent.name + "/" + path;
+                parent = parent.parent;
+            }
+            return path;
         }
     }
 }
