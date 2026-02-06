@@ -53,9 +53,9 @@ namespace Assets.Scripts
 
                 if (interactable != null)
                 {
-                    if (hitGO == lastHitGO && currentInteractable != null) 
+                    if (hitGO == lastHitGO && currentInteractable != null)
                     {
-                        return; 
+                        return;
                     }
 
                     string msg = interactable.GetInteractText();
@@ -64,12 +64,12 @@ namespace Assets.Scripts
                     {
                         ClearCurrent();
                     }
-                    else 
+                    else
                     {
                         currentInteractable = interactable;
                         lastHitGO = hitGO;
-                        
-                        string buttonText = "Press E"; 
+
+                        string buttonText = "Press E";
                         if (hitGO.GetComponent<HidingSpot>() != null) buttonText = "Hide (E)";
 
                         popupManager?.ShowPopup(msg, OnPopupExecute, this, buttonText, hitGO.GetComponent<CollectItem>()?.itemIcon);
