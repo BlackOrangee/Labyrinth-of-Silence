@@ -170,6 +170,8 @@ namespace Assets.Scripts
             }
 
             ShowMessage(activationMessage);
+
+            TriggerThought();
         }
 
         /// <summary>
@@ -265,6 +267,18 @@ namespace Assets.Scripts
         public bool IsActivated()
         {
             return isActivated;
+        }
+
+        /// <summary>
+        /// Trigger thought if ThoughtTrigger component is attached
+        /// </summary>
+        private void TriggerThought()
+        {
+            ThoughtTrigger thoughtTrigger = GetComponent<ThoughtTrigger>();
+            if (thoughtTrigger != null)
+            {
+                thoughtTrigger.TriggerFromInteraction();
+            }
         }
 
         private void OnDrawGizmos()

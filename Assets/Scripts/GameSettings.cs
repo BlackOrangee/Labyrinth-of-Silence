@@ -19,6 +19,8 @@ namespace Assets.Scripts
 
         [Range(0f, 1f)] public float musicVolume;
 
+        [Range(0f, 1f)] public float sfxVolume;
+
         [Header("Localization")] public bool subtitlesEnabled;
         public string subtitleLanguage;
         public string gameLanguage;
@@ -32,6 +34,7 @@ namespace Assets.Scripts
             mouseSensitivity = 1.0f;
             masterVolume = 1.0f;
             musicVolume = 0.8f;
+            sfxVolume = 0.8f;
             subtitlesEnabled = true;
             subtitleLanguage = "English";
             gameLanguage = "English";
@@ -46,6 +49,7 @@ namespace Assets.Scripts
             mouseSensitivity = 1.0f;
             masterVolume = 1.0f;
             musicVolume = 0.8f;
+            sfxVolume = 0.8f;
             subtitlesEnabled = true;
             subtitleLanguage = "English";
             gameLanguage = "English";
@@ -62,6 +66,7 @@ namespace Assets.Scripts
                 mouseSensitivity = this.mouseSensitivity,
                 masterVolume = this.masterVolume,
                 musicVolume = this.musicVolume,
+                sfxVolume = this.sfxVolume,
                 subtitlesEnabled = this.subtitlesEnabled,
                 subtitleLanguage = this.subtitleLanguage,
                 gameLanguage = this.gameLanguage
@@ -77,6 +82,7 @@ namespace Assets.Scripts
             mouseSensitivity = other.mouseSensitivity;
             masterVolume = other.masterVolume;
             musicVolume = other.musicVolume;
+            sfxVolume = other.sfxVolume;
             subtitlesEnabled = other.subtitlesEnabled;
             subtitleLanguage = other.subtitleLanguage;
             gameLanguage = other.gameLanguage;

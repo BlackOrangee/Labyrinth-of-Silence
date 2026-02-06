@@ -10,7 +10,7 @@ namespace Assets.Scripts
 
         public Dropdown resolutionDropdown;
 
-        [Tooltip("Slider для яркости")] public Slider brightnessSlider;
+        public Slider brightnessSlider;
 
         public Text brightnessValueText;
 
@@ -26,6 +26,10 @@ namespace Assets.Scripts
 
         public Text musicVolumeValueText;
 
+        public Slider sfxVolumeSlider;
+
+        public Text sfxVolumeValueText;
+
         public Toggle subtitlesToggle;
 
         public Dropdown subtitleLanguageDropdown;
@@ -34,15 +38,19 @@ namespace Assets.Scripts
 
         private SettingsManager settingsManager;
 
-        void Start()
+        void Awake()
         {
             settingsManager = SettingsManager.Instance;
-
             InitializeUI();
-
-            LoadCurrentSettings();
-
             SetupEventListeners();
+        }
+
+        void OnEnable()
+        {
+            if (settingsManager != null)
+            {
+                LoadCurrentSettings();
+            }
         }
 
         void InitializeUI()
@@ -98,6 +106,11 @@ namespace Assets.Scripts
                 musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
             }
 
+            if (sfxVolumeSlider != null)
+            {
+                sfxVolumeSlider.onValueChanged.AddListener(OnSfxVolumeChanged);
+            }
+
             if (subtitlesToggle != null)
             {
                 subtitlesToggle.onValueChanged.AddListener(OnSubtitlesChanged);
@@ -148,6 +161,12 @@ namespace Assets.Scripts
             {
                 musicVolumeSlider.value = settingsManager.currentSettings.musicVolume;
                 UpdateMusicVolumeText(settingsManager.currentSettings.musicVolume);
+            }
+
+            if (sfxVolumeSlider != null)
+            {
+                sfxVolumeSlider.value = settingsManager.currentSettings.sfxVolume;
+                UpdateSfxVolumeText(settingsManager.currentSettings.sfxVolume);
             }
 
             if (subtitlesToggle != null)
@@ -214,6 +233,13 @@ namespace Assets.Scripts
             settingsManager.SaveSettings();
         }
 
+        void OnSfxVolumeChanged(float value)
+        {
+            settingsManager.SetSfxVolume(value);
+            UpdateSfxVolumeText(value);
+            settingsManager.SaveSettings();
+        }
+
         void OnSubtitlesChanged(bool value)
         {
             settingsManager.SetSubtitlesEnabled(value);
@@ -274,6 +300,14 @@ namespace Assets.Scripts
             }
         }
 
+        void UpdateSfxVolumeText(float value)
+        {
+            if (sfxVolumeValueText != null)
+            {
+                sfxVolumeValueText.text = $"{Mathf.RoundToInt(value * 100)}%";
+            }
+        }
+
         #endregion
 
         void OnDestroy()
@@ -306,6 +340,11 @@ namespace Assets.Scripts
             if (musicVolumeSlider != null)
             {
                 musicVolumeSlider.onValueChanged.RemoveListener(OnMusicVolumeChanged);
+            }
+
+            if (sfxVolumeSlider != null)
+            {
+                sfxVolumeSlider.onValueChanged.RemoveListener(OnSfxVolumeChanged);
             }
 
             if (subtitlesToggle != null)

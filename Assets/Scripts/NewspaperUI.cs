@@ -152,17 +152,17 @@ namespace Assets.Scripts
             }
 
             currentNewspaper = newspaperData;
-            newspaperImage.sprite = newspaperData.newspaperImage;
+            newspaperImage.sprite = newspaperData.GetLocalizedImage();
 
             // Set title and content
             if (titleText != null)
             {
-                titleText.text = newspaperData.title;
+                titleText.text = newspaperData.GetLocalizedTitle();
             }
 
             if (contentText != null)
             {
-                contentText.text = newspaperData.content;
+                contentText.text = newspaperData.GetLocalizedContent();
             }
 
             if (fadeCoroutine != null)
@@ -176,7 +176,7 @@ namespace Assets.Scripts
 
             Time.timeScale = 0f;
 
-            Debug.Log($"NewspaperUI: Showing newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
+            Debug.Log($"NewspaperUI: Showing newspaper '{newspaperData.GetLocalizedName()}' (ID: {newspaperData.newspaperId})");
         }
 
         /// <summary>
