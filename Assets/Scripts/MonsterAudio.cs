@@ -4,21 +4,34 @@ namespace Assets.Scripts
 {
     public class MonsterAudio : MonoBehaviour
     {
-        [Header("Audio Source")]
-        public AudioSource mainSource;   // Для кроків і ударів
-        public AudioSource breathSource; // Окреме джерело для дихання (Loop)
-        public AudioSource chainSource;  // Окреме джерело для дзвону ланцюгів
+        [Header("--- AUDIO SOURCES (Динаміки) ---")]
+        [Tooltip("Для звуку Кроків")]
+        public AudioSource stepsSource;   
+        
+        [Tooltip("Для звуку Ланцюгів")]
+        public AudioSource chainSource;   
+        
+        [Tooltip("Для Дихання (Loop)")]
+        public AudioSource breathSource;  
+        
+        [Tooltip("Для Удару (Атака)")]
+        public AudioSource attackSource;  
+        
+        [Tooltip("Для Рику (Коли помітив)")]
+        public AudioSource spotSource;    
 
-        [Header("Sound Profiles (Налаштуй це!)")]
-        public SoundProfile stepSounds;   // Кроки
-        public SoundProfile chainSounds;  // Ланцюги (дзвін при ходьбі)
-        public SoundProfile screamSound;  // Атака
-        public SoundProfile breathSound;  // Дихання
+        [Header("--- SOUND PROFILES (Файли) ---")]
+        public SoundProfile stepSounds;
+        public SoundProfile chainSounds;
+        public SoundProfile screamSound;
+        public SoundProfile spotSound;
+        public SoundProfile breathSound;
+
+        private bool hasSpotted = false; 
 
         void Start()
         {
-            // Запускаємо дихання відразу
-            if (breathSource != null && breathSound.clips.Length > 0)
+            if (breathSource != null && breathSound != null && breathSound.clips != null && breathSound.clips.Length > 0)
             {
                 breathSource.clip = breathSound.clips[0];
                 breathSource.loop = true;
@@ -26,25 +39,40 @@ namespace Assets.Scripts
                 breathSource.Play();
             }
         }
-
-        // Викликається з Анімації (Events: PlayStep)
-        public void PlayStep()
+public void PlayStep()
         {
-            // [DEBUG] Цей рядок покаже в консолі, чи працює анімація
-            Debug.Log("👣 ГУП! (Крок спрацював)"); 
+            Debug.Log($"Monster-A: ТУП! (Гучність: {stepSounds?.volume})");
 
-            stepSounds.Play(mainSource);
+            if (stepSounds != null && stepsSource != null)
+                stepSounds.Play(stepsSource);
 
-            if (chainSource != null)
-            {
+            if (chainSounds != null && chainSource != null)
                 chainSounds.Play(chainSource);
+        }
+        public void PlayScream()
+        {
+            if (screamSound != null && attackSource != null) 
+            {
+                screamSound.Play(attackSource);
+            }
+            else
+            {
+                Debug.LogWarning("MonsterAudio: Немає AttackSource або профілю звуку удару!");
+            }
+        }
+        public void PlaySpotSound()
+        {
+            if (!hasSpotted && spotSound != null && spotSource != null)
+            {
+                spotSound.Play(spotSource);
+                hasSpotted = true;
+                Invoke(nameof(ResetSpot), 10f);
             }
         }
 
-        // Викликається з EnemyAI
-        public void PlayScream()
+        private void ResetSpot()
         {
-            screamSound.Play(mainSource);
+            hasSpotted = false;
         }
     }
 }
