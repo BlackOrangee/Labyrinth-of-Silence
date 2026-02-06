@@ -100,8 +100,8 @@ TextureImporter:
       name: PauseMenuButtons_0
       rect:
         serializedVersion: 2
-        x: 20
-        y: 1188
+        x: 0
+        y: 1422
         width: 1039
         height: 187
       alignment: 0
@@ -122,8 +122,8 @@ TextureImporter:
       name: PauseMenuButtons_1
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 1188
+        x: 1139
+        y: 1422
         width: 1039
         height: 187
       alignment: 0
@@ -144,8 +144,8 @@ TextureImporter:
       name: PauseMenuButtons_2
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 1188
+        x: 2278
+        y: 1422
         width: 1039
         height: 187
       alignment: 0
@@ -166,8 +166,8 @@ TextureImporter:
       name: PauseMenuButtons_3
       rect:
         serializedVersion: 2
-        x: 20
-        y: 955
+        x: 0
+        y: 1185
         width: 1039
         height: 187
       alignment: 0
@@ -188,8 +188,8 @@ TextureImporter:
       name: PauseMenuButtons_4
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 955
+        x: 1139
+        y: 1185
         width: 1039
         height: 187
       alignment: 0
@@ -210,8 +210,8 @@ TextureImporter:
       name: PauseMenuButtons_5
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 955
+        x: 2278
+        y: 1185
         width: 1039
         height: 187
       alignment: 0
@@ -232,8 +232,8 @@ TextureImporter:
       name: PauseMenuButtons_6
       rect:
         serializedVersion: 2
-        x: 20
-        y: 722
+        x: 0
+        y: 948
         width: 1039
         height: 187
       alignment: 0
@@ -254,8 +254,8 @@ TextureImporter:
       name: PauseMenuButtons_7
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 722
+        x: 1139
+        y: 948
         width: 1039
         height: 187
       alignment: 0
@@ -276,8 +276,8 @@ TextureImporter:
       name: PauseMenuButtons_8
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 722
+        x: 2278
+        y: 948
         width: 1039
         height: 187
       alignment: 0
@@ -298,8 +298,8 @@ TextureImporter:
       name: PauseMenuButtons_9
       rect:
         serializedVersion: 2
-        x: 20
-        y: 489
+        x: 0
+        y: 711
         width: 1039
         height: 187
       alignment: 0
@@ -320,8 +320,8 @@ TextureImporter:
       name: PauseMenuButtons_10
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 489
+        x: 1139
+        y: 711
         width: 1039
         height: 187
       alignment: 0
@@ -342,8 +342,8 @@ TextureImporter:
       name: PauseMenuButtons_11
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 489
+        x: 2278
+        y: 711
         width: 1039
         height: 187
       alignment: 0
@@ -364,8 +364,8 @@ TextureImporter:
       name: PauseMenuButtons_12
       rect:
         serializedVersion: 2
-        x: 20
-        y: 256
+        x: 0
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -386,8 +386,8 @@ TextureImporter:
       name: PauseMenuButtons_13
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 256
+        x: 1139
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -408,8 +408,8 @@ TextureImporter:
       name: PauseMenuButtons_14
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 256
+        x: 2278
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -430,8 +430,8 @@ TextureImporter:
       name: PauseMenuButtons_15
       rect:
         serializedVersion: 2
-        x: 20
-        y: 23
+        x: 0
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -452,8 +452,8 @@ TextureImporter:
       name: PauseMenuButtons_16
       rect:
         serializedVersion: 2
-        x: 1117
-        y: 23
+        x: 1139
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -474,8 +474,8 @@ TextureImporter:
       name: PauseMenuButtons_17
       rect:
         serializedVersion: 2
-        x: 2214
-        y: 23
+        x: 2278
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -488,6 +488,72 @@ TextureImporter:
       bones: []
       spriteID: 017b4e2ab0e698641861bcc42ba85726
       internalID: -202335692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PauseMenuButtons_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1039
+        height: 187
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d9211d50f15ce446a3b79b56f3d04a3
+      internalID: -900310408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PauseMenuButtons_19
+      rect:
+        serializedVersion: 2
+        x: 1139
+        y: 0
+        width: 1039
+        height: 187
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f3022eb792f317d429e5c9c486f9aa36
+      internalID: 485210664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PauseMenuButtons_20
+      rect:
+        serializedVersion: 2
+        x: 2278
+        y: 0
+        width: 1039
+        height: 187
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a60283e7c1f5ed43989fdc46b42c026
+      internalID: -233356251
       vertices: []
       indices: 
       edges: []
@@ -506,7 +572,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":6.0},"gridSpriteSize":{"x":1039.0,"y":187.0},"gridSpriteOffset":{"x":20.0,"y":20.0},"gridSpritePadding":{"x":58.0,"y":46.0},"pivot":{"x":0.5,"y":0.5},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":1039.0,"y":187.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":100.0,"y":50.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       PauseMenuButtons_0: -1791273128
       PauseMenuButtons_1: 1634238001
@@ -518,7 +584,10 @@ TextureImporter:
       PauseMenuButtons_15: 1259074830
       PauseMenuButtons_16: 269083026
       PauseMenuButtons_17: -202335692
+      PauseMenuButtons_18: -900310408
+      PauseMenuButtons_19: 485210664
       PauseMenuButtons_2: 1380044049
+      PauseMenuButtons_20: -233356251
       PauseMenuButtons_3: -1666213863
       PauseMenuButtons_4: 243935333
       PauseMenuButtons_5: -412589758

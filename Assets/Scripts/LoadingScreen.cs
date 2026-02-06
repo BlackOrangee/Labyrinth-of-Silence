@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
@@ -32,6 +33,7 @@ namespace Assets.Scripts
         private float currentFrameRate = 0.2f;
         private int currentFrame = 0;
         private float frameTimer = 0f;
+        private LoadingScreenConfig currentConfig;
 
         private void Awake()
         {
@@ -44,12 +46,35 @@ namespace Assets.Scripts
             StartCoroutine(FadeIn());
         }
 
+        private void OnEnable()
+        {
+            SettingsManager.OnLanguageChanged += OnLanguageChanged;
+        }
+
+        private void OnDisable()
+        {
+            SettingsManager.OnLanguageChanged -= OnLanguageChanged;
+        }
+
+        private void OnLanguageChanged(Language newLanguage)
+        {
+            UpdateLocalizedText();
+        }
+
+        private void UpdateLocalizedText()
+        {
+            if (currentConfig != null && tipText != null)
+            {
+                tipText.text = currentConfig.GetLocalizedTipText();
+            }
+        }
+
 
         private void Update()
         {
             if (loadingIcon != null && currentAnimationFrames != null && currentAnimationFrames.Length > 0)
             {
-                frameTimer += Time.deltaTime;
+                frameTimer += Time.unscaledDeltaTime;
                 if (frameTimer >= currentFrameRate)
                 {
                     frameTimer = 0f;
@@ -81,6 +106,8 @@ namespace Assets.Scripts
                 return;
             }
 
+            currentConfig = config;
+
             if (backgroundImage != null)
             {
                 if (config.backgroundSprite != null)
@@ -97,7 +124,7 @@ namespace Assets.Scripts
 
             if (tipText != null)
             {
-                tipText.text = config.tipText;
+                tipText.text = config.GetLocalizedTipText();
             }
 
             if (config.animationFrames != null && config.animationFrames.Length > 0)
@@ -121,7 +148,7 @@ namespace Assets.Scripts
 
             while (elapsed < fadeInDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 canvasGroup.alpha = Mathf.Clamp01(elapsed / fadeInDuration);
                 yield return null;
             }
@@ -136,7 +163,7 @@ namespace Assets.Scripts
 
             while (elapsed < fadeOutDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / fadeOutDuration);
                 yield return null;
             }

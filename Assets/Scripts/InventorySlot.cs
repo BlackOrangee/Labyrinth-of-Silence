@@ -117,7 +117,7 @@ namespace Assets.Scripts
 
             if (nameText != null)
             {
-                nameText.text = newspaper.newspaperName;
+                nameText.text = newspaper.GetLocalizedName();
             }
 
             if (backgroundImage != null)
