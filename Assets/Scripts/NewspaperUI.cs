@@ -89,6 +89,8 @@ namespace Assets.Scripts
         private NewspaperData currentNewspaper;
         private AudioSource audioSource;
         private bool wasInventoryOpenBefore = false;
+        private float showTime = 0f;
+        private const float INPUT_DELAY = 0.3f;
         #endregion
 
         #region Initialization
@@ -175,6 +177,7 @@ namespace Assets.Scripts
             PlaySound(openSound);
 
             Time.timeScale = 0f;
+            showTime = Time.unscaledTime;
 
             Debug.Log($"NewspaperUI: Showing newspaper '{newspaperData.GetLocalizedName()}' (ID: {newspaperData.newspaperId})");
         }
@@ -303,7 +306,14 @@ namespace Assets.Scripts
         {
             if (isShowing)
             {
-                if (Input.GetKeyDown(KeyCode.E))
+                float timeSinceShow = Time.unscaledTime - showTime;
+
+                if (timeSinceShow < INPUT_DELAY)
+                {
+                    return;
+                }
+
+                if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
                 {
                     HideNewspaper();
                 }

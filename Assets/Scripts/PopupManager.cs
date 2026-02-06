@@ -50,6 +50,15 @@ namespace Assets.Scripts
             if (itemIconImage != null) itemIconImage.gameObject.SetActive(false);
         }
 
+        void OnDestroy()
+        {
+            if (ownerRef != null && InteractionLocker.IsOwner(ownerRef))
+            {
+                InteractionLocker.Release(ownerRef);
+                ownerRef = null;
+            }
+        }
+
         void Update()
         {
             if (canvasGroup != null && canvasGroup.alpha > 0.01f && InteractionLocker.IsOwner(ownerRef))
@@ -89,7 +98,7 @@ namespace Assets.Scripts
             SetIcon(icon);
             SetupButton();
 
-            StartFade(1f, fadeInDuration); 
+            StartFade(1f, fadeInDuration);
         }
 
         public void HidePopup(object requester = null)
