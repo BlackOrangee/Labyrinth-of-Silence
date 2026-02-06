@@ -282,7 +282,8 @@ public class LoadSaveMenuController : MonoBehaviour
                 if (btn != null)
                 {
                     btn.onClick.RemoveAllListeners();
-                    btn.onClick.AddListener(() => OnLoadClicked(slotIndex));
+                    int capturedIndex = slotIndex;
+                    btn.onClick.AddListener(() => OnLoadClicked(capturedIndex));
                 }
             }
 

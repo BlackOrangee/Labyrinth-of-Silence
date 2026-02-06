@@ -42,9 +42,13 @@ namespace Assets.Scripts
 
         public string GetInteractText()
         {
-            if (newspaperData != null && !string.IsNullOrEmpty(newspaperData.newspaperName))
+            if (newspaperData != null)
             {
-                return $"Press to read {newspaperData.newspaperName}";
+                string localizedName = newspaperData.GetLocalizedName();
+                if (!string.IsNullOrEmpty(localizedName))
+                {
+                    return $"Press to read {localizedName}";
+                }
             }
             return "Press to read Newspaper";
         }
@@ -75,6 +79,8 @@ namespace Assets.Scripts
             PlayPickupSound();
 
             Debug.Log($"NewspaperPickup: Picked up newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
+
+            TriggerThought();
         }
 
         public void OnInteract(GameObject actor)
@@ -140,6 +146,18 @@ namespace Assets.Scripts
             yield return new WaitForSeconds(0.1f);
 
             Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Trigger thought if ThoughtTrigger component is attached
+        /// </summary>
+        private void TriggerThought()
+        {
+            ThoughtTrigger thoughtTrigger = GetComponent<ThoughtTrigger>();
+            if (thoughtTrigger != null)
+            {
+                thoughtTrigger.TriggerFromInteraction();
+            }
         }
 
         private void OnValidate()
