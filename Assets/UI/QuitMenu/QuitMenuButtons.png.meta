@@ -100,8 +100,8 @@ TextureImporter:
       name: QuitMenuButtons_0
       rect:
         serializedVersion: 2
-        x: 20
-        y: 446
+        x: 0
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -122,8 +122,8 @@ TextureImporter:
       name: QuitMenuButtons_1
       rect:
         serializedVersion: 2
-        x: 1179
-        y: 446
+        x: 1139
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -144,8 +144,8 @@ TextureImporter:
       name: QuitMenuButtons_2
       rect:
         serializedVersion: 2
-        x: 2338
-        y: 446
+        x: 2278
+        y: 474
         width: 1039
         height: 187
       alignment: 0
@@ -166,8 +166,8 @@ TextureImporter:
       name: QuitMenuButtons_3
       rect:
         serializedVersion: 2
-        x: 20
-        y: 233
+        x: 0
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -188,8 +188,8 @@ TextureImporter:
       name: QuitMenuButtons_4
       rect:
         serializedVersion: 2
-        x: 1179
-        y: 233
+        x: 1139
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -210,8 +210,8 @@ TextureImporter:
       name: QuitMenuButtons_5
       rect:
         serializedVersion: 2
-        x: 2338
-        y: 233
+        x: 2278
+        y: 237
         width: 1039
         height: 187
       alignment: 0
@@ -232,8 +232,8 @@ TextureImporter:
       name: QuitMenuButtons_6
       rect:
         serializedVersion: 2
-        x: 20
-        y: 20
+        x: 0
+        y: 0
         width: 1039
         height: 187
       alignment: 0
@@ -254,8 +254,8 @@ TextureImporter:
       name: QuitMenuButtons_7
       rect:
         serializedVersion: 2
-        x: 1179
-        y: 20
+        x: 1139
+        y: 0
         width: 1039
         height: 187
       alignment: 0
@@ -276,8 +276,8 @@ TextureImporter:
       name: QuitMenuButtons_8
       rect:
         serializedVersion: 2
-        x: 2338
-        y: 20
+        x: 2278
+        y: 0
         width: 1039
         height: 187
       alignment: 0
@@ -308,7 +308,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":6.0},"gridSpriteSize":{"x":1039.0,"y":187.0},"gridSpriteOffset":{"x":20.0,"y":20.0},"gridSpritePadding":{"x":120.0,"y":26.0},"pivot":{"x":0.5,"y":0.5},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":1039.0,"y":187.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":100.0,"y":50.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       QuitMenuButtons_0: 1222094700
       QuitMenuButtons_1: -1775584820
