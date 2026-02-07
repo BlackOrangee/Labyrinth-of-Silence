@@ -30,6 +30,9 @@ public class LoadSaveMenuController : MonoBehaviour
     public string questInfoTextName = "QuestInfoText";
     [Tooltip("Image element name for screenshot")]
     public string screenshotImageName = "ScreenshotImage";
+    public string screenshotImageName2 = "ScreenshotImage2";
+    public string screenshotImageName3 = "ScreenshotImage3";
+    public string screenshotImageName4 = "ScreenshotImage4";
 
     private GameObject title;
     private GameObject content;
@@ -185,9 +188,19 @@ public class LoadSaveMenuController : MonoBehaviour
         Text questInfoText = slotObject.transform.GetComponentsInChildren<Text>(includeInactive: true)
             .FirstOrDefault(t => t.name == questInfoTextName);
 
-        Image screenshotImage = slotObject.transform.GetComponentsInChildren<Image>(includeInactive: true)
+        Transform screenshotTransform = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
             .FirstOrDefault(t => t.name == screenshotImageName);
+        Transform screenshotTransform2 = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == screenshotImageName2);
+        Transform screenshotTransform3 = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == screenshotImageName3);
+        Transform screenshotTransform4 = slotObject.transform.GetComponentsInChildren<Transform>(includeInactive: true)
+            .FirstOrDefault(t => t.name == screenshotImageName4);
 
+        Image screenshotImage = screenshotTransform?.GetComponent<Image>();
+        Image screenshotImage2 = screenshotTransform2?.GetComponent<Image>();
+        Image screenshotImage3 = screenshotTransform3?.GetComponent<Image>();
+        Image screenshotImage4 = screenshotTransform4?.GetComponent<Image>();
         if (saveExists)
         {
             if (saveNameText != null)
@@ -207,9 +220,16 @@ public class LoadSaveMenuController : MonoBehaviour
                     : $"{saveData.chapter} - {saveData.currentQuest}";
             }
 
-            if (screenshotImage != null && !string.IsNullOrEmpty(saveData.screenshotPath))
+            if (screenshotImage != null && 
+                screenshotImage2 != null && 
+                screenshotImage3 != null && 
+                screenshotImage4 != null && 
+                !string.IsNullOrEmpty(saveData.screenshotPath))
             {
                 LoadScreenshot(screenshotImage, saveData.screenshotPath);
+                LoadScreenshot(screenshotImage2, saveData.screenshotPath);
+                LoadScreenshot(screenshotImage3, saveData.screenshotPath);
+                LoadScreenshot(screenshotImage4, saveData.screenshotPath);
             }
         }
         else
@@ -232,6 +252,18 @@ public class LoadSaveMenuController : MonoBehaviour
             if (screenshotImage != null)
             {
                 screenshotImage.color = new Color(0.2f, 0.2f, 0.2f);
+            }
+            if (screenshotImage2 != null)
+            {
+                screenshotImage2.color = new Color(0.2f, 0.2f, 0.2f, 0.43137255f);
+            }
+            if (screenshotImage3 != null)
+            {
+                screenshotImage3.color = new Color(0.2f, 0.2f, 0.2f, 0.22745098f);
+            }
+            if (screenshotImage4 != null)
+            {
+                screenshotImage4.color = new Color(0.2f, 0.2f, 0.2f, 0.2627451f);
             }
         }
 
@@ -310,7 +342,7 @@ public class LoadSaveMenuController : MonoBehaviour
         if (File.Exists(path))
         {
             byte[] fileData = File.ReadAllBytes(path);
-            Texture2D texture = new Texture2D(2, 2);
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             texture.LoadImage(fileData);
 
             Sprite sprite = Sprite.Create(
@@ -320,7 +352,10 @@ public class LoadSaveMenuController : MonoBehaviour
             );
 
             image.sprite = sprite;
-            image.color = Color.white;
+            Color originalColor = image.color;
+            image.color = new Color(1f, 1f, 1f, originalColor.a);
+
+            image.raycastTarget = false;
         }
     }
 
