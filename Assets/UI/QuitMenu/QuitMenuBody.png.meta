@@ -100,9 +100,9 @@ TextureImporter:
       name: QuitMenuBody_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 10
         y: 0
-        width: 1293
+        width: 1292
         height: 1225
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
