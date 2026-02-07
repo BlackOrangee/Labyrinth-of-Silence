@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3e89372e87e2712478929f901bc2d653
+guid: 9ced1d93aecd4d34aaaf9f7ca979148a
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,13 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: NewGameConfirmMenuBody_0
+      name: Save_UA_0
       rect:
         serializedVersion: 2
-        x: 10
+        x: 0
         y: 0
-        width: 1564
-        height: 545
+        width: 458
+        height: 200
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,8 +112,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bce3f7c12081bed49ae3c0428d32341e
-      internalID: -1906085480
+      spriteID: 73f8c095ca3229e4cba598e034c2267c
+      internalID: -233822184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Save_UA_1
+      rect:
+        serializedVersion: 2
+        x: 558
+        y: 0
+        width: 458
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 306d20c57046feb4ab8a8c37de042adf
+      internalID: -1419787201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Save_UA_2
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 0
+        width: 458
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61d34787e4fa05a469720f6b519a36d7
+      internalID: 1380672475
       vertices: []
       indices: 
       edges: []
@@ -122,7 +166,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 7f4a4e125fc1eac4c8e8e066064d0943
+    spriteID: 30f378ddd346a7b459fdc2598cfdbc68
     internalID: 0
     vertices: []
     indices: 
@@ -132,9 +176,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":458.0,"y":200.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":100.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      NewGameConfirmMenuBody_0: -1906085480
+      Save_UA_0: -233822184
+      Save_UA_1: -1419787201
+      Save_UA_2: 1380672475
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

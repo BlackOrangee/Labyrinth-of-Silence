@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3e89372e87e2712478929f901bc2d653
+guid: 3552e82bbb3e21a4fad281ca187ff349
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,23 +97,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: NewGameConfirmMenuBody_0
+      name: Rectangle 59_0
       rect:
         serializedVersion: 2
-        x: 10
+        x: 0
         y: 0
-        width: 1564
-        height: 545
+        width: 350
+        height: 271
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: bce3f7c12081bed49ae3c0428d32341e
-      internalID: -1906085480
+      spriteID: 86fbbeea02797c44f8455645469a7b31
+      internalID: -956773889
       vertices: []
       indices: 
       edges: []
@@ -122,7 +122,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 7f4a4e125fc1eac4c8e8e066064d0943
+    spriteID: 10a24caad57d44546b684c25bcf0aa45
     internalID: 0
     vertices: []
     indices: 
@@ -130,11 +130,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      NewGameConfirmMenuBody_0: -1906085480
+      Rectangle 59_0: -956773889
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
