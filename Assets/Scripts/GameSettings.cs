@@ -11,7 +11,7 @@ namespace Assets.Scripts
         public int resolutionHeight;
         [Range(0f, 1f)] public float brightness;
 
-        [Header("Controls")] [Range(0.1f, 10f)]
+        [Header("Controls")] [Range(0.05f, 5f)]
         public float mouseSensitivity;
 
         [Header("Audio Settings")] [Range(0f, 1f)]
@@ -31,7 +31,7 @@ namespace Assets.Scripts
             resolutionWidth = 1920;
             resolutionHeight = 1080;
             brightness = 0.5f;
-            mouseSensitivity = 1.0f;
+            mouseSensitivity = 2.0f;
             masterVolume = 1.0f;
             musicVolume = 0.8f;
             sfxVolume = 0.8f;
@@ -46,7 +46,7 @@ namespace Assets.Scripts
             resolutionWidth = Screen.currentResolution.width;
             resolutionHeight = Screen.currentResolution.height;
             brightness = 0.5f;
-            mouseSensitivity = 1.0f;
+            mouseSensitivity = 2.0f;
             masterVolume = 1.0f;
             musicVolume = 0.8f;
             sfxVolume = 0.8f;
