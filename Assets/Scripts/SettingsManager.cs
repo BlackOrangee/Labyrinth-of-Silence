@@ -61,9 +61,9 @@ namespace Assets.Scripts
 
             LoadSettings();
 
-            ApplyAllSettings();
-
             InitializeLanguage();
+
+            ApplyAllSettings();
         }
 
         #region Save/Load
@@ -74,7 +74,7 @@ namespace Assets.Scripts
             {
                 string json = JsonUtility.ToJson(currentSettings, true);
                 File.WriteAllText(settingsFilePath, json);
-                Debug.Log($"[SettingsManager] Settings saved {settingsFilePath}");
+                Debug.Log($"[SettingsManager] Saved: Resolution={currentSettings.resolutionWidth}x{currentSettings.resolutionHeight}, Fullscreen={currentSettings.fullscreen}, Language={currentSettings.gameLanguage}, MouseSensitivity={currentSettings.mouseSensitivity}");
             }
             catch (System.Exception e)
             {
@@ -90,7 +90,7 @@ namespace Assets.Scripts
                 {
                     string json = File.ReadAllText(settingsFilePath);
                     currentSettings = JsonUtility.FromJson<GameSettings>(json);
-                    Debug.Log("[SettingsManager] Setting loaded");
+                    Debug.Log($"[SettingsManager] Loaded: Resolution={currentSettings.resolutionWidth}x{currentSettings.resolutionHeight}, Fullscreen={currentSettings.fullscreen}, Language={currentSettings.gameLanguage}");
 
                     if (currentSettings.sfxVolume == 0f &&
                         (currentSettings.masterVolume > 0f || currentSettings.musicVolume > 0f))
@@ -107,8 +107,9 @@ namespace Assets.Scripts
             }
             else
             {
-                Debug.Log("[SettingsManager] Used default settings. File not found:");
+                Debug.Log("[SettingsManager] Settings file not found, creating default settings");
                 currentSettings = new GameSettings();
+                SaveSettings();
             }
         }
 
@@ -141,6 +142,7 @@ namespace Assets.Scripts
             {
                 currentLanguage = Language.English;
                 currentSettings.gameLanguage = Language.English.ToString();
+                SaveSettings();
             }
         }
 
@@ -151,16 +153,26 @@ namespace Assets.Scripts
 
         public void ApplyGraphicsSettings()
         {
+            Debug.Log($"[SettingsManager] Applying graphics settings: {currentSettings.resolutionWidth}x{currentSettings.resolutionHeight}, Fullscreen: {currentSettings.fullscreen}");
+
+            FullScreenMode fullscreenMode = currentSettings.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
+
+            Debug.Log($"[SettingsManager] Current screen: {Screen.width}x{Screen.height}, Fullscreen: {Screen.fullScreen}");
+
             Screen.SetResolution(
                 currentSettings.resolutionWidth,
                 currentSettings.resolutionHeight,
-                currentSettings.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed
+                fullscreenMode
             );
 
-            RenderSettings.ambientLight = Color.white * currentSettings.brightness;
-
-            Debug.Log(
-                $"[SettingsManager] Graphic settings: {currentSettings.resolutionWidth}x{currentSettings.resolutionHeight}, Fullscreen: {currentSettings.fullscreen}");
+            if (BrightnessController.Instance != null)
+            {
+                BrightnessController.Instance.ApplyBrightness(currentSettings.brightness);
+            }
+            else
+            {
+                RenderSettings.ambientLight = Color.white * currentSettings.brightness;
+            }
         }
 
         public void ApplyAudioSettings()
@@ -186,6 +198,11 @@ namespace Assets.Scripts
             else
             {
                 AudioListener.volume = currentSettings.masterVolume;
+            }
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.ApplyVolumeSettings();
             }
 
             Debug.Log(
@@ -222,7 +239,13 @@ namespace Assets.Scripts
 
         public void SetMouseSensitivity(float sensitivity)
         {
-            currentSettings.mouseSensitivity = Mathf.Clamp(sensitivity, 0.1f, 10f);
+            currentSettings.mouseSensitivity = Mathf.Clamp(sensitivity, 0.05f, 5f);
+
+            CameraController[] cameras = FindObjectsByType<CameraController>(FindObjectsSortMode.None);
+            foreach (var cam in cameras)
+            {
+                cam.UpdateSensitivityFromSettings();
+            }
         }
 
         public void SetMasterVolume(float volume)

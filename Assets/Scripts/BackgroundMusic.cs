@@ -1,33 +1,82 @@
 using UnityEngine;
 
-public class BackgroundMusic : MonoBehaviour
+namespace Assets.Scripts
 {
-    [Header("Settings")]
-    public float targetVolume = 0.5f; // Яка гучність має бути в кінці (налаштуй під себе)
-    public float fadeDuration = 3.0f; // Скільки секунд наростає звук
-
-    private AudioSource audioSource;
-
-    void Start()
+    public class BackgroundMusic : MonoBehaviour
     {
-        audioSource = GetComponent<AudioSource>();
-        
-        // 1. Ставимо гучність в нуль на старті
-        audioSource.volume = 0f;
-        
-        // 2. Якщо забули поставити галочку Play On Awake - вмикаємо примусово
-        if (!audioSource.isPlaying)
+        [Header("Settings")] public float targetVolume = 0.5f;
+        public float fadeDuration = 3.0f;
+
+        private AudioSource audioSource;
+        private float currentFadeVolume = 0f;
+        private bool isRegistered = false;
+
+        void Start()
         {
-            audioSource.Play();
+            audioSource = GetComponent<AudioSource>();
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.RegisterAudioSource(audioSource, AudioType.Music);
+                isRegistered = true;
+            }
+
+            currentFadeVolume = 0f;
+
+            if (!audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
         }
-    }
 
-    void Update()
-    {
-        // 3. Плавно піднімаємо гучність до цільової
-        if (audioSource.volume < targetVolume)
+        void Update()
         {
-            audioSource.volume += Time.deltaTime / fadeDuration * targetVolume;
+            if (currentFadeVolume < targetVolume)
+            {
+                currentFadeVolume += Time.deltaTime / fadeDuration * targetVolume;
+                currentFadeVolume = Mathf.Min(currentFadeVolume, targetVolume);
+            }
+
+            ApplyVolume();
+        }
+
+        private void ApplyVolume()
+        {
+            if (audioSource == null) return;
+
+            float settingsMultiplier = 1f;
+
+            if (SettingsManager.Instance != null)
+            {
+                settingsMultiplier = SettingsManager.Instance.currentSettings.musicVolume *
+                                     SettingsManager.Instance.currentSettings.masterVolume;
+            }
+
+            audioSource.volume = currentFadeVolume * settingsMultiplier;
+        }
+
+        /// <summary>
+        /// Get the target volume (used by AudioManager)
+        /// </summary>
+        public float GetTargetVolume()
+        {
+            return targetVolume;
+        }
+
+        /// <summary>
+        /// Set the target volume
+        /// </summary>
+        public void SetTargetVolume(float volume)
+        {
+            targetVolume = Mathf.Clamp01(volume);
+        }
+
+        void OnDestroy()
+        {
+            if (isRegistered && AudioManager.Instance != null)
+            {
+                AudioManager.Instance.UnregisterAudioSource(audioSource);
+            }
         }
     }
 }

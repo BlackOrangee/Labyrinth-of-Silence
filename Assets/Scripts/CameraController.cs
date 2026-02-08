@@ -6,9 +6,11 @@ namespace Assets.Scripts
     public class CameraController : MonoBehaviour
     {
         [Header("Settings")]
-        [SerializeField] private float mouseSensitivity = 200f; 
-        
-        // [НОВЕ] Налаштування плавності для тачпада/мишки
+        [Tooltip("Base sensitivity multiplier (will be multiplied by setting from SettingsManager)")]
+        [SerializeField] private float baseSensitivity = 100f;
+
+        private float mouseSensitivity = 200f;
+
         [Header("Smoothing (Плавність)")]
         [Tooltip("Час згладжування. 0 = різко (як було), 0.1 = дуже плавно.")]
         [Range(0f, 0.5f)]
@@ -36,6 +38,7 @@ namespace Assets.Scripts
             {
                 playerBody = transform.parent;
             }
+            UpdateSensitivityFromSettings();
         }
 
         void Update()
@@ -198,6 +201,34 @@ namespace Assets.Scripts
                      playerBody.rotation = Quaternion.LookRotation(new Vector3(finalDir.x, 0, finalDir.z));
                  }
             }
+        }
+
+        /// <summary>
+        /// Update sensitivity from SettingsManager
+        /// </summary>
+        public void UpdateSensitivityFromSettings()
+        {
+            if (SettingsManager.Instance != null)
+            {
+                float settingsSensitivity = SettingsManager.Instance.currentSettings.mouseSensitivity;
+                mouseSensitivity = baseSensitivity * settingsSensitivity;
+
+                Debug.Log($"[CameraController] Mouse sensitivity updated: {mouseSensitivity:F1} (base: {baseSensitivity}, multiplier: {settingsSensitivity:F2})");
+            }
+            else
+            {
+                mouseSensitivity = baseSensitivity * 2f; // Default to 200
+                Debug.LogWarning("[CameraController] SettingsManager not found, using default sensitivity");
+            }
+        }
+
+        /// <summary>
+        /// Set mouse sensitivity directly
+        /// </summary>
+        public void SetMouseSensitivity(float sensitivity)
+        {
+            mouseSensitivity = baseSensitivity * sensitivity;
+            Debug.Log($"[CameraController] Mouse sensitivity set to: {mouseSensitivity:F1}");
         }
     }
 }
