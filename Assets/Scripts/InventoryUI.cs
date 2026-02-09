@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using System.Collections.Generic;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
@@ -129,6 +129,9 @@ namespace Assets.Scripts
         private NewspaperData selectedNewspaper = null;
         private InventorySlot selectedSlot = null;
 
+        private LocalizedTextDynamic localizedCollectionCounter;
+        private LocalizedTextDynamic localizedKeysCounter;
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -172,6 +175,11 @@ namespace Assets.Scripts
 
         private void Start()
         {
+            if (InteractionLocker.IsLocked)
+            {
+                InteractionLocker.ForceRelease();
+            }
+
             inventory = FindFirstObjectByType<SimpleInventory>();
 
             if (inventory != null)
@@ -183,6 +191,29 @@ namespace Assets.Scripts
             {
                 newspaperDatabase = FindFirstObjectByType<NewspaperDatabase>();
             }
+
+            if (collectionCounterText != null)
+            {
+                localizedCollectionCounter = collectionCounterText.GetComponent<LocalizedTextDynamic>();
+            }
+
+            if (keysCounterText != null)
+            {
+                localizedKeysCounter = keysCounterText.GetComponent<LocalizedTextDynamic>();
+            }
+
+            SettingsManager.OnLanguageChanged += OnLanguageChanged;
+        }
+
+        /// <summary>
+        /// Handle language change - refresh inventory to update key names
+        /// </summary>
+        private void OnLanguageChanged(Language newLanguage)
+        {
+            if (isOpen)
+            {
+                RefreshInventory();
+            }
         }
 
         private void OnDestroy()
@@ -191,6 +222,8 @@ namespace Assets.Scripts
             {
                 SimpleInventory.OnInventoryChanged -= RefreshInventory;
             }
+
+            SettingsManager.OnLanguageChanged -= OnLanguageChanged;
         }
 
         private void Update()
@@ -423,7 +456,7 @@ namespace Assets.Scripts
                     break;
             }
 
-            titleText.text = $"Inventory - {filterName} ({slots.Count})";
+            // titleText.text = $"Inventory - {filterName} ({slots.Count})";
         }
 
         /// <summary>
@@ -434,21 +467,27 @@ namespace Assets.Scripts
             if (collectionCounterText == null)
                 return;
 
-            if (inventory == null)
-            {
-                collectionCounterText.text = "Documents: 0/0";
-                return;
-            }
-
-            int collectedCount = inventory.GetCollectedNewspapersCount();
+            int collectedCount = 0;
             int totalCount = 0;
 
-            if (newspaperDatabase != null)
+            if (inventory != null)
             {
-                totalCount = newspaperDatabase.allNewspapers.Count;
+                collectedCount = inventory.GetCollectedNewspapersCount();
+
+                if (newspaperDatabase != null)
+                {
+                    totalCount = newspaperDatabase.allNewspapers.Count;
+                }
             }
 
-            collectionCounterText.text = $"Documents  {collectedCount}/{totalCount}";
+            if (localizedCollectionCounter != null)
+            {
+                localizedCollectionCounter.SetText(collectedCount, totalCount);
+            }
+            else
+            {
+                collectionCounterText.text = $"{collectedCount}/{totalCount}";
+            }
         }
 
         /// <summary>
@@ -459,14 +498,21 @@ namespace Assets.Scripts
             if (keysCounterText == null)
                 return;
 
-            if (inventory == null)
+            int collectedKeysCount = 0;
+
+            if (inventory != null)
             {
-                keysCounterText.text = "Keys       0/0";
-                return;
+                collectedKeysCount = GetNonVirtualKeysCount();
             }
 
-            int collectedKeysCount = GetNonVirtualKeysCount();
-            keysCounterText.text = $"Keys       {collectedKeysCount}/{totalCollectibleKeys}";
+            if (localizedKeysCounter != null)
+            {
+                localizedKeysCounter.SetText(collectedKeysCount, totalCollectibleKeys);
+            }
+            else
+            {
+                keysCounterText.text = $"{collectedKeysCount}/{totalCollectibleKeys}";
+            }
         }
 
         /// <summary>
@@ -512,22 +558,26 @@ namespace Assets.Scripts
         }
 
         /// <summary>
-        /// Get key name by type
+        /// Get localized key name by type
         /// </summary>
         private string GetKeyName(KeyColorType keyType)
         {
+            Language currentLanguage = SettingsManager.Instance != null
+                ? SettingsManager.Instance.GetCurrentLanguage()
+                : Language.English;
+
             switch (keyType)
             {
                 case KeyColorType.Green:
-                    return "Green Key";
+                    return currentLanguage == Language.Ukrainian ? "Зелений ключ" : "Green Key";
                 case KeyColorType.Yellow:
-                    return "Yellow Key";
+                    return currentLanguage == Language.Ukrainian ? "Жовтий ключ" : "Yellow Key";
                 case KeyColorType.Blue:
-                    return "Blue Key";
+                    return currentLanguage == Language.Ukrainian ? "Синій ключ" : "Blue Key";
                 case KeyColorType.Pink:
-                    return "Pink Key";
+                    return currentLanguage == Language.Ukrainian ? "Рожевий ключ" : "Pink Key";
                 default:
-                    return "Unknown Key";
+                    return currentLanguage == Language.Ukrainian ? "Невідомий ключ" : "Unknown Key";
             }
         }
 
@@ -580,11 +630,20 @@ namespace Assets.Scripts
             if (previewImage == null)
                 return;
 
-            if (selectedNewspaper != null && selectedNewspaper.newspaperImage != null)
+            if (selectedNewspaper != null)
             {
-                previewImage.sprite = selectedNewspaper.newspaperImage;
-                previewImage.color = Color.white;
-                previewImage.enabled = true;
+                Sprite localizedImage = selectedNewspaper.GetLocalizedImage();
+                if (localizedImage != null)
+                {
+                    previewImage.sprite = localizedImage;
+                    previewImage.color = Color.white;
+                    previewImage.enabled = true;
+                }
+                else
+                {
+                    previewImage.sprite = null;
+                    previewImage.enabled = false;
+                }
             }
             else
             {
@@ -607,17 +666,17 @@ namespace Assets.Scripts
 
                 if (descriptionNameText != null)
                 {
-                    descriptionNameText.text = selectedNewspaper.newspaperName;
+                    descriptionNameText.text = selectedNewspaper.GetLocalizedName();
                 }
 
                 if (descriptionTitleText != null)
                 {
-                    descriptionTitleText.text = selectedNewspaper.title;
+                    descriptionTitleText.text = selectedNewspaper.GetLocalizedTitle();
                 }
 
                 if (descriptionContentText != null)
                 {
-                    string content = selectedNewspaper.content;
+                    string content = selectedNewspaper.GetLocalizedContent();
                     if (!string.IsNullOrEmpty(content) && content.Length > maxDescriptionLength)
                     {
                         content = content.Substring(0, maxDescriptionLength) + "...";
@@ -673,6 +732,21 @@ namespace Assets.Scripts
         public bool IsOpen()
         {
             return isOpen;
+        }
+
+        /// <summary>
+        /// Helper method to get full path of GameObject in hierarchy
+        /// </summary>
+        private string GetGameObjectPath(GameObject obj)
+        {
+            string path = obj.name;
+            Transform parent = obj.transform.parent;
+            while (parent != null)
+            {
+                path = parent.name + "/" + path;
+                parent = parent.parent;
+            }
+            return path;
         }
     }
 }

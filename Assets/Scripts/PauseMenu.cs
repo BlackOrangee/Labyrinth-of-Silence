@@ -25,12 +25,15 @@ namespace Assets.Scripts
         public string optionsPanelName = "OptionsPanel";
         [Tooltip("Developers panel name")]
         public string developersPanelName = "DevelopersPanel";
-        
+        [Tooltip("Quit panel name")]
+        public string quitPanelName = "QuitPanel";
+
         private bool isPaused = false;
         private GameObject pausePanel;
         private GameObject loadSavePanel;
         private GameObject optionsPanel;
         private GameObject developersPanel;
+        private GameObject quitPanel;
 
         void Start()
         {
@@ -75,8 +78,19 @@ namespace Assets.Scripts
                 Debug.LogError("DevelopersPanel not found");
                 return;
             }
-            
+
             developersPanel.SetActive(false);
+
+            quitPanel = transform.GetComponentsInChildren<Transform>(includeInactive: true)
+                .FirstOrDefault(t => t.name == quitPanelName)?.gameObject;
+
+            if (!quitPanel)
+            {
+                Debug.LogError("QuitPanel not found");
+                return;
+            }
+
+            quitPanel.SetActive(false);
 
             Time.timeScale = 1f;
 
@@ -118,6 +132,7 @@ namespace Assets.Scripts
             loadSavePanel.SetActive(false);
             optionsPanel.SetActive(false);
             developersPanel.SetActive(false);
+            quitPanel.SetActive(false);
 
             Time.timeScale = 1f;
             isPaused = false;
@@ -196,7 +211,40 @@ namespace Assets.Scripts
             pausePanel.SetActive(false);
             developersPanel.SetActive(true);
         }
-        
+
+        public void ShowQuitPanel()
+        {
+            pausePanel.SetActive(false);
+            quitPanel.SetActive(true);
+        }
+
+        public void SaveAndQuit()
+        {
+            if (SaveManager.Instance != null)
+            {
+                Canvas canvasToHide = GetComponent<Canvas>();
+                SaveManager.Instance.SaveGame(0, "Quick Save", null, canvasToHide);
+                Debug.Log("Quick save created before quitting!");
+            }
+            else
+            {
+                Debug.LogError("SaveManager not found!");
+            }
+
+            LoadMainMenu();
+        }
+
+        public void QuitWithoutSave()
+        {
+            LoadMainMenu();
+        }
+
+        public void CancelQuit()
+        {
+            quitPanel.SetActive(false);
+            pausePanel.SetActive(true);
+        }
+
         public void LoadMainMenu()
         {
             Time.timeScale = 1f;
@@ -221,6 +269,7 @@ namespace Assets.Scripts
             loadSavePanel.SetActive(false);
             optionsPanel.SetActive(false);
             developersPanel.SetActive(false);
+            quitPanel.SetActive(false);
         }
     }
 }

@@ -225,6 +225,8 @@ namespace Assets.Scripts
         {
             yield return new WaitForEndOfFrame();
 
+            Time.timeScale = 1f;
+
             Debug.Log($"[SaveManager] Applying save data...");
 
             GameObject player = GameObject.FindGameObjectWithTag("Player");

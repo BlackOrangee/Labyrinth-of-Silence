@@ -66,6 +66,7 @@ namespace Assets.Scripts
         private string targetSceneName;
         private AsyncOperation loadingOperation;
         private LoadingScreenConfig currentConfig;
+        private bool isLoadingComplete = false;
 
         private void Awake()
         {
@@ -132,6 +133,11 @@ namespace Assets.Scripts
         /// </summary>
         public float GetLoadingProgress()
         {
+            if (isLoadingComplete)
+            {
+                return 1f;
+            }
+
             if (loadingOperation != null)
             {
                 return Mathf.Clamp01(loadingOperation.progress / 0.9f);
@@ -142,6 +148,7 @@ namespace Assets.Scripts
 
         private IEnumerator LoadSceneCoroutine()
         {
+            isLoadingComplete = false;
             float startTime = Time.time;
 
             AsyncOperation loadingScreenOperation = SceneManager.LoadSceneAsync(loadingSceneName);
@@ -280,6 +287,10 @@ namespace Assets.Scripts
 
             yield return loadingOperation;
 
+            isLoadingComplete = true;
+
+            yield return new WaitForSeconds(0.1f);
+
             loadingOperation = null;
             currentConfig = null;
 
@@ -341,8 +352,6 @@ namespace Assets.Scripts
                 }
 
                 string configName = config.name;
-                Debug.Log($"[SceneLoader] Checking config: '{configName}'");
-
                 string[] parts = configName.Split('_');
 
                 if (parts.Length >= 2)

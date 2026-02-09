@@ -19,10 +19,17 @@ namespace Assets.Scripts
             if (owner == null)
             {
                 owner = newOwner;
+                Debug.Log($"[InteractionLocker] Claimed by: {newOwner.GetType().Name}");
                 return true;
             }
 
-            return owner == newOwner;
+            if (owner == newOwner)
+            {
+                return true;
+            }
+
+            Debug.LogWarning($"[InteractionLocker] Claim failed - already owned by {owner.GetType().Name}, requester: {newOwner.GetType().Name}");
+            return false;
         }
 
         public static void Release(object releasingOwner)
@@ -41,6 +48,30 @@ namespace Assets.Scripts
         public static bool IsOwner(object candidate)
         {
             return owner == candidate;
+        }
+
+        /// <summary>
+        /// Force release the lock - use with caution! Only for cleanup/reset scenarios
+        /// </summary>
+        public static void ForceRelease()
+        {
+            if (owner != null)
+            {
+                Debug.LogWarning($"[InteractionLocker] Force released - was owned by: {owner.GetType().Name}");
+                owner = null;
+            }
+        }
+
+        /// <summary>
+        /// Get debug info about current lock state
+        /// </summary>
+        public static string GetDebugInfo()
+        {
+            if (owner == null)
+            {
+                return "[InteractionLocker] Not locked";
+            }
+            return $"[InteractionLocker] Locked by: {owner.GetType().Name}";
         }
     }
 }
