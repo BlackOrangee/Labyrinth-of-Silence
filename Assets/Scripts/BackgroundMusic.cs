@@ -4,7 +4,8 @@ namespace Assets.Scripts
 {
     public class BackgroundMusic : MonoBehaviour
     {
-        [Header("Settings")] public float targetVolume = 0.5f;
+        [Header("Settings")]
+        public float targetVolume = 0.5f;
         public float fadeDuration = 3.0f;
 
         private AudioSource audioSource;

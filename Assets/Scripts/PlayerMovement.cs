@@ -18,13 +18,15 @@ namespace Assets.Scripts
         [SerializeField] private float footstepInterval = 0.5f;
         [SerializeField] private bool emitSounds = true;
 
+        [Header("Visual Settings")]
+        [SerializeField] private Animator visualAnimator; 
+
         private CharacterController controller;
         private Vector3 velocity;
         private bool isGrounded;
         private float footstepTimer = 0f;
         private Transform myTransform;
 
-        // [НОВЕ] Прапорець для блокування руху (КРОК 5)
         private bool isMovementLocked = false;
 
         void Start()
@@ -35,29 +37,29 @@ namespace Assets.Scripts
 
         void Update()
         {
-            // [НОВЕ] Якщо заблоковано - імітуємо гравітацію (щоб не висів у повітрі), але не рухаємось
             if (isMovementLocked) 
             {
-                 // Можна залишити просту гравітацію, щоб тіло впало, якщо схопили в стрибку
-                 if (!controller.isGrounded)
-                 {
+                if (!controller.isGrounded)
+                {
                     velocity.y += gravity * Time.deltaTime;
                     controller.Move(velocity * Time.deltaTime);
-                 }
-                 return;
+                }
+                
+                if (visualAnimator != null) visualAnimator.SetFloat("Speed", 0f);
+
+                return;
             }
 
             HandleMovement();
             HandleGravity();
         }
 
-        // [НОВЕ] Метод, який викличе монстр, щоб зупинити тебе
         public void SetMovementLock(bool locked)
         {
             isMovementLocked = locked;
             if (locked)
             {
-                velocity = Vector3.zero; // Скидаємо інерцію
+                velocity = Vector3.zero;
             }
         }
 
@@ -79,6 +81,16 @@ namespace Assets.Scripts
             float currentSpeed = isRunning ? walkSpeed * runSpeedMultiplier : walkSpeed;
 
             controller.Move(move * currentSpeed * Time.deltaTime);
+
+            if (visualAnimator != null)
+            {
+                float targetAnimValue = 0f;
+                if (move.sqrMagnitude > 0.01f)
+                {
+                    targetAnimValue = isRunning ? 2f : 1f;
+                }
+                visualAnimator.SetFloat("Speed", targetAnimValue, 0.1f, Time.deltaTime);
+            }
 
             if (emitSounds && move.sqrMagnitude > 0.01f && isGrounded)
             {
