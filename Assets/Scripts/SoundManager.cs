@@ -3,10 +3,6 @@ using System;
 
 namespace Assets.Scripts
 {
-    /// <summary>
-    /// Global sound system for handling sound events in the game
-    /// Enemies subscribe to events and react to sounds
-    /// </summary>
     public class SoundManager : MonoBehaviour
     {
         public static SoundManager Instance { get; private set; }

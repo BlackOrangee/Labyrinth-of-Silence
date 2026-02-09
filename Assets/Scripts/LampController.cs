@@ -6,9 +6,13 @@ namespace Assets.Scripts
 {
     public class LampController : MonoBehaviour
     {
+        [Header("MAIN GROUP")]
+        [Tooltip("Перетягни сюди об'єкт Light_Group, в якому лежать світло і вогонь")]
+        public GameObject lightGroupObject; 
+
         [Header("References")]
         public Light lampLight;
-        public Light fillLight;
+
         public ParticleSystem fireEffect;
 
         [Header("Audio")]
@@ -40,6 +44,8 @@ namespace Assets.Scripts
         public float brightIntensity = 40f; 
         public float dimRange = 10f; 
         public float brightRange = 20f; 
+        
+        [Tooltip("Швидкість зміни яскравості. Більше = швидше.")]
         public float lightChangeSpeed = 5f; 
 
         [Header("Fill Light Intensity (Soft Glow)")]
@@ -60,7 +66,6 @@ namespace Assets.Scripts
         
         private float targetMainIntensity;
         private float targetMainRange;
-        private float targetFillIntensity;
 
         private void Start()
         {
@@ -79,10 +84,11 @@ namespace Assets.Scripts
                 lampAudioSource.clip = burningSoundLoop;
             }
 
+            if (fireEffect != null) { var em = fireEffect.emission; em.enabled = false; }
+
             UpdateLightTargets();
             
             if (lampLight != null) { lampLight.intensity = targetMainIntensity; lampLight.range = targetMainRange; }
-            if (fillLight != null) { fillLight.intensity = targetFillIntensity; }
             
             UpdateUI();
         }
@@ -117,15 +123,16 @@ namespace Assets.Scripts
                 {
                     if (lightMode == 0)
                     {
-                        lampAudioSource.Stop(); 
+                        lampAudioSource.Stop();
 
                         if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
                     }
-                    else if (oldMode == 0)
+
+                    else if (lightMode == 1)
                     {
                         if (turnOnProfile != null) turnOnProfile.Play(lampAudioSource);
 
-                        if(burningSoundLoop) lampAudioSource.Play(); 
+                        if (burningSoundLoop) lampAudioSource.Play();
                     }
                 }
 
@@ -164,23 +171,35 @@ namespace Assets.Scripts
             Debug.Log("Fuel empty! Lamp turned off.");
             UpdateLightTargets();
         }
+        
         private void UpdateLightTargets()
         {
-            if (currentFuel <= 0)
+            if (currentFuel <= 0 || lightMode == 0)
             {
                 targetMainIntensity = 0f;
                 targetMainRange = 0f; 
-                targetFillIntensity = 0f;
+
+                if (lightGroupObject != null) lightGroupObject.SetActive(true); 
 
                 if (fireEffect != null)
                 {
-                    fireEffect.Stop();
-                    fireEffect.Clear();
+                    var emission = fireEffect.emission;
+                    emission.enabled = false;
                 }
+                
                 return; 
             }
+            else
+            {
+                if (fireEffect != null)
+                {
+                    var emission = fireEffect.emission;
+                    emission.enabled = true;
+                }
+            }
 
-            bool isLightOn = (lightMode != 0);
+            if (lightGroupObject != null) lightGroupObject.SetActive(true);
+
             float fadeFactor = 1.0f;
             float thresholdValue = maxFuel * fadeThreshold;
 
@@ -189,39 +208,30 @@ namespace Assets.Scripts
                 fadeFactor = currentFuel / thresholdValue;
             }
 
-            if (isLightOn)
+            if (lightMode == 1)
             {
-                float baseIntensity = (lightMode == 2) ? brightIntensity : dimIntensity;
-                targetMainIntensity = baseIntensity * fadeFactor;
-                
-                targetMainRange = (lightMode == 2) ? brightRange : dimRange;
-
-                float baseFill = (lightMode == 2) ? fillBrightIntensity : fillDimIntensity;
-                targetFillIntensity = baseFill * fadeFactor;
-
-                if (fireEffect != null)
-                {
-                    if (!fireEffect.isPlaying) fireEffect.Play();
-                    var main = fireEffect.main;
-                    float targetSize = (lightMode == 2) ? 1.0f : 0.6f;
-                    main.startSizeMultiplier = targetSize * fadeFactor;
-                }
+                targetMainIntensity = dimIntensity * fadeFactor;
+                targetMainRange = dimRange;
             }
-            else
+            else if (lightMode == 2)
             {
-                targetMainIntensity = 0f;
-                targetMainRange = 0f; 
-                targetFillIntensity = 0f;
+                targetMainIntensity = brightIntensity * fadeFactor;
+                targetMainRange = brightRange;
+            }
 
-                if (fireEffect != null)
-                {
-                    fireEffect.Stop();
-                }
+            if (fireEffect != null)
+            {
+                
+                var main = fireEffect.main;
+                float targetSize = (lightMode == 2) ? 1.0f : 0.5f;
+                main.startSizeMultiplier = targetSize * fadeFactor;
             }
         }
 
         private void UpdateLightVisuals()
         {
+            if (lightGroupObject != null && !lightGroupObject.activeSelf) return;
+
             if (lampLight != null)
             {
                 float currentBaseIntensity = Mathf.Lerp(lampLight.intensity, targetMainIntensity, Time.deltaTime * lightChangeSpeed);
@@ -238,13 +248,6 @@ namespace Assets.Scripts
                 }
 
                 lampLight.range = Mathf.Lerp(lampLight.range, targetMainRange, Time.deltaTime * lightChangeSpeed);
-                lampLight.enabled = lampLight.intensity > 0.01f;
-            }
-
-            if (fillLight != null)
-            {
-                fillLight.intensity = Mathf.Lerp(fillLight.intensity, targetFillIntensity, Time.deltaTime * lightChangeSpeed);
-                fillLight.enabled = fillLight.intensity > 0.01f;
             }
         }
 
@@ -286,7 +289,7 @@ namespace Assets.Scripts
             UpdateLightTargets();
             UpdateUI();
         }
-
+        
         public float GetCurrentFuel() => currentFuel;
         public float GetMaxFuel() => maxFuel;
 

@@ -8,31 +8,28 @@ namespace Assets.Scripts
 
         void Start()
         {
-            // [ВИПРАВЛЕНО] Використовуємо нову команду FindFirstObjectByType
             enemy = Object.FindFirstObjectByType<EnemyAI>();
         }
 
-        // Коли гравець заходить у зону під столом
         private void OnTriggerEnter(Collider other)
         {
             if (other.CompareTag("Player")) 
             {
                 if (enemy != null)
                 {
-                    enemy.isPlayerHidden = true; // ВМИКАЄМО захист
+                    enemy.isPlayerHidden = true;
                     Debug.Log("Гравець у безпеці (Safe Zone)!");
                 }
             }
         }
 
-        // Коли гравець виходить з-під стола
         private void OnTriggerExit(Collider other)
         {
             if (other.CompareTag("Player"))
             {
                 if (enemy != null)
                 {
-                    enemy.isPlayerHidden = false; // ВИМИКАЄМО захист
+                    enemy.isPlayerHidden = false;
                     Debug.Log("Гравець вийшов зі схованки.");
                 }
             }
