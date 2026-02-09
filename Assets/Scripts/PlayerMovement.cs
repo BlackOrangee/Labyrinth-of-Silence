@@ -39,15 +39,15 @@ namespace Assets.Scripts
         {
             if (isMovementLocked) 
             {
-                 if (!controller.isGrounded)
-                 {
+                if (!controller.isGrounded)
+                {
                     velocity.y += gravity * Time.deltaTime;
                     controller.Move(velocity * Time.deltaTime);
-                 }
-                 
-                 if (visualAnimator != null) visualAnimator.SetFloat("Speed", 0f);
+                }
+                
+                if (visualAnimator != null) visualAnimator.SetFloat("Speed", 0f);
 
-                 return;
+                return;
             }
 
             HandleMovement();
