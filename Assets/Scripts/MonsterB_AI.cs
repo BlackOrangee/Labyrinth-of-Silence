@@ -355,6 +355,7 @@ namespace Assets.Scripts
             {
                 voiceSource.PlayOneShot(attackSound);
             }
+            // -------------------------
 
             Debug.Log("Monster-B: Початок атаки (Замах)...");
 

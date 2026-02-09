@@ -62,6 +62,7 @@ namespace Assets.Scripts
 
         void FindLantern()
         {
+            // [ВИПРАВЛЕНО] Використовуємо нову команду, щоб прибрати warning
             lampController = Object.FindFirstObjectByType<LampController>();
 
             if (lampController != null)
