@@ -26,6 +26,18 @@ namespace Assets.Scripts
         void Start()
         {
             controller = GetComponent<CharacterController>();
+
+            if (AudioManager.Instance != null)
+            {
+                if (footstepSource != null)
+                {
+                    AudioManager.Instance.RegisterAudioSource(footstepSource, AudioType.SFX);
+                }
+                if (voiceSource != null)
+                {
+                    AudioManager.Instance.RegisterAudioSource(voiceSource, AudioType.SFX);
+                }
+            }
         }
 
         void Update()
@@ -81,6 +93,21 @@ namespace Assets.Scripts
         public void SetSnowSurface(bool state)
         {
             isSnow = state;
+        }
+
+        void OnDestroy()
+        {
+            if (AudioManager.Instance != null)
+            {
+                if (footstepSource != null)
+                {
+                    AudioManager.Instance.UnregisterAudioSource(footstepSource);
+                }
+                if (voiceSource != null)
+                {
+                    AudioManager.Instance.UnregisterAudioSource(voiceSource);
+                }
+            }
         }
     }
 }
