@@ -2,11 +2,14 @@ using UnityEngine;
 using UnityEngine.Audio;
 using System.IO;
 using System.Collections.Generic;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
     public class SettingsManager : MonoBehaviour
     {
+        public static event System.Action<Language> OnLanguageChanged;
+
         private static SettingsManager instance;
 
         public static SettingsManager Instance
@@ -38,8 +41,10 @@ namespace Assets.Scripts
         private Resolution[] availableResolutions;
         public Resolution[] AvailableResolutions => availableResolutions;
 
-        private string[] availableLanguages = { "English", "Ukrainian", "French", "German", "Spanish" };
+        private string[] availableLanguages = { "English", "Ukrainian" };
         public string[] AvailableLanguages => availableLanguages;
+
+        private Language currentLanguage = Language.English;
 
         void Awake()
         {
@@ -57,6 +62,8 @@ namespace Assets.Scripts
             LoadSettings();
 
             ApplyAllSettings();
+
+            InitializeLanguage();
         }
 
         #region Save/Load
@@ -84,6 +91,13 @@ namespace Assets.Scripts
                     string json = File.ReadAllText(settingsFilePath);
                     currentSettings = JsonUtility.FromJson<GameSettings>(json);
                     Debug.Log("[SettingsManager] Setting loaded");
+
+                    if (currentSettings.sfxVolume == 0f &&
+                        (currentSettings.masterVolume > 0f || currentSettings.musicVolume > 0f))
+                    {
+                        currentSettings.sfxVolume = 0.8f;
+                        SaveSettings();
+                    }
                 }
                 catch (System.Exception e)
                 {
@@ -114,6 +128,25 @@ namespace Assets.Scripts
         {
             ApplyGraphicsSettings();
             ApplyAudioSettings();
+            ApplyLanguageSettings();
+        }
+
+        private void InitializeLanguage()
+        {
+            if (System.Enum.TryParse(currentSettings.gameLanguage, out Language language))
+            {
+                currentLanguage = language;
+            }
+            else
+            {
+                currentLanguage = Language.English;
+                currentSettings.gameLanguage = Language.English.ToString();
+            }
+        }
+
+        public void ApplyLanguageSettings()
+        {
+            SetGameLanguage(currentLanguage);
         }
 
         public void ApplyGraphicsSettings()
@@ -142,8 +175,13 @@ namespace Assets.Scripts
                     ? Mathf.Log10(currentSettings.musicVolume) * 20
                     : -80f;
 
+                float sfxVolumeDb = currentSettings.sfxVolume > 0
+                    ? Mathf.Log10(currentSettings.sfxVolume) * 20
+                    : -80f;
+
                 audioMixer.SetFloat("MasterVolume", masterVolumeDb);
                 audioMixer.SetFloat("MusicVolume", musicVolumeDb);
+                audioMixer.SetFloat("SFXVolume", sfxVolumeDb);
             }
             else
             {
@@ -151,7 +189,7 @@ namespace Assets.Scripts
             }
 
             Debug.Log(
-                $"[SettingsManager] Audio settings: Master={currentSettings.masterVolume}, Music={currentSettings.musicVolume}");
+                $"[SettingsManager] Audio settings: Master={currentSettings.masterVolume}, Music={currentSettings.musicVolume}, SFX={currentSettings.sfxVolume}");
         }
 
         #endregion
@@ -199,6 +237,12 @@ namespace Assets.Scripts
             ApplyAudioSettings();
         }
 
+        public void SetSfxVolume(float volume)
+        {
+            currentSettings.sfxVolume = Mathf.Clamp01(volume);
+            ApplyAudioSettings();
+        }
+
         public void SetSubtitlesEnabled(bool enabled)
         {
             currentSettings.subtitlesEnabled = enabled;
@@ -211,7 +255,30 @@ namespace Assets.Scripts
 
         public void SetGameLanguage(string language)
         {
-            currentSettings.gameLanguage = language;
+            if (System.Enum.TryParse(language, out Language parsedLanguage))
+            {
+                SetGameLanguage(parsedLanguage);
+            }
+            else
+            {
+                Debug.LogWarning($"[SettingsManager] Invalid language string: {language}. Using English as fallback.");
+                SetGameLanguage(Language.English);
+            }
+        }
+
+        public void SetGameLanguage(Language language)
+        {
+            currentLanguage = language;
+            currentSettings.gameLanguage = language.ToString();
+
+            OnLanguageChanged?.Invoke(language);
+
+            Debug.Log($"[SettingsManager] Language changed to: {language}");
+        }
+
+        public Language GetCurrentLanguage()
+        {
+            return currentLanguage;
         }
 
         #endregion

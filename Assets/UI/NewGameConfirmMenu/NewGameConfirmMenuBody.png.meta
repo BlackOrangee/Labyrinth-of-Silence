@@ -100,12 +100,12 @@ TextureImporter:
       name: NewGameConfirmMenuBody_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 10
         y: 0
         width: 1564
-        height: 621
+        height: 545
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 50a369a712dd5834bba2baa17bc3d8e3
+guid: d8c5b31ab820c144b8515f8c1d5c2c8c
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,13 +97,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PauseMenuButton_SaveAs_0
+      name: "\u0412\u0438\u043A\u0442\u043E\u0440\u0438\u044F \u043C\u0435\u043D\u044E
+        \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 (3)_0"
       rect:
         serializedVersion: 2
-        x: 20
-        y: 20
-        width: 1039
-        height: 187
+        x: 0
+        y: 0
+        width: 4390
+        height: 2470
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,52 +113,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 450665a99d000514596912cc056476a9
-      internalID: -1254004052
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PauseMenuButton_SaveAs_1
-      rect:
-        serializedVersion: 2
-        x: 1117
-        y: 20
-        width: 1039
-        height: 187
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 376e57cc470deba4dae2371e7cefd009
-      internalID: 270674981
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: PauseMenuButton_SaveAs_2
-      rect:
-        serializedVersion: 2
-        x: 2214
-        y: 20
-        width: 1039
-        height: 187
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e08402ec74e313e4f9137221bea47bbf
-      internalID: 1290418001
+      spriteID: e30ece27b66fa1f43a28d7bf01816454
+      internalID: 630922322
       vertices: []
       indices: 
       edges: []
@@ -166,7 +123,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 0808b75a3478d08478175b36aaee2ed8
+    spriteID: 541aa740807e2e148a27f3e12acc26ca
     internalID: 0
     vertices: []
     indices: 
@@ -174,13 +131,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":6.0},"gridSpriteSize":{"x":1039.0,"y":187.0},"gridSpriteOffset":{"x":20.0,"y":20.0},"gridSpritePadding":{"x":58.0,"y":26.0},"pivot":{"x":0.5,"y":0.5},"autoSlicingMethod":0,"spriteAlignment":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      PauseMenuButton_SaveAs_0: -1254004052
-      PauseMenuButton_SaveAs_1: 270674981
-      PauseMenuButton_SaveAs_2: 1290418001
+      "\u0412\u0438\u043A\u0442\u043E\u0440\u0438\u044F \u043C\u0435\u043D\u044E \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 (3)_0": 630922322
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

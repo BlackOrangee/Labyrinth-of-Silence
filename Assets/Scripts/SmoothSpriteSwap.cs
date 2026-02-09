@@ -2,19 +2,28 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
     [RequireComponent(typeof(Image))]
-    public class SmoothButtonAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    public class SmoothButtonAnimation : LocalizedComponentBase, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
-        [Header("Button Sprites")]
+        [Header("Button Sprites - English")]
         [Tooltip("Normal state sprite")]
         public Sprite normalSprite;
         [Tooltip("Highlighted state sprite")]
         public Sprite highlightedSprite;
         [Tooltip("Pressed state sprite")]
         public Sprite pressedSprite;
+
+        [Header("Button Sprites - Ukrainian")]
+        [Tooltip("Normal state sprite (Ukrainian)")]
+        public Sprite normalSpriteUkr;
+        [Tooltip("Highlighted state sprite (Ukrainian)")]
+        public Sprite highlightedSpriteUkr;
+        [Tooltip("Pressed state sprite (Ukrainian)")]
+        public Sprite pressedSpriteUkr;
 
         [Header("Animation Settings")]
         [Tooltip("Transition duration (seconds)")]
@@ -34,6 +43,17 @@ namespace Assets.Scripts
         private Coroutine currentTransition;
         private Coroutine pressedDelayCoroutine;
 
+        private Sprite currentNormalSprite;
+        private Sprite currentHighlightedSprite;
+        private Sprite currentPressedSprite;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+
+            Debug.Log("[SmoothButtonAnimation] OnEnable called - localization subscribed");
+        }
+
         void Start()
         {
             buttonImage = GetComponent<Image>();
@@ -46,11 +66,17 @@ namespace Assets.Scripts
                 return;
             }
 
+            buttonImage.preserveAspect = true;
+
             CreateOverlayImage();
 
-            if (normalSprite != null)
+            currentNormalSprite = normalSprite;
+            currentHighlightedSprite = highlightedSprite;
+            currentPressedSprite = pressedSprite;
+
+            if (currentNormalSprite != null)
             {
-                buttonImage.sprite = normalSprite;
+                buttonImage.sprite = currentNormalSprite;
             }
 
             if (button != null)
@@ -65,19 +91,20 @@ namespace Assets.Scripts
         {
             GameObject overlayObject = new GameObject("Overlay");
             overlayObject.transform.SetParent(transform, false);
-            
+
             overlayImage = overlayObject.AddComponent<Image>();
-            
+            overlayImage.preserveAspect = true;
+
             RectTransform overlayRect = overlayImage.GetComponent<RectTransform>();
             overlayRect.anchorMin = Vector2.zero;
             overlayRect.anchorMax = Vector2.one;
             overlayRect.sizeDelta = Vector2.zero;
             overlayRect.anchoredPosition = Vector2.zero;
-            
+
             Color overlayColor = Color.white;
             overlayColor.a = 0f;
             overlayImage.color = overlayColor;
-            
+
             overlayImage.raycastTarget = false;
         }
 
@@ -140,7 +167,7 @@ namespace Assets.Scripts
         private IEnumerator DelayedStateChange()
         {
             float waitTime = Mathf.Max(minPressedDuration, transitionDuration);
-            yield return new WaitForSeconds(waitTime);
+            yield return new WaitForSecondsRealtime(waitTime);
             
             isPressed = false;
             UpdateButtonState();
@@ -154,15 +181,15 @@ namespace Assets.Scripts
 
             if (isPressed)
             {
-                targetSprite = pressedSprite ?? normalSprite;
+                targetSprite = currentPressedSprite ?? currentNormalSprite;
             }
             else if (isPointerOver)
             {
-                targetSprite = highlightedSprite ?? normalSprite;
+                targetSprite = currentHighlightedSprite ?? currentNormalSprite;
             }
             else
             {
-                targetSprite = normalSprite;
+                targetSprite = currentNormalSprite;
             }
 
             if (currentTransition != null)
@@ -186,14 +213,14 @@ namespace Assets.Scripts
 
             while (elapsed < transitionDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / transitionDuration);
-                
+
                 float smoothT = Mathf.SmoothStep(0f, 1f, t);
-                
+
                 overlayColor.a = smoothT;
                 overlayImage.color = overlayColor;
-                
+
                 yield return null;
             }
 
@@ -227,8 +254,42 @@ namespace Assets.Scripts
             UpdateButtonState();
         }
 
-        void OnDisable()
+        /// <summary>
+        /// Apply localization - update all button sprites based on selected language
+        /// Called automatically when language changes
+        /// </summary>
+        /// <param name="newLanguage">The new language to apply</param>
+        protected override void ApplyLocalization(Language newLanguage)
         {
+            Debug.Log($"[SmoothButtonAnimation] Applying localization for language: {newLanguage}");
+
+            switch (newLanguage)
+            {
+                case Language.Ukrainian:
+                    currentNormalSprite = normalSpriteUkr != null ? normalSpriteUkr : normalSprite;
+                    currentHighlightedSprite = highlightedSpriteUkr != null ? highlightedSpriteUkr : highlightedSprite;
+                    currentPressedSprite = pressedSpriteUkr != null ? pressedSpriteUkr : pressedSprite;
+                    break;
+
+                case Language.English:
+                default:
+                    currentNormalSprite = normalSprite;
+                    currentHighlightedSprite = highlightedSprite;
+                    currentPressedSprite = pressedSprite;
+                    break;
+            }
+
+            if (buttonImage != null)
+            {
+                UpdateButtonState();
+                Debug.Log("[SmoothButtonAnimation] Button state updated with localized sprites");
+            }
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+
             isPointerOver = false;
             isPressed = false;
 
@@ -243,9 +304,9 @@ namespace Assets.Scripts
                 pressedDelayCoroutine = null;
             }
 
-            if (buttonImage != null && normalSprite != null)
+            if (buttonImage != null && currentNormalSprite != null)
             {
-                buttonImage.sprite = normalSprite;
+                buttonImage.sprite = currentNormalSprite;
             }
             if (overlayImage != null)
             {

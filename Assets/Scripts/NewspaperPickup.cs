@@ -42,11 +42,27 @@ namespace Assets.Scripts
 
         public string GetInteractText()
         {
-            if (newspaperData != null && !string.IsNullOrEmpty(newspaperData.newspaperName))
+            if (isPickedUp)
             {
-                return $"Press to read {newspaperData.newspaperName}";
+                return "";
             }
-            return "Press to read Newspaper";
+
+            if (newspaperData != null)
+            {
+                try
+                {
+                    string localizedName = newspaperData.GetLocalizedName();
+                    if (!string.IsNullOrEmpty(localizedName))
+                    {
+                        return $"Press [E] to read {localizedName}";
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"NewspaperPickup: Error getting localized name - {ex.Message}");
+                }
+            }
+            return "Press [E] to read Newspaper";
         }
 
         public void Interact(GameObject actor)
@@ -75,6 +91,8 @@ namespace Assets.Scripts
             PlayPickupSound();
 
             Debug.Log($"NewspaperPickup: Picked up newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
+
+            TriggerThought();
         }
 
         public void OnInteract(GameObject actor)
@@ -140,6 +158,18 @@ namespace Assets.Scripts
             yield return new WaitForSeconds(0.1f);
 
             Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Trigger thought if ThoughtTrigger component is attached
+        /// </summary>
+        private void TriggerThought()
+        {
+            ThoughtTrigger thoughtTrigger = GetComponent<ThoughtTrigger>();
+            if (thoughtTrigger != null)
+            {
+                thoughtTrigger.TriggerFromInteraction();
+            }
         }
 
         private void OnValidate()
