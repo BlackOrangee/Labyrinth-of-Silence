@@ -2,7 +2,6 @@
 
 namespace Assets.Scripts
 {
-    // Гарантуємо, що на об'єкті є Колайдер
     [RequireComponent(typeof(Collider))]
     public class CollectItem : MonoBehaviour, IInteractable
     {
@@ -22,16 +21,13 @@ namespace Assets.Scripts
 
         private bool isCollected = false;
         private Collider cachedCollider;
-        private Rigidbody cachedRigidbody; // Кешуємо посилання на Rigidbody
+        private Rigidbody cachedRigidbody;
 
         private void Awake()
         {
             cachedCollider = GetComponent<Collider>();
             cachedRigidbody = GetComponent<Rigidbody>();
 
-            // --- [FIX: АВТОМАТИЧНА ФІКСАЦІЯ] ---
-            // При старті робимо ключ "кінематичним", щоб він не падав крізь стіл 
-            // і не відлітав у космос через баги фізики.
             if (cachedRigidbody != null)
             {
                 cachedRigidbody.isKinematic = true; 
@@ -50,19 +46,15 @@ namespace Assets.Scripts
             if (isCollected) return;
 
             isCollected = true;
-            
-            // 1. Вимикаємо колайдер, щоб не можна було натиснути двічі
+
             if (cachedCollider != null) cachedCollider.enabled = false;
-            
-            // 2. [ВИПРАВЛЕНО] Вимикаємо фізику для 3D
-            // Замість .simulated (якого немає в 3D) використовуємо ці налаштування:
+
             if (cachedRigidbody != null) 
             {
-                cachedRigidbody.isKinematic = true;      // Об'єкт завмирає
-                cachedRigidbody.detectCollisions = false; // Перестає стикатися з іншими
+                cachedRigidbody.isKinematic = true;
+                cachedRigidbody.detectCollisions = false;
             }
 
-            // 3. Додаємо в інвентар
             var inv = actor.GetComponent<SimpleInventory>();
             if (inv != null)
             {
@@ -81,14 +73,11 @@ namespace Assets.Scripts
                 Debug.LogWarning("CollectItem: Player has no SimpleInventory component!");
             }
 
-            // 4. Звук
             if (pickupSound != null)
             {
-                // PlayClipAtPoint створює тимчасовий об'єкт у точці, звук дограє до кінця
                 AudioSource.PlayClipAtPoint(pickupSound, transform.position, pickupVolume);
             }
 
-            // 5. Видалення або приховування
             if (destroyOnCollect)
             {
                 Destroy(gameObject);
