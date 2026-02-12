@@ -107,24 +107,21 @@ namespace Assets.Scripts
             Taunt,
             Kill
         }
-
         [SerializeField] private AIState currentState = AIState.Patrol;
-
         private NavMeshAgent navAgent;
         private int currentPatrolIndex = 0;
-
         private float waitTimer = 0f;
         private float memoryTimer = 0f;
         private float hitRecoveryTimer = 0f;
-
         private Vector3 targetPosition;
         private int currentHits = 0;
         
         private PlayerMovement playerMovement;
         private CameraController playerCamera;
-
         void Start()
         {
+            AudioListener.volume = 1f;
+
             navAgent = GetComponent<NavMeshAgent>();
             navAgent.updateRotation = true;
             navAgent.speed = patrolSpeed;
@@ -158,7 +155,6 @@ namespace Assets.Scripts
 
             if (damageOverlay) damageOverlay.color = Color.clear;
         }
-
         void OnDestroy()
         {
             SoundManager.OnSoundEmitted -= OnSoundHeard;
@@ -166,7 +162,6 @@ namespace Assets.Scripts
             if (voiceSource) voiceSource.Stop();
             if (feetSource) feetSource.Stop();
         }
-
         void Update()
         {
             if (!player) return;
@@ -220,7 +215,6 @@ namespace Assets.Scripts
                     break;
             }
         }
-
         void UpdateAnimator()
         {
             if (animator != null)
@@ -242,7 +236,6 @@ namespace Assets.Scripts
         }
 
         #region Sensory Systems (Чуття)
-
         void CheckProximity()
         {
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
@@ -267,7 +260,6 @@ namespace Assets.Scripts
                 StartCoroutine(ExecuteAttack());
             }
         }
-
         void OnSoundHeard(Vector3 position, float intensity, GameObject source)
         {
             if (source == gameObject || isPlayerHidden || currentState == AIState.Attack || currentState == AIState.Kill) return;
@@ -293,7 +285,6 @@ namespace Assets.Scripts
         #endregion
 
         #region Behaviors (Поведінка)
-
         void PatrolBehavior()
         {
             navAgent.speed = patrolSpeed;
@@ -307,7 +298,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
         void AlertBehavior()
         {
             navAgent.speed = patrolSpeed;
@@ -322,7 +312,6 @@ namespace Assets.Scripts
                 }
             }
         }
-
         void ChaseBehavior()
         {
             navAgent.speed = chaseSpeed;
@@ -338,7 +327,6 @@ namespace Assets.Scripts
         #endregion
 
         #region Attack Logic (Атака і Смерть)
-
         IEnumerator ExecuteAttack()
         {
             currentState = AIState.Attack;
@@ -351,14 +339,17 @@ namespace Assets.Scripts
 
             if (animator) animator.SetTrigger("Attack");
 
+            Debug.Log("Monster-B: Початок атаки (Замах)...");
+
+            float timeBeforeSound = Mathf.Max(0f, damageDelay - 0.1f);
+            yield return new WaitForSeconds(timeBeforeSound);
+
             if (attackSound && voiceSource)
             {
                 voiceSource.PlayOneShot(attackSound);
             }
 
-            Debug.Log("Monster-B: Початок атаки (Замах)...");
-
-            yield return new WaitForSeconds(damageDelay);
+            yield return new WaitForSeconds(0.1f);
 
             float distance = Vector3.Distance(transform.position, player.position);
             
@@ -373,7 +364,7 @@ namespace Assets.Scripts
                 }
                 else if (currentHits >= 2)
                 {
-                    HandleDeathSequence();
+                    StartCoroutine(HandleDeathSequence());
                     yield break;
                 }
             }
@@ -385,7 +376,6 @@ namespace Assets.Scripts
                 navAgent.isStopped = false;
             }
         }
-
         IEnumerator HandleFirstHitSequence()
         {
             currentState = AIState.Taunt;
@@ -413,16 +403,19 @@ namespace Assets.Scripts
             currentState = AIState.Chase;
             navAgent.isStopped = false;
         }
-
-        void HandleDeathSequence()
+        IEnumerator HandleDeathSequence()
         {
             currentState = AIState.Kill;
             Debug.Log("Monster-B: ГРАВЦЯ ВБИТО.");
 
+            yield return new WaitForSeconds(0.2f); 
+
+            AudioListener.volume = 0f;
+
             navAgent.isStopped = true;
             if (playerMovement) playerMovement.SetMovementLock(true);
-            if (heartBeatAudio) heartBeatAudio.Stop();
 
+            if (heartBeatAudio) heartBeatAudio.Stop();
             if (voiceSource) voiceSource.Stop();
             if (feetSource) feetSource.Stop();
 
@@ -443,14 +436,12 @@ namespace Assets.Scripts
         #endregion
 
         #region Navigation Helpers
-
         void GoToNextPatrolPoint()
         {
             if (patrolPoints.Length == 0) return;
             navAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
-
         void GoToNearestPatrolPoint()
         {
             if (patrolPoints.Length == 0) return;
