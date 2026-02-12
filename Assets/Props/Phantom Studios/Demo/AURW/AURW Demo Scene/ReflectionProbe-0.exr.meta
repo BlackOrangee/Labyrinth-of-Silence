@@ -1,5 +1,12 @@
 fileFormatVersion: 2
 guid: 96836085177232f40b2e2ae662486722
+AssetOrigin:
+  serializedVersion: 1
+  productId: 195139
+  packageName: A.U.R.W. URP Free
+  packageVersion: 4.1
+  assetPath: Assets/Phantom Studios/Demo/AURW/AURW Demo Scene/ReflectionProbe-0.exr
+  uploadId: 768540
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -22,7 +29,7 @@ TextureImporter:
     normalMapFilter: 0
     flipGreenChannel: 0
   isReadable: 0
-  streamingMipmaps: 0
+  streamingMipmaps: 1
   streamingMipmapsPriority: 0
   vTOnly: 0
   ignoreMipmapLimit: 0
@@ -69,7 +76,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 1024
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -128,10 +135,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 195139
-  packageName: A.U.R.W. URP Free
-  packageVersion: 4.1
-  assetPath: Assets/Phantom Studios/Demo/AURW/AURW Demo Scene/ReflectionProbe-0.exr
-  uploadId: 768540
