@@ -25,7 +25,6 @@ namespace Assets.Scripts
         [SerializeField] private AudioClip lockedSound;
 
         [Header("Dependencies")]
-        [SerializeField] private PopupManager popupManager;
         [SerializeField] private GameObject levelCompletePanel; 
 
         private bool isOpen = false;
@@ -36,25 +35,8 @@ namespace Assets.Scripts
         {
             audioSource = GetComponent<AudioSource>();
 
-            if (popupManager == null)
-                popupManager = FindFirstObjectByType<PopupManager>();
-            
             var player = GameObject.FindWithTag("Player");
             if (player != null) playerInventory = player.GetComponent<SimpleInventory>();
-        }
-
-        public string GetInteractText()
-        {
-            if (isOpen) return "";
-
-            if (playerInventory != null && playerInventory.HasAllKeys(requiredKeys))
-            {
-                return $"{doorName}: Press [E] to open";
-            }
-            else
-            {
-                return $"{doorName} Locked. Find all keys";
-            }
         }
 
         public void Interact(GameObject actor)
@@ -71,18 +53,18 @@ namespace Assets.Scripts
             else
             {
                 PlaySound(lockedSound);
-
-                if (popupManager != null)
-                {
-                    popupManager.ShowPopup($"You need specific keys to open {doorName}!", null, this, "OK", null);
-                    StartCoroutine(AutoClosePopup());
-                }
+                Debug.Log($"[DoorController] {doorName} is locked! You need specific keys to open it.");
             }
         }
 
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
+        }
+
+        public string GetPopupID()
+        {
+            return isOpen ? "" : "open";
         }
 
         private void OpenDoor()
@@ -123,12 +105,6 @@ namespace Assets.Scripts
         {
             yield return new WaitForSeconds(5f);
             if(levelCompletePanel != null) levelCompletePanel.SetActive(false);
-        }
-
-        private IEnumerator AutoClosePopup()
-        {
-            yield return new WaitForSeconds(2f);
-            if (popupManager != null) popupManager.HidePopup(this);
         }
     }
 }

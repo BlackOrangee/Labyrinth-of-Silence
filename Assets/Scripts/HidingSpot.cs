@@ -40,8 +40,6 @@ namespace Assets.Scripts
         private AudioSource audioSource;
         private bool isOccupied = false;
 
-        private PopupManager popupManager;
-
         void Awake()
         {
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -52,8 +50,6 @@ namespace Assets.Scripts
 
         void Start()
         {
-            popupManager = FindFirstObjectByType<PopupManager>();
-
             if (hidePoint == null)
             {
                 GameObject hideObj = new GameObject("HidePoint_Ref");
@@ -87,11 +83,6 @@ namespace Assets.Scripts
         }
 
         #region IInteractable
-        public string GetInteractText()
-        {
-            return $"Press [E] to hide";
-        }
-
         public void Interact(GameObject actor)
         {
             PlayerHideController controller = actor.GetComponent<PlayerHideController>();
@@ -102,6 +93,11 @@ namespace Assets.Scripts
         }
 
         public void OnInteract(GameObject actor) => Interact(actor);
+
+        public string GetPopupID()
+        {
+            return isOccupied ? "out" : "hide";
+        }
         #endregion
 
         public void EnterHiding(GameObject player, PlayerHideController controller)
@@ -128,11 +124,6 @@ namespace Assets.Scripts
             player.transform.rotation = exitPoint.rotation;
 
             if (cc != null) cc.enabled = true;
-
-            if (popupManager != null)
-            {
-                popupManager.HidePopup(this); 
-            }
         }
 
         private void PlaySound(AudioClip clip)

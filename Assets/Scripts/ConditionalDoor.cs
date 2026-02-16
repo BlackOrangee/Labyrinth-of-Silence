@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Serialization;
 
 namespace Assets.Scripts
 {
@@ -57,12 +58,14 @@ namespace Assets.Scripts
         [Tooltip("Color when unlocked")]
         [SerializeField] private Color unlockedColor = Color.green;
 
+        [FormerlySerializedAs("lockedMessage")]
         [Header("Messages")]
         [Tooltip("Message when locked")]
-        [SerializeField] private string lockedMessage = "Door is locked";
+        [SerializeField] private string lockedMessageID = "doorLocked";
 
+        [FormerlySerializedAs("unlockedMessage")]
         [Tooltip("Message when unlocked")]
-        [SerializeField] private string unlockedMessage = "Press [E] to open";
+        [SerializeField] private string popupID = "open";
 
         private bool isOpen = false;
         private bool isLocked = true;
@@ -97,21 +100,6 @@ namespace Assets.Scripts
             {
                 CheckLockState();
             }
-        }
-
-        public string GetInteractText()
-        {
-            if (isOpen)
-            {
-                return autoClose ? "" : $"{doorName}: Press [E] to close";
-            }
-
-            if (isLocked)
-            {
-                return $"{doorName}: {lockedMessage}";
-            }
-
-            return $"{doorName}: {unlockedMessage}";
         }
 
         public void Interact(GameObject actor)
@@ -154,6 +142,11 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
+        }
+
+        public string GetPopupID()
+        {
+            return isOpen ? "" : popupID;
         }
 
         /// <summary>
@@ -330,7 +323,11 @@ namespace Assets.Scripts
         {
             string missingKeys = GetMissingKeysMessage();
             Debug.Log($"[ConditionalDoor] {doorName} is locked! {missingKeys}");
-            // TODO: Show UI message
+
+            if (Localization.PopupManager.Instance != null)
+            {
+                Localization.PopupManager.Instance.ShowPopup(lockedMessageID, false, 1f);
+            }
         }
 
         /// <summary>

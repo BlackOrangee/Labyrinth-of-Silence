@@ -372,7 +372,7 @@ namespace Assets.Scripts
                 }
             }
 
-            UpdateTitle();
+            // UpdateTitle();
             UpdateCollectionCounter();
             UpdateKeysCounter();
         }
@@ -434,30 +434,30 @@ namespace Assets.Scripts
         /// <summary>
         /// Update inventory title
         /// </summary>
-        private void UpdateTitle()
-        {
-            if (titleText == null)
-                return;
-
-            string filterName = "";
-            switch (currentFilter)
-            {
-                case InventoryFilter.All:
-                    filterName = "All Items";
-                    break;
-                case InventoryFilter.Keys:
-                    filterName = "Keys";
-                    break;
-                case InventoryFilter.Documents:
-                    filterName = "Documents";
-                    break;
-                case InventoryFilter.Items:
-                    filterName = "Items";
-                    break;
-            }
-
-            // titleText.text = $"Inventory - {filterName} ({slots.Count})";
-        }
+        // private void UpdateTitle()
+        // {
+        //     if (titleText == null)
+        //         return;
+        //
+        //     string filterName = "";
+        //     switch (currentFilter)
+        //     {
+        //         case InventoryFilter.All:
+        //             filterName = "All Items";
+        //             break;
+        //         case InventoryFilter.Keys:
+        //             filterName = "Keys";
+        //             break;
+        //         case InventoryFilter.Documents:
+        //             filterName = "Documents";
+        //             break;
+        //         case InventoryFilter.Items:
+        //             filterName = "Items";
+        //             break;
+        //     }
+        //
+        //     // titleText.text = $"Inventory - {filterName} ({slots.Count})";
+        // }
 
         /// <summary>
         /// Update collection counter display

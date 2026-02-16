@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using TMPro;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
@@ -9,7 +10,6 @@ namespace Assets.Scripts
     {
         [Header("References")]
         [SerializeField] private CameraController mainCamController;
-        [SerializeField] private PopupManager popupManager;
 
         [Header("Hiding Settings")]
         [SerializeField] private float mouseSensitivity = 2f;
@@ -39,8 +39,7 @@ namespace Assets.Scripts
             playerInteractor = GetComponent<PlayerInteractor>();
 
             if (mainCamController == null) mainCamController = GetComponentInChildren<CameraController>();
-            if (popupManager == null) popupManager = FindFirstObjectByType<PopupManager>();
-            
+
             if (Camera.main != null) cameraTransform = Camera.main.transform;
         }
 
@@ -74,9 +73,9 @@ namespace Assets.Scripts
 
             TogglePlayerControl(false);
 
-            if (popupManager != null)
+            if (Localization.PopupManager.Instance != null)
             {
-                popupManager.HidePopup(null);
+                Localization.PopupManager.Instance.HidePopup();
             }
 
             yield return new WaitForSeconds(0.1f);
@@ -85,14 +84,14 @@ namespace Assets.Scripts
             transform.rotation = spot.hidePoint.rotation;
             initialHidePos = spot.hidePoint.position;
 
-            currentYRotation = 0f; 
+            currentYRotation = 0f;
             currentXRotation = 0f;
-            
+
             if(cameraTransform) cameraTransform.localRotation = Quaternion.identity;
 
-            if (popupManager != null)
+            if (Localization.PopupManager.Instance != null)
             {
-                popupManager.ShowPopup("Press [Esc] to exit", null, this, "", null);
+                Localization.PopupManager.Instance.ShowPopup("out", false, 0f);
             }
 
             yield return new WaitForSeconds(0.4f);
@@ -104,7 +103,10 @@ namespace Assets.Scripts
             if (currentSpot == null) yield break;
             isTransitioning = true;
 
-            if (popupManager != null) popupManager.HidePopup(this);
+            if (Localization.PopupManager.Instance != null)
+            {
+                Localization.PopupManager.Instance.HidePopup();
+            }
 
             Vector3 lookAngles = cameraTransform.eulerAngles;
             float exitPitch = lookAngles.x;

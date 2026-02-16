@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b8b0827170adf048a6d77c57b4248db, type: 3}
+  m_Name: PopupLocalizationDB
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Localization.LocalizationDatabase
+  popups:
+  - popupID: open
+    spriteNormalEnglish: {fileID: -755272099, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -455441639, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -1243608009, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 410252838, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: turnOn
+    spriteNormalEnglish: {fileID: 304063049, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -2024197547, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 1500651095, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -1910289134, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: upLamp
+    spriteNormalEnglish: {fileID: 646962345, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: 495889772, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 1266791687, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -1593851660, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: upDocument
+    spriteNormalEnglish: {fileID: -1992822412, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -663710741, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -134898299, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -1240654796, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: upKerosene
+    spriteNormalEnglish: {fileID: 1436571098, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: 1387560665, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 615203570, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -1522108066, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: hide
+    spriteNormalEnglish: {fileID: -939267605, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: 1092355562, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 551737637, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -228656232, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: out
+    spriteNormalEnglish: {fileID: -1003787546, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -1490332510, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -778075833, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 1939522466, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: lampON
+    spriteNormalEnglish: {fileID: -1301056572, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -9888203, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -1831065240, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 1867830685, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: lampOFF
+    spriteNormalEnglish: {fileID: 242379651, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: 154266075, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -89557993, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -1836775397, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: doorLocked
+    spriteNormalEnglish: {fileID: -1866126785, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
+    spritePressedEnglish: {fileID: 402034055, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
+    spriteNormalUkrainian: {fileID: 815458669, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
+    spritePressedUkrainian: {fileID: 2066667917, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
+  - popupID: canOpenDoor
+    spriteNormalEnglish: {fileID: -1246528503, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
+    spritePressedEnglish: {fileID: -673561756, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
+    spriteNormalUkrainian: {fileID: -471099869, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
+    spritePressedUkrainian: {fileID: 1059936358, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}

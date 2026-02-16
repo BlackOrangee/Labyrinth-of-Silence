@@ -343,11 +343,6 @@ namespace Assets.Scripts
             {
                 Debug.LogWarning("NewspaperUI: contentText is not assigned! Assign the TextMeshProUGUI component for content in the inspector.");
             }
-
-            if (closeButton == null)
-            {
-                Debug.LogWarning("NewspaperUI: closeButton is not assigned! Assign the Button component in the inspector.");
-            }
         }
         #endregion
     }
