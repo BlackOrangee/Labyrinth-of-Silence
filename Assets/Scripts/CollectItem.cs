@@ -35,12 +35,6 @@ namespace Assets.Scripts
             }
         }
 
-        public string GetInteractText()
-        {
-            string nameToShow = keyColor != KeyColorType.None ? $"{keyColor} Key" : displayName;
-            return $"Press [E] to pick: {nameToShow}";
-        }
-
         public void Interact(GameObject actor)
         {
             if (isCollected) return;
@@ -91,6 +85,11 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
+        }
+
+        public string GetPopupID()
+        {
+            return isCollected ? "" : "open";
         }
     }
 }

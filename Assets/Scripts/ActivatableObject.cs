@@ -17,9 +17,9 @@ namespace Assets.Scripts
         [Tooltip("Virtual key to give on activation (should be >= 100)")]
         [SerializeField] private KeyColorType keyToGive = KeyColorType.GeneratorPower;
 
-        [Header("Interaction Settings")]
-        [Tooltip("Interaction key")]
-        [SerializeField] private KeyCode interactionKey = KeyCode.E;
+        // [Header("Interaction Settings")]
+        // [Tooltip("Interaction key")]
+        // [SerializeField] private KeyCode interactionKey = KeyCode.E;
 
         [Tooltip("Can be activated only once?")]
         [SerializeField] private bool oneTimeActivation = true;
@@ -100,21 +100,6 @@ namespace Assets.Scripts
             SetVisualState(false);
         }
 
-        public string GetInteractText()
-        {
-            if (isActivated && oneTimeActivation)
-            {
-                return "";
-            }
-
-            if (requireKey && playerInventory != null && !playerInventory.HasKey(requiredKey))
-            {
-                return $"{objectName}: {lockedMessage}";
-            }
-
-            return $"{objectName}: Press [{interactionKey}] to activate";
-        }
-
         public void Interact(GameObject actor)
         {
             if (isActivated && oneTimeActivation)
@@ -145,6 +130,11 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
+        }
+
+        public string GetPopupID()
+        {
+            return (isActivated && oneTimeActivation) ? "" : "turnOn";
         }
 
         /// <summary>

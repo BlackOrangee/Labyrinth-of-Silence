@@ -9,8 +9,8 @@ namespace Assets.Scripts
         [Tooltip("Поточний запас палива в цій каністрі (може бути більше 100)")]
         [SerializeField] private float canisterCapacity = 200f;
         
-        [Tooltip("Що ми вважаємо за 100%? (Зазвичай це повний бак ліхтаря)")]
-        [SerializeField] private float standardRefuelAmount = 100f; 
+        // [Tooltip("Що ми вважаємо за 100%? (Зазвичай це повний бак ліхтаря)")]
+        // [SerializeField] private float standardRefuelAmount = 100f; 
         
         [SerializeField] private bool destroyOnEmpty = true;
 
@@ -22,13 +22,6 @@ namespace Assets.Scripts
         [Tooltip("Гучність звуку заправки")]
         [SerializeField] private float soundVolume = 0.7f;
 
-
-        public string GetInteractText()
-        {
-            float percentage = (canisterCapacity / standardRefuelAmount) * 100f;
-
-            return $"Press [E] to pick kerosene (Left: {Mathf.RoundToInt(percentage)}%)";
-        }
 
         public void Interact(GameObject actor)
         {
@@ -74,5 +67,10 @@ namespace Assets.Scripts
         }
 
         public void OnInteract(GameObject actor) => Interact(actor);
+
+        public string GetPopupID()
+        {
+            return canisterCapacity > 0.1f ? "upKerosene" : "";
+        }
     }
 }

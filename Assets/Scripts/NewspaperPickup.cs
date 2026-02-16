@@ -40,31 +40,6 @@ namespace Assets.Scripts
             }
         }
 
-        public string GetInteractText()
-        {
-            if (isPickedUp)
-            {
-                return "";
-            }
-
-            if (newspaperData != null)
-            {
-                try
-                {
-                    string localizedName = newspaperData.GetLocalizedName();
-                    if (!string.IsNullOrEmpty(localizedName))
-                    {
-                        return $"Press [E] to read {localizedName}";
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogWarning($"NewspaperPickup: Error getting localized name - {ex.Message}");
-                }
-            }
-            return "Press [E] to read Newspaper";
-        }
-
         public void Interact(GameObject actor)
         {
             if (isPickedUp)
@@ -98,6 +73,11 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
+        }
+
+        public string GetPopupID()
+        {
+            return isPickedUp ? "" : "upDocument";
         }
 
         private void ShowNewspaper(GameObject actor)
