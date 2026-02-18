@@ -11,9 +11,7 @@ namespace Assets.Scripts
         [Header("Debug")]
         [Tooltip("Show debug visualization for sounds")]
         public bool showDebugSounds = true;
-
         private static readonly Vector3 DebugRayDirection = Vector3.up * 2f;
-
         void Awake()
         {
             if (Instance == null)

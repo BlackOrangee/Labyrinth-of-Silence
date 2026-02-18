@@ -1,9 +1,8 @@
 using UnityEngine;
 using TMPro;
-
 namespace Assets.Scripts
 {
-    // 1. Створюємо список ідентифікаторів для всіх завдань у грі
+    // Створюємо список ідентифікаторів для всіх завдань у грі
     public enum GameObjective
     {
         None,               // Пусто (немає завдання)
@@ -14,7 +13,6 @@ namespace Assets.Scripts
         FindWorkaround,     // Знайдіть обхідний шлях
         GetToCity           // Дістаньтесь до міста
     }
-
     public class MainObjectiveManager : MonoBehaviour
     {
         public static MainObjectiveManager Instance;
@@ -26,24 +24,20 @@ namespace Assets.Scripts
         [Header("Debug")]
         [Tooltip("Вибери тут завдання і натисни правою кнопкою на скрипт -> Set Objective From Inspector, щоб протестувати")]
         public GameObjective currentDebugObjective; 
-
         void Awake()
         {
             if (Instance == null) Instance = this;
             else Destroy(gameObject);
         }
-
         void Start()
         {
             SetObjective(GameObjective.ExitLab);
         }
-
         public void SetObjective(GameObjective objectiveType)
         {
             string textToShow = GetTextForObjective(objectiveType);
             UpdateUI(textToShow);
         }
-
         private string GetTextForObjective(GameObjective type)
         {
             switch (type)
@@ -71,7 +65,6 @@ namespace Assets.Scripts
                     return "";
             }
         }
-
         private void UpdateUI(string newText)
         {
             if (panelRoot != null)
@@ -91,8 +84,6 @@ namespace Assets.Scripts
             }
         }
 
-        // --- ДЛЯ ТЕСТУВАННЯ (Context Menu) ---
-        // Можеш натиснути на шестерню скрипта в Inspector і вибрати цей пункт
         [ContextMenu("Apply Debug Objective")]
         public void ApplyDebugObjective()
         {
