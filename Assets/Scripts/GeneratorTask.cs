@@ -74,6 +74,11 @@ namespace Assets.Scripts
             }
         }
 
+        public string GetPopupID()
+        {
+            return "turnOn";
+        }
+
         private void OnSuccess()
         {
             isRepaired = true;
