@@ -30,7 +30,7 @@ namespace Assets.Scripts
         public AudioSource heartBeatAudio;
         #endregion
 
-        #region 3. Audio Settings (Налаштування Звуку - НОВЕ)
+        #region 3. Audio Settings (Налаштування Звуку)
         [Header("Audio Files (Звукові файли)")]
         [Tooltip("Файл: Один крок (НЕ ЛУП!). Використовуй короткий звук удару ногою.")]
         public AudioClip stepSound;
@@ -118,6 +118,7 @@ namespace Assets.Scripts
         
         private PlayerMovement playerMovement;
         private CameraController playerCamera;
+
         void Start()
         {
             AudioListener.volume = 1f;
@@ -155,6 +156,7 @@ namespace Assets.Scripts
 
             if (damageOverlay) damageOverlay.color = Color.clear;
         }
+
         void OnDestroy()
         {
             SoundManager.OnSoundEmitted -= OnSoundHeard;
@@ -162,6 +164,7 @@ namespace Assets.Scripts
             if (voiceSource) voiceSource.Stop();
             if (feetSource) feetSource.Stop();
         }
+
         void Update()
         {
             if (!player) return;
@@ -215,22 +218,28 @@ namespace Assets.Scripts
                     break;
             }
         }
-        void UpdateAnimator()
-        {
+
+       void UpdateAnimator()
+    {
             if (animator != null)
             {
-                float speed = navAgent.isStopped ? 0 : navAgent.velocity.magnitude;
-                animator.SetFloat("Speed", speed);
-            }
+            float currentSpeed = navAgent.isStopped ? 0 : navAgent.velocity.magnitude;
+        
+            animator.SetFloat("Speed", currentSpeed, 0.1f, Time.deltaTime);
         }
+    }
         public void PlayStepSound()
         {
-            if (stepSound != null && feetSource != null)
+            if (navAgent.velocity.magnitude > 0.1f && stepSound != null && feetSource != null)
             {
                 float currentSpeed = navAgent.velocity.magnitude;
-                float pitch = Mathf.Lerp(0.85f, 1.15f, currentSpeed / chaseSpeed);
                 
-                feetSource.pitch = pitch;
+                float pitch = Mathf.Lerp(0.9f, 1.15f, currentSpeed / chaseSpeed);
+                
+                feetSource.pitch = pitch + Random.Range(-0.05f, 0.05f);
+                
+                feetSource.volume = 0.7f; 
+
                 feetSource.PlayOneShot(stepSound);
             }
         }
@@ -403,23 +412,23 @@ namespace Assets.Scripts
             currentState = AIState.Chase;
             navAgent.isStopped = false;
         }
+
         IEnumerator HandleDeathSequence()
         {
             currentState = AIState.Kill;
             Debug.Log("Monster-B: ГРАВЦЯ ВБИТО.");
 
-            yield return new WaitForSeconds(0.2f); 
-
-            AudioListener.volume = 0f;
-
             navAgent.isStopped = true;
             if (playerMovement) playerMovement.SetMovementLock(true);
-
             if (heartBeatAudio) heartBeatAudio.Stop();
-            if (voiceSource) voiceSource.Stop();
-            if (feetSource) feetSource.Stop();
-
             if (damageOverlay) damageOverlay.gameObject.SetActive(false);
+
+            var skillCheck = FindObjectOfType<SkillCheckSystem>(); 
+
+            if (skillCheck != null)
+            {
+            skillCheck.ForceStop();
+            }
 
             if (deathScreenPanel != null)
             {
@@ -430,7 +439,15 @@ namespace Assets.Scripts
             else
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                yield break;
             }
+
+            yield return new WaitForSeconds(0.15f);
+
+            AudioListener.volume = 0f;
+            
+            if (voiceSource) voiceSource.Stop();
+            if (feetSource) feetSource.Stop();
         }
 
         #endregion
@@ -463,6 +480,22 @@ namespace Assets.Scripts
         }
 
         #endregion
+
+        public void TriggerChaseToLocation(Vector3 location)
+        {
+            Debug.Log("Monster-B: Чую вибух генератора! Біжу туди!");
+            
+            if (currentState == AIState.Patrol || currentState == AIState.Alert)
+            {
+                targetPosition = location;
+                navAgent.SetDestination(targetPosition);
+                currentState = AIState.Chase;
+
+                memoryTimer = 10f;
+                
+                if (spotSound && voiceSource) voiceSource.PlayOneShot(spotSound);
+            }
+        }
         void OnDrawGizmos()
         {
             if (!showDebugGizmos) return;

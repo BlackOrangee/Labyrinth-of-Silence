@@ -59,6 +59,7 @@ namespace Assets.Scripts
                 }
                 else
                 {
+                    inv.AddItem(displayName);
                     Debug.Log($"Picked up item: {displayName}");
                 }
             }
