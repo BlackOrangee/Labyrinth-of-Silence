@@ -12,7 +12,6 @@ public class SoundProfile
     [Header("Randomization (Ефект ВАУ)")]
     [Range(0f, 0.5f)] public float volumeRandom = 0.1f;
     [Range(0f, 0.5f)] public float pitchRandom = 0.1f;
-
     public void Play(AudioSource source)
     {
         if (clips.Length == 0 || source == null) return;
