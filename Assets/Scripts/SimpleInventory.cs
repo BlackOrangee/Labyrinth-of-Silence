@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-
 namespace Assets.Scripts
 {
     public class SimpleInventory : MonoBehaviour
@@ -10,9 +9,7 @@ namespace Assets.Scripts
         private List<KeyColorType> collectedKeys = new List<KeyColorType>();
         private List<string> items = new List<string>();
         private List<NewspaperData> collectedNewspapers = new List<NewspaperData>();
-
         public static event Action OnInventoryChanged;
-
         public void AddKey(KeyColorType keyType)
         {
             if (keyType == KeyColorType.None) return;
@@ -25,12 +22,10 @@ namespace Assets.Scripts
                 OnInventoryChanged?.Invoke();
             }
         }
-
         public bool HasKey(KeyColorType keyType)
         {
             return collectedKeys.Contains(keyType);
         }
-
         public bool HasAllKeys(List<KeyColorType> requiredKeys)
         {
             foreach (var key in requiredKeys)
@@ -40,22 +35,18 @@ namespace Assets.Scripts
             }
             return true;
         }
-
         public int GetCollectedKeysCount()
         {
             return collectedKeys.Count;
         }
-
         public List<string> GetItems()
         {
             return new List<string>(items);
         }
-
         public List<KeyColorType> GetCollectedKeys()
         {
             return new List<KeyColorType>(collectedKeys);
         }
-
         public void SetCollectedKeys(List<KeyColorType> keys)
         {
             collectedKeys.Clear();
@@ -65,7 +56,24 @@ namespace Assets.Scripts
             }
             OnInventoryChanged?.Invoke();
         }
-
+        public void AddItem(string itemName)
+        {
+            if (!items.Contains(itemName))
+            {
+                items.Add(itemName);
+                Debug.Log($"SimpleInventory: Added item '{itemName}'");
+                OnInventoryChanged?.Invoke();
+            }
+        }
+        
+        public void RemoveItem(string itemName)
+        {
+            if (items.Contains(itemName))
+            {
+                items.Remove(itemName);
+                OnInventoryChanged?.Invoke();
+            }
+        }
         public void AddNewspaper(NewspaperData newspaperData)
         {
             if (newspaperData == null)
@@ -85,7 +93,6 @@ namespace Assets.Scripts
 
             OnInventoryChanged?.Invoke();
         }
-
         public bool HasNewspaper(string newspaperId)
         {
             if (string.IsNullOrEmpty(newspaperId))
@@ -93,12 +100,10 @@ namespace Assets.Scripts
 
             return collectedNewspapers.Exists(n => n != null && n.newspaperId == newspaperId);
         }
-
         public List<NewspaperData> GetCollectedNewspapers()
         {
             return new List<NewspaperData>(collectedNewspapers);
         }
-
         public NewspaperData GetNewspaperById(string newspaperId)
         {
             if (string.IsNullOrEmpty(newspaperId))
@@ -106,12 +111,10 @@ namespace Assets.Scripts
 
             return collectedNewspapers.Find(n => n != null && n.newspaperId == newspaperId);
         }
-
         public int GetCollectedNewspapersCount()
         {
             return collectedNewspapers.Count;
         }
-
         public void ClearInventory()
         {
             collectedKeys.Clear();
