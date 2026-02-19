@@ -94,9 +94,7 @@ public class MenuController : MonoBehaviour
 
     public void ConfirmNewGame()
     {
-        string targetScene = SceneLoader.Instance.GetSceneNameFromBuildIndex(1);
-        LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(targetScene);
-        SceneLoader.Instance.LoadScene(1, config);
+        SceneLoader.Instance.LoadScene("IntroVideo");
     }
     
     public void Load()

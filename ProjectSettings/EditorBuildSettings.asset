@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Loader.unity
     guid: aafd9384c59d8e74cbb4657e8d9413ce
+  - enabled: 1
+    path: Assets/Scenes/IntroVideo.unity
+    guid: 8b99ad48f367ba54baf28aafb8546727
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
