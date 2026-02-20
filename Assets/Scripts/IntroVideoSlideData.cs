@@ -14,8 +14,15 @@ namespace Assets.Scripts
     public class IntroVideoSlideData
     {
         [Header("Background Video")]
-        [Tooltip("Background video that loops continuously (shared for all languages)")]
-        public VideoClip backgroundVideo;
+        [Tooltip("Optional intro video that plays ONCE before switching to the loop video")]
+        public VideoClip backgroundIntroVideo;
+
+        [Tooltip("Background video that loops continuously after the intro (or from the start if no intro)")]
+        public VideoClip backgroundLoopVideo;
+
+        [Header("Audio")]
+        [Tooltip("Audio clip that loops for the duration of this slide (optional)")]
+        public AudioClip slideAudio;
 
         [Header("Running Text (Typewriter Effect)")]
         [Tooltip("Text for English - will be displayed with typewriter effect")]
@@ -73,7 +80,7 @@ namespace Assets.Scripts
         /// </summary>
         public bool IsValid()
         {
-            return backgroundVideo != null && !string.IsNullOrEmpty(textEnglish);
+            return backgroundLoopVideo != null && !string.IsNullOrEmpty(textEnglish);
         }
 
         /// <summary>
@@ -81,8 +88,8 @@ namespace Assets.Scripts
         /// </summary>
         public string GetValidationError()
         {
-            if (backgroundVideo == null)
-                return "Background video is missing";
+            if (backgroundLoopVideo == null)
+                return "Background loop video is missing";
             if (string.IsNullOrEmpty(textEnglish))
                 return "English text is missing";
             return "Valid";

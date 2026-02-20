@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ed4dd6934be1b9d448eb80690fb0026c
+guid: 813a038261f470b4ea58cb14e58ff887
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -97,13 +97,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: introSkipButtons_0
+      name: SkipTip_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 150
-        width: 250
-        height: 100
+        y: 109
+        width: 492
+        height: 59
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -112,42 +112,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c37b90fe35a4eed458692346a14b209b
-      internalID: 244489924
+      spriteID: c4f07ed200eb86943a3dd079c8d4cdba
+      internalID: -306724785
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: introSkipButtons_1
-      rect:
-        serializedVersion: 2
-        x: 300
-        y: 150
-        width: 250
-        height: 100
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 790febb43e7a9114cab7c5c996ed68a6
-      internalID: -1690587427
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: introSkipButtons_2
+      name: SkipTip_1
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 250
-        height: 100
+        width: 492
+        height: 59
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,30 +134,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3e4b1d9bf150e0c46a473309d018fef8
-      internalID: -1984036341
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: introSkipButtons_3
-      rect:
-        serializedVersion: 2
-        x: 300
-        y: 0
-        width: 250
-        height: 100
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: b13aa638aae1fe94d97ce4c300eb8015
-      internalID: 289191932
+      spriteID: ca1477e44ddb41142888a94862bc24f8
+      internalID: -2049113244
       vertices: []
       indices: 
       edges: []
@@ -188,7 +144,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 65f74eaffdf34e94caa9a626d66ff0a5
+    spriteID: d383fcbf1ad575c46b987175f0813307
     internalID: 0
     vertices: []
     indices: 
@@ -198,12 +154,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":250.0,"y":100.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":50.0,"y":50.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":492.0,"y":59.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":50.0,"y":50.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      introSkipButtons_0: 244489924
-      introSkipButtons_1: -1690587427
-      introSkipButtons_2: -1984036341
-      introSkipButtons_3: 289191932
+      SkipTip_0: -306724785
+      SkipTip_1: -2049113244
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
