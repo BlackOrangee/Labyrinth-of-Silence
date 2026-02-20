@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: IntroVideoDatabase
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.IntroVideoDatabase
   slides:
-  - backgroundVideo: {fileID: 32900000, guid: 899083796a658d347af44dad8a7dd4bb, type: 3}
+  - backgroundIntroVideo: {fileID: 32900000, guid: 9e50de154356a9845ac0291d9c6b9d15, type: 3}
+    backgroundLoopVideo: {fileID: 32900000, guid: 03965543b54700948b6c6a2dea596e6f, type: 3}
+    slideAudio: {fileID: 0}
     textEnglish: "February 12, 1950. \r\nWorking as a journalist, I realized one
       thing - I will never be successful unless I find a truly sensational story"
     textUkrainian: "12 \u043B\u044E\u0442\u043E\u0433\u043E 1950 \u0440\u043E\u043A\u0443.
@@ -27,7 +29,9 @@ MonoBehaviour:
     hasSecondText: 0
     secondTextEnglish: 
     secondTextUkrainian: 
-  - backgroundVideo: {fileID: 32900000, guid: e2d91222818e6a84d8e4034c04356d7a, type: 3}
+  - backgroundIntroVideo: {fileID: 0}
+    backgroundLoopVideo: {fileID: 32900000, guid: e2d91222818e6a84d8e4034c04356d7a, type: 3}
+    slideAudio: {fileID: 0}
     textEnglish: I love rereading old newspapers for several reasons. One of them
       is the forgotten stories. They just stop being written about and are covered
       up by other unnecessary news. But this time I was lucky.
@@ -44,7 +48,9 @@ MonoBehaviour:
     hasSecondText: 0
     secondTextEnglish: 
     secondTextUkrainian: 
-  - backgroundVideo: {fileID: 32900000, guid: 8c9671f700388bd45a8612e4ee6d12ad, type: 3}
+  - backgroundIntroVideo: {fileID: 0}
+    backgroundLoopVideo: {fileID: 32900000, guid: 8c9671f700388bd45a8612e4ee6d12ad, type: 3}
+    slideAudio: {fileID: 0}
     textEnglish: Recently, I found a news about an event that happened in the town
       of Penraddock. An old, abandoned town with beautiful nature. One of the latest
       news is a mass disappearance of people.
@@ -62,7 +68,9 @@ MonoBehaviour:
     hasSecondText: 0
     secondTextEnglish: 
     secondTextUkrainian: 
-  - backgroundVideo: {fileID: 32900000, guid: aae04e45cc3b4794487b2ac2a05d94bc, type: 3}
+  - backgroundIntroVideo: {fileID: 0}
+    backgroundLoopVideo: {fileID: 32900000, guid: aae04e45cc3b4794487b2ac2a05d94bc, type: 3}
+    slideAudio: {fileID: 0}
     textEnglish: No one could explain where they had gone. Surprisingly, this town
       is nothing special, except for the forest nearby, but there are no animals
       in it that could attack so many people! And they would have written about this
@@ -84,29 +92,34 @@ MonoBehaviour:
     hasSecondText: 0
     secondTextEnglish: 
     secondTextUkrainian: 
-  - backgroundVideo: {fileID: 32900000, guid: bdcf61bac74af4a4eae52dc14484464f, type: 3}
+  - backgroundIntroVideo: {fileID: 0}
+    backgroundLoopVideo: {fileID: 32900000, guid: bdcf61bac74af4a4eae52dc14484464f, type: 3}
+    slideAudio: {fileID: 0}
     textEnglish: ' '
     textUkrainian: ' '
     hasSecondText: 1
-    secondTextEnglish: "\u041C\u0430\u0441\u043E\u0432\u0435 \u0437\u043D\u0438\u043A\u043D\u0435\u043D\u043D\u044F
-      \u043C\u0456\u0441\u0442\u044F\u043D\r\n\r\n03 \u0432\u0435\u0440\u0435\u0441\u043D\u044F
-      1950 \u0440\u043E\u043A\u0443\r\n\r\n\u041D\u0430 \u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456\u0448\u043D\u0456\u0439
-      \u0434\u0435\u043D\u044C \u0437\u043D\u0438\u043A\u043B\u043E \u0432\u0436\u0435
-      10 \u043B\u044E\u0434\u0435\u0439. \u041C\u0435\u0448\u043A\u0430\u043D\u0446\u0456
-      \u0431\u043E\u044F\u0442\u044C\u0441\u044F \u0432\u0438\u0445\u043E\u0434\u0438\u0442\u0438
-      \u0456\u0437 \u0431\u0443\u0434\u0438\u043D\u043A\u0456\u0432. \r\n\u0414\u043E\u0441\u0456
-      \u043D\u0435\u0432\u0456\u0434\u043E\u043C\u043E, \u043A\u0443\u0434\u0438
-      \u0437\u043D\u0438\u043A\u0430\u044E\u0442\u044C \u0446\u0456\u043B\u0456 \u0440\u043E\u0434\u0438\u043D\u0438.
-      \r\n\u0412\u0435\u0440\u0441\u0456\u044E \u043F\u0440\u043E \u0441\u0435\u0440\u0456\u0439\u043D\u043E\u0433\u043E
-      \u043C\u0430\u043D\u0456\u044F\u043A\u0430 \u0431\u0443\u043B\u043E \u0432\u0456\u0434\u043A\u0438\u043D\u0443\u0442\u043E.\r\n\r\n\u041B\u044E\u0434\u0438
-      \u0441\u043A\u0430\u0440\u0436\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0434\u0438\u0432\u043D\u0456
-      \u0437\u0432\u0443\u043A\u0438 \u0432\u043D\u043E\u0447\u0456. \u041C\u0438
-      \u0441\u0442\u0435\u0436\u0438\u0442\u0438\u043C\u0435\u043C\u043E \u0437\u0430
-      \u0442\u0438\u043C, \u0449\u043E \u0432\u0456\u0434\u0431\u0443\u0432\u0430\u0454\u0442\u044C\u0441\u044F.
-      \r\n\r\n! \u0412\u0435\u043B\u0438\u043A\u0435 \u043F\u0440\u043E\u0445\u0430\u043D\u043D\u044F
-      \u043D\u0435 \u0432\u0438\u0445\u043E\u0434\u0438\u0442\u0438 \u0437 \u0434\u043E\u043C\u0443
-      \u0431\u0435\u0437 \u043D\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0457 \u043F\u043E\u0442\u0440\u0435\u0431\u0438
-      !\r\n"
+    secondTextEnglish: 'Mass Disappearance of Townspeople
+
+
+      September 3, 1950
+
+
+      As
+      of today, 10 people have already gone missing. Residents are afraid to leave
+      their homes.
+
+      It remains unknown where entire families are disappearing
+      to.
+
+      The theory of a serial maniac has been ruled out.
+
+
+      People
+      are reporting strange sounds at night. We will continue to monitor the situation.
+
+
+      !
+      We strongly urge you not to leave your home unless absolutely necessary !'
     secondTextUkrainian: "\u041C\u0430\u0441\u043E\u0432\u0435 \u0437\u043D\u0438\u043A\u043D\u0435\u043D\u043D\u044F
       \u043C\u0456\u0441\u0442\u044F\u043D\r\n\r\n03 \u0432\u0435\u0440\u0435\u0441\u043D\u044F
       1950 \u0440\u043E\u043A\u0443\r\n\r\n\u041D\u0430 \u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456\u0448\u043D\u0456\u0439
@@ -136,7 +149,7 @@ MonoBehaviour:
     spritePressedEnglish: {fileID: -1690587427, guid: ed4dd6934be1b9d448eb80690fb0026c, type: 3}
     spritePressedUkrainian: {fileID: 289191932, guid: ed4dd6934be1b9d448eb80690fb0026c, type: 3}
   fillCircleSprite: {fileID: -919277245, guid: cdc72c25aaeb93648ba516c911e54ca1, type: 3}
-  holdDuration: 0.66
+  holdDuration: 0.5
   crossfadeDuration: 0.207
   pressedHoldDuration: 0.27
   nextSceneName: Forest

@@ -53,6 +53,9 @@ namespace Assets.Scripts
         [Tooltip("Fill circle image for hold progress")]
         public Image fillCircleImage;
 
+        [Tooltip("AudioSource for slide background audio (looping)")]
+        public AudioSource slideAudioSource;
+
         [Header("Input Settings")]
         [Tooltip("Primary skip key")]
         public KeyCode skipKey = KeyCode.Space;
@@ -65,7 +68,9 @@ namespace Assets.Scripts
         #region Private Variables
 
         private VideoPlayer backgroundPlayer;
+        private VideoPlayer backgroundLoopPlayer;
         private RenderTexture backgroundRenderTexture;
+        private VideoClip backgroundLoopClip;
 
         private int currentSlideIndex = 0;
         private Language currentLanguage;
@@ -145,9 +150,10 @@ namespace Assets.Scripts
             bgPlayerObj.transform.SetParent(transform);
             backgroundPlayer = bgPlayerObj.AddComponent<VideoPlayer>();
             backgroundPlayer.renderMode = VideoRenderMode.RenderTexture;
-            backgroundPlayer.isLooping = true;
+            backgroundPlayer.isLooping = false;
             backgroundPlayer.playOnAwake = false;
-            backgroundPlayer.audioOutputMode = VideoAudioOutputMode.None; // No audio for background
+            backgroundPlayer.audioOutputMode = VideoAudioOutputMode.None;
+            backgroundPlayer.loopPointReached += OnBackgroundVideoFinished;
 
             backgroundRenderTexture = new RenderTexture(1920, 1080, 0);
             backgroundPlayer.targetTexture = backgroundRenderTexture;
@@ -244,13 +250,64 @@ namespace Assets.Scripts
 
             currentState = IntroState.Initializing;
 
-            backgroundPlayer.clip = slide.backgroundVideo;
-            backgroundPlayer.Prepare();
-            while (!backgroundPlayer.isPrepared)
+            backgroundPlayer.Stop();
+            if (backgroundLoopPlayer != null)
             {
-                yield return null;
+                backgroundLoopPlayer.Stop();
+                backgroundLoopPlayer.clip = null;
             }
-            backgroundPlayer.Play();
+
+            backgroundLoopClip = slide.backgroundLoopVideo;
+
+            if (slide.backgroundIntroVideo != null)
+            {
+                backgroundPlayer.isLooping = false;
+                backgroundPlayer.clip = slide.backgroundIntroVideo;
+                backgroundPlayer.Prepare();
+
+                if (backgroundLoopPlayer == null)
+                {
+                    GameObject loopObj = new GameObject("BackgroundLoopPlayer");
+                    loopObj.transform.SetParent(transform);
+                    backgroundLoopPlayer = loopObj.AddComponent<VideoPlayer>();
+                    backgroundLoopPlayer.renderMode = VideoRenderMode.RenderTexture;
+                    backgroundLoopPlayer.targetTexture = backgroundRenderTexture;
+                    backgroundLoopPlayer.isLooping = true;
+                    backgroundLoopPlayer.playOnAwake = false;
+                    backgroundLoopPlayer.audioOutputMode = VideoAudioOutputMode.None;
+                }
+
+                backgroundLoopPlayer.clip = slide.backgroundLoopVideo;
+                backgroundLoopPlayer.Prepare();
+
+                while (!backgroundPlayer.isPrepared)
+                {
+                    yield return null;
+                }
+                backgroundPlayer.Play();
+            }
+            else
+            {
+                backgroundPlayer.isLooping = true;
+                backgroundPlayer.clip = slide.backgroundLoopVideo;
+                backgroundPlayer.Prepare();
+                while (!backgroundPlayer.isPrepared)
+                {
+                    yield return null;
+                }
+                backgroundPlayer.Play();
+            }
+
+            if (slideAudioSource != null)
+            {
+                slideAudioSource.Stop();
+                if (slide.slideAudio != null)
+                {
+                    slideAudioSource.clip = slide.slideAudio;
+                    slideAudioSource.loop = true;
+                    slideAudioSource.Play();
+                }
+            }
 
             string text = slide.GetText(currentLanguage);
             currentFullText = text;
@@ -468,6 +525,46 @@ namespace Assets.Scripts
 
         #endregion
 
+        #region Background Video Events
+
+        private void OnBackgroundVideoFinished(VideoPlayer vp)
+        {
+            if (vp != backgroundPlayer)
+            {
+                return;
+            }
+
+            if (backgroundLoopClip == null || vp.clip == backgroundLoopClip)
+            {
+                return;
+            }
+
+            backgroundPlayer.Stop();
+
+            if (backgroundLoopPlayer != null)
+            {
+                if (backgroundLoopPlayer.isPrepared)
+                {
+                    backgroundLoopPlayer.Play();
+                }
+                else
+                {
+                    StartCoroutine(WaitAndPlayLoopPlayer());
+                }
+            }
+        }
+
+        private IEnumerator WaitAndPlayLoopPlayer()
+        {
+            while (backgroundLoopPlayer != null && !backgroundLoopPlayer.isPrepared)
+            {
+                yield return null;
+            }
+            backgroundLoopPlayer?.Play();
+        }
+
+        #endregion
+
         #region Typewriter Effect
 
         private IEnumerator TypewriterEffect(string fullText, bool isSecond)
@@ -548,9 +645,17 @@ namespace Assets.Scripts
 
             if (backgroundPlayer != null)
             {
+                backgroundPlayer.loopPointReached -= OnBackgroundVideoFinished;
                 backgroundPlayer.Stop();
                 Destroy(backgroundPlayer.gameObject);
                 backgroundPlayer = null;
+            }
+
+            if (backgroundLoopPlayer != null)
+            {
+                backgroundLoopPlayer.Stop();
+                Destroy(backgroundLoopPlayer.gameObject);
+                backgroundLoopPlayer = null;
             }
 
             if (backgroundRenderTexture != null)
@@ -568,6 +673,11 @@ namespace Assets.Scripts
             if (runningText != null)
             {
                 runningText.text = "";
+            }
+
+            if (slideAudioSource != null)
+            {
+                slideAudioSource.Stop();
             }
 
             Resources.UnloadUnusedAssets();
