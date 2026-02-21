@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Assets.Scripts
 {
@@ -6,7 +7,6 @@ namespace Assets.Scripts
     {
         [Header("State")]
         private bool isRepaired = false;
-
         private bool hasFuel = false; 
 
         [Header("Debug")]
@@ -16,6 +16,9 @@ namespace Assets.Scripts
         [Header("References")]
         [SerializeField] private SkillCheckSystem skillCheckSystem;
         [SerializeField] private MonsterB_AI monsterAI; 
+        
+        [Tooltip("Система індикаторів на генераторі (Red/Orange/Green)")]
+        [SerializeField] private GeneratorIndicators indicators;
 
         [Header("Items Needed")]
         [Tooltip("ID предмета в SimpleInventory")]
@@ -26,21 +29,39 @@ namespace Assets.Scripts
         [SerializeField] private AudioClip workingSound;
         [SerializeField] private AudioClip failAlertSound; 
 
+        [SerializeField] private AudioClip refuelSound; 
+
         private void Start()
         {
             if (skillCheckSystem == null) skillCheckSystem = FindFirstObjectByType<SkillCheckSystem>();
             if (monsterAI == null) monsterAI = FindFirstObjectByType<MonsterB_AI>();
+            
+            if (indicators != null)
+            {
+                indicators.SetState(GeneratorIndicators.IndicatorState.Idle);
+            }
         }
-
         public string GetInteractText()
         {
             if (isRepaired) return "Generator is ON";
 
-            if (!hasFuel && !debugHasFuel) return "Need Fuel (Find Canister)";
-            
-            return "Press [E] to Start Generator";
-        }
+            if (hasFuel || debugHasFuel) return "Press [E] to Start Generator";
 
+            if (IsPlayerHoldingFuel()) 
+            {
+                return "Press [E] to Refuel";
+            }
+            return "Need Fuel (Find Canister)";
+        }
+        private bool IsPlayerHoldingFuel()
+        {
+            SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>();
+            if (inventory != null)
+            {
+                return inventory.GetItems().Contains(fuelItemName);
+            }
+            return false;
+        }
         public void Interact(GameObject actor)
         {
             if (isRepaired) return;
@@ -49,17 +70,21 @@ namespace Assets.Scripts
             {
                 SimpleInventory inventory = actor.GetComponentInChildren<SimpleInventory>();
                 
-                if (inventory != null)
+                if (inventory != null && inventory.GetItems().Contains(fuelItemName))
                 {
-                    if (inventory.GetItems().Contains(fuelItemName))
+                    hasFuel = true; 
+                    Debug.Log("Generator: Refueling complete!");
+
+                    if (generatorAudio && refuelSound) generatorAudio.PlayOneShot(refuelSound);
+
+                    if (indicators != null)
                     {
-                        hasFuel = true; 
-                        Debug.Log("Generator: Fuel poured in!");
+                        indicators.SetState(GeneratorIndicators.IndicatorState.Waiting);
                     }
-                    else
-                    {
-                        Debug.Log("Generator: Player has no fuel canister!");
-                    }
+                }
+                else
+                {
+                    Debug.Log("Generator: You need fuel!");
                 }
                 return;
             }
@@ -67,25 +92,22 @@ namespace Assets.Scripts
             if (hasFuel || debugHasFuel)
             {
                 Debug.Log("Generator: Starting Skill Check...");
-                
                 skillCheckSystem.OnSeriesComplete = OnSuccess;
                 skillCheckSystem.OnFail = OnFail;
                 skillCheckSystem.StartRepair(); 
             }
         }
-
-        public string GetPopupID()
-        {
-            return "turnOn";
-        }
-
         private void OnSuccess()
         {
             isRepaired = true;
             Debug.Log("Generator: REPAIRED! Power Restored.");
-            
             skillCheckSystem.OnSeriesComplete = null;
             skillCheckSystem.OnFail = null;
+
+            if (indicators != null)
+            {
+                indicators.SetState(GeneratorIndicators.IndicatorState.Success);
+            }
 
             if (generatorAudio && workingSound)
             {
@@ -94,10 +116,14 @@ namespace Assets.Scripts
                 generatorAudio.Play();
             }
         }
-
         private void OnFail()
         {
             Debug.Log("Generator Failed! Monster Alerted!");
+            
+            if (indicators != null)
+            {
+                indicators.SetState(GeneratorIndicators.IndicatorState.Failed);
+            }
             
             if (generatorAudio && failAlertSound) 
             {
@@ -109,7 +135,10 @@ namespace Assets.Scripts
                 monsterAI.TriggerChaseToLocation(transform.position);
             }
         }
-
         public void OnInteract(GameObject actor) => Interact(actor);
+        public string GetPopupID()
+        {
+            return "turnOn"; 
+        }
     }
 }
