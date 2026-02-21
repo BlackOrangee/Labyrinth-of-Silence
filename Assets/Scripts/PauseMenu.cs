@@ -245,6 +245,14 @@ namespace Assets.Scripts
             pausePanel.SetActive(true);
         }
 
+        public void RestartLevel()
+        {
+            Time.timeScale = 1f;
+            string currentScene = SceneManager.GetActiveScene().name;
+            LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(currentScene);
+            SceneLoader.Instance.LoadScene(currentScene, config);
+        }
+
         public void LoadMainMenu()
         {
             Time.timeScale = 1f;
