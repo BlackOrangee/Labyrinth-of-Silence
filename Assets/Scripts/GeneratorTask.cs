@@ -138,7 +138,7 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor) => Interact(actor);
         public string GetPopupID()
         {
-            return null; 
+            return "turnOn"; 
         }
     }
 }
