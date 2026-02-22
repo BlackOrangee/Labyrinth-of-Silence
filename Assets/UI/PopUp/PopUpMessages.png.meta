@@ -101,7 +101,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1608
+        y: 2208
         width: 1300
         height: 150
       alignment: 0
@@ -123,7 +123,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 1608
+        y: 2208
         width: 1300
         height: 150
       alignment: 0
@@ -145,7 +145,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1408
+        y: 2008
         width: 1300
         height: 150
       alignment: 0
@@ -167,7 +167,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 1408
+        y: 2008
         width: 1300
         height: 150
       alignment: 0
@@ -189,7 +189,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1208
+        y: 1808
         width: 1300
         height: 150
       alignment: 0
@@ -211,7 +211,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 1208
+        y: 1808
         width: 1300
         height: 150
       alignment: 0
@@ -233,7 +233,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 1008
+        y: 1608
         width: 1300
         height: 150
       alignment: 0
@@ -255,7 +255,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 1008
+        y: 1608
         width: 1300
         height: 150
       alignment: 0
@@ -277,7 +277,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 808
+        y: 1408
         width: 1300
         height: 150
       alignment: 0
@@ -299,7 +299,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 808
+        y: 1408
         width: 1300
         height: 150
       alignment: 0
@@ -321,7 +321,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 608
+        y: 1208
         width: 1300
         height: 150
       alignment: 0
@@ -343,7 +343,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 608
+        y: 1208
         width: 1300
         height: 150
       alignment: 0
@@ -365,7 +365,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 408
+        y: 1008
         width: 1300
         height: 150
       alignment: 0
@@ -387,7 +387,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 408
+        y: 1008
         width: 1300
         height: 150
       alignment: 0
@@ -409,7 +409,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 208
+        y: 808
         width: 1300
         height: 150
       alignment: 0
@@ -431,7 +431,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 208
+        y: 808
         width: 1300
         height: 150
       alignment: 0
@@ -453,7 +453,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 8
+        y: 608
         width: 1300
         height: 150
       alignment: 0
@@ -475,7 +475,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1400
-        y: 8
+        y: 608
         width: 1300
         height: 150
       alignment: 0
@@ -488,6 +488,138 @@ TextureImporter:
       bones: []
       spriteID: ad24c69024e09f540a3bbed1b2837419
       internalID: 154266075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 408
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f878b87d1eff124d8e6dca079be228c
+      internalID: -399229469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_19
+      rect:
+        serializedVersion: 2
+        x: 1400
+        y: 408
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b028d50f253dd14e93b49810a4e1be5
+      internalID: -126979279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 208
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4fcfc0cfdc69a384db8ee30965f71a70
+      internalID: -43117090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_21
+      rect:
+        serializedVersion: 2
+        x: 1400
+        y: 208
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8229fa7a6f315f947a90b2c3026ed06a
+      internalID: -1045587987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_22
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 8
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff397bc08a278cf45a4f52d142b9d373
+      internalID: -1820491818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PopUpMessages_23
+      rect:
+        serializedVersion: 2
+        x: 1400
+        y: 8
+        width: 1300
+        height: 150
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa8e56353f4ca2642ae433d97eb40df0
+      internalID: -95099731
       vertices: []
       indices: 
       edges: []
@@ -518,7 +650,13 @@ TextureImporter:
       PopUpMessages_15: -9888203
       PopUpMessages_16: 242379651
       PopUpMessages_17: 154266075
+      PopUpMessages_18: -399229469
+      PopUpMessages_19: -126979279
       PopUpMessages_2: 304063049
+      PopUpMessages_20: -43117090
+      PopUpMessages_21: -1045587987
+      PopUpMessages_22: -1820491818
+      PopUpMessages_23: -95099731
       PopUpMessages_3: -2024197547
       PopUpMessages_4: 646962345
       PopUpMessages_5: 495889772
