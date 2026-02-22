@@ -74,7 +74,10 @@ namespace Assets.Scripts
         [Tooltip("Дистанція (Синя), з якої починається атака")]
         public float attackRange = 1.8f;
         
-        [Tooltip("Затримка перед нанесенням шкоди (синхронізація з анімацією). Спробуй 0.3 - 0.4")]
+        [Tooltip("Точний час, коли має пролунати звук удару (сек)")]
+        public float attackSoundDelay = 0.3f; 
+
+        [Tooltip("Затримка перед нанесенням шкоди (синхронізація з анімацією).")]
         public float damageDelay = 0.4f; 
         
         [Tooltip("Час блокування гравця після першого удару (ШОК)")]
@@ -83,6 +86,9 @@ namespace Assets.Scripts
         [Tooltip("Час, який монстр стоїть і гарчить після 1-го удару (дає фору гравцю)")]
         public float monsterTauntDuration = 3.0f; 
         
+        [Tooltip("Скільки секунд гравець бачить монстра при смертельному ударі, перш ніж з'явиться екран смерті")]
+        public float deathVisibilityDuration = 0.01f; 
+
         [Tooltip("Час відновлення гравця (зникнення червоного екрану), якщо втік")]
         public float recoveryTime = 10f;
         #endregion
@@ -126,6 +132,10 @@ namespace Assets.Scripts
             navAgent = GetComponent<NavMeshAgent>();
             navAgent.updateRotation = true;
             navAgent.speed = patrolSpeed;
+            
+            // [NEW] Збільшуємо прискорення, щоб монстр не "ковзав" при старті/зупинці
+            // Це робить рух більш різким і точним
+            navAgent.acceleration = 60f; 
 
             if (player == null)
             {
@@ -224,8 +234,10 @@ namespace Assets.Scripts
             if (animator != null)
             {
             float currentSpeed = navAgent.isStopped ? 0 : navAgent.velocity.magnitude;
-        
-            animator.SetFloat("Speed", currentSpeed, 0.1f, Time.deltaTime);
+            
+            // [NEW] Зменшив час згладжування з 0.1f до 0.05f
+            // Це допоможе ногам швидше зупинятися, коли монстр зупиняється (менше ковзання)
+            animator.SetFloat("Speed", currentSpeed, 0.05f, Time.deltaTime);
         }
     }
         public void PlayStepSound()
@@ -238,7 +250,9 @@ namespace Assets.Scripts
                 
                 feetSource.pitch = pitch + Random.Range(-0.05f, 0.05f);
                 
-                feetSource.volume = 0.7f; 
+                // [OLD] feetSource.volume = 0.7f; 
+                // [NEW] Прибрали жорстке встановлення гучності. Тепер вона береться з налаштувань AudioSource в Inspector.
+                // Якщо треба зробити тихіше/гучніше - крути повзунок Volume на самому компоненті AudioSource (Feet).
 
                 feetSource.PlayOneShot(stepSound);
             }
@@ -350,15 +364,15 @@ namespace Assets.Scripts
 
             Debug.Log("Monster-B: Початок атаки (Замах)...");
 
-            float timeBeforeSound = Mathf.Max(0f, damageDelay - 0.1f);
-            yield return new WaitForSeconds(timeBeforeSound);
+            yield return new WaitForSeconds(attackSoundDelay);
 
             if (attackSound && voiceSource)
             {
                 voiceSource.PlayOneShot(attackSound);
             }
 
-            yield return new WaitForSeconds(0.1f);
+            float remainingTime = Mathf.Max(0f, damageDelay - attackSoundDelay);
+            yield return new WaitForSeconds(remainingTime);
 
             float distance = Vector3.Distance(transform.position, player.position);
             
@@ -424,10 +438,11 @@ namespace Assets.Scripts
             if (damageOverlay) damageOverlay.gameObject.SetActive(false);
 
             var skillCheck = FindObjectOfType<SkillCheckSystem>(); 
+            if (skillCheck != null) skillCheck.ForceStop();
 
-            if (skillCheck != null)
+            if (deathVisibilityDuration > 0)
             {
-            skillCheck.ForceStop();
+                yield return new WaitForSeconds(deathVisibilityDuration);
             }
 
             if (deathScreenPanel != null)
@@ -442,7 +457,7 @@ namespace Assets.Scripts
                 yield break;
             }
 
-            yield return new WaitForSeconds(0.15f);
+            yield return null; 
 
             AudioListener.volume = 0f;
             
