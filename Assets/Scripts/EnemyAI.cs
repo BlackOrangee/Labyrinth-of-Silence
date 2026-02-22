@@ -21,7 +21,6 @@ namespace Assets.Scripts
         private LightDetector lightDetector;
         [Tooltip("Sanity controller reference")]
         public SanityController sanityController;
-
         private MonsterAudio audioSystem;
 
         [Header("UI & Effects")]
@@ -89,8 +88,12 @@ namespace Assets.Scripts
         public float stunTimeAfterHit = 3.5f;
 
         [Header("Physics & Impact")]
+        [Tooltip("Через скільки секунд від початку анімації грати звук (має бути менше impactWaitTime)")]
+        public float attackSoundDelay = 0.3f; 
+
         [Tooltip("Wait time before impact during attack animation")]
         public float impactWaitTime = 0.5f;
+        
         [Tooltip("Knockback force when hitting player")]
         public float knockbackForce = 8f;
         [Tooltip("Player lock duration during attack")]
@@ -401,12 +404,15 @@ IEnumerator TriggerAttackSequence()
                 animator.SetTrigger("Attack");
             }
 
-            yield return new WaitForSeconds(impactWaitTime);
+            yield return new WaitForSeconds(attackSoundDelay);
 
             if (audioSystem != null) 
             {
                 audioSystem.PlayScream();
             }
+
+            float remainingTime = Mathf.Max(0f, impactWaitTime - attackSoundDelay);
+            yield return new WaitForSeconds(remainingTime);
 
             if (currentHits == 1)
             {
