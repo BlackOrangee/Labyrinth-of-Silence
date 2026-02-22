@@ -68,3 +68,18 @@ MonoBehaviour:
     spritePressedEnglish: {fileID: -673561756, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
     spriteNormalUkrainian: {fileID: -471099869, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
     spritePressedUkrainian: {fileID: 1059936358, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
+  - popupID: generatorIsOn
+    spriteNormalEnglish: {fileID: -399229469, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -126979279, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -1121136011, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -880983842, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: refuel
+    spriteNormalEnglish: {fileID: -43117090, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -1045587987, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: -516166111, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: -796399951, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+  - popupID: needFuel
+    spriteNormalEnglish: {fileID: -1820491818, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -95099731, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 1654663961, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 1501484717, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}

@@ -7,7 +7,8 @@ namespace Assets.Scripts
     {
         [Header("State")]
         private bool isRepaired = false;
-        private bool hasFuel = false; 
+        private bool hasFuel = false;
+        private bool hasTriedToStart = false;
 
         [Header("Debug")]
         [Tooltip("Постав галочку, щоб тестувати без пошуку каністри")]
@@ -41,17 +42,28 @@ namespace Assets.Scripts
                 indicators.SetState(GeneratorIndicators.IndicatorState.Idle);
             }
         }
-        public string GetInteractText()
+        public string GetPopupID()
         {
-            if (isRepaired) return "Generator is ON";
-
-            if (hasFuel || debugHasFuel) return "Press [E] to Start Generator";
-
-            if (IsPlayerHoldingFuel()) 
+            if (isRepaired)
             {
-                return "Press [E] to Refuel";
+                return "generatorIsOn";
             }
-            return "Need Fuel (Find Canister)";
+
+            if (hasFuel || debugHasFuel)
+            {
+                return "turnOn";
+            }
+
+            if (IsPlayerHoldingFuel())
+            {
+                return "refuel";
+            }
+
+            if (hasTriedToStart)
+            {
+                return "needFuel";
+            }
+            return "turnOn";
         }
         private bool IsPlayerHoldingFuel()
         {
@@ -65,6 +77,7 @@ namespace Assets.Scripts
         public void Interact(GameObject actor)
         {
             if (isRepaired) return;
+            hasTriedToStart = true;
 
             if (!hasFuel && !debugHasFuel)
             {
@@ -136,9 +149,5 @@ namespace Assets.Scripts
             }
         }
         public void OnInteract(GameObject actor) => Interact(actor);
-        public string GetPopupID()
-        {
-            return "turnOn"; 
-        }
     }
 }
