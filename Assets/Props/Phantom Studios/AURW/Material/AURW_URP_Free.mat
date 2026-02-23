@@ -154,33 +154,33 @@ Material:
     - _ReceiveShadows: 1
     - _Refraction_Strength: 0.25
     - _Second_Direction_Factor: -0.1
-    - _Smoothness: 0.95
+    - _Smoothness: 0.9
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _Speed: 0.17
     - _Speed_Factor: 20
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _Stain_scale: 25
+    - _Stain_scale: 30
     - _Surface: 0
-    - _Tilling: 12
+    - _Tilling: 10
     - _Water_Bottom: 40
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 0.5, g: 0.47843137, b: 0.41960785, a: 1}
-    - _Depth_Color: {r: 0.1882353, g: 0.36078432, b: 0.69803923, a: 0.9490196}
+    - _Depth_Color: {r: 0.9386792, g: 0.97744524, b: 1, a: 0.9490196}
     - _Depth_color: {r: 0.14489143, g: 0.69875187, b: 0.8301887, a: 0.9490196}
     - _Direction: {r: -0.25, g: 1.5, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Foam_Color: {r: 1, g: 1, b: 1, a: 3}
     - _Sjy: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _Specular: {r: 0.5, g: 0.47999996, b: 0.41999996, a: 1}
+    - _Specular: {r: 0.6981132, g: 0.6981132, b: 0.6981132, a: 1}
     - _Stain_color: {r: 0.15, g: 0.65, b: 0.8, a: 1}
-    - _Water_Near_Color: {r: 0, g: 0.49019608, b: 1, a: 0.9490196}
-    - _Water_color: {r: 0.13333334, g: 0.3882353, b: 0.62352943, a: 0.9490196}
+    - _Water_Near_Color: {r: 0, g: 0.9903989, b: 1, a: 0.9490196}
+    - _Water_color: {r: 0.93004626, g: 0.9392799, b: 0.9433962, a: 0.9490196}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &8587847341148257710
