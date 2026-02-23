@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Assets.Scripts
 {
@@ -36,11 +35,11 @@ namespace Assets.Scripts
         [Tooltip("Show prompt when player is near?")]
         public bool showPrompt = true;
 
-        [Tooltip("Prompt text (leave empty for default)")]
-        public string promptText = "";
+        [Tooltip("Popup ID to show (e.g. 'open', 'turnOn', 'out'). Leave empty to disable.")]
+        public string popupID = "open";
 
-        [Tooltip("UI Text component for prompt (optional)")]
-        public Text promptUI;
+        [Tooltip("Thought to trigger when player tries to activate but requirements are not met (optional)")]
+        public ThoughtTrigger lockedThought;
 
         [Tooltip("Require specific keys?")]
         public bool requireKeys = false;
@@ -59,12 +58,6 @@ namespace Assets.Scripts
             {
                 Debug.LogWarning($"[SceneTrigger] Collider on {gameObject.name} is not a trigger! Setting isTrigger = true.");
                 col.isTrigger = true;
-            }
-
-            // Hide prompt initially
-            if (promptUI != null)
-            {
-                promptUI.gameObject.SetActive(false);
             }
         }
 
@@ -166,7 +159,10 @@ namespace Assets.Scripts
                     if (!inventory.HasKey(keyColor))
                     {
                         Debug.Log($"[SceneTrigger] Missing required key: {keyColor}");
-                        ShowMessage($"Требуется ключ: {keyColor}");
+                        if (lockedThought != null)
+                        {
+                            lockedThought.TriggerFromInteraction();
+                        }
                         return false;
                     }
                 }
@@ -177,32 +173,17 @@ namespace Assets.Scripts
 
         private void ShowPrompt()
         {
-            if (promptUI != null)
+            if (!string.IsNullOrEmpty(popupID) && Localization.PopupManager.Instance != null)
             {
-                string message = string.IsNullOrEmpty(promptText)
-                    ? $"Нажмите [{interactionKey}] чтобы перейти"
-                    : promptText;
-
-                promptUI.text = message;
-                promptUI.gameObject.SetActive(true);
+                Localization.PopupManager.Instance.ShowPopup(popupID, false, 0f);
             }
         }
 
         private void HidePrompt()
         {
-            if (promptUI != null)
+            if (Localization.PopupManager.Instance != null)
             {
-                promptUI.gameObject.SetActive(false);
-            }
-        }
-
-        private void ShowMessage(string message)
-        {
-            if (promptUI != null)
-            {
-                promptUI.text = message;
-                promptUI.gameObject.SetActive(true);
-                Invoke(nameof(HidePrompt), 2f);
+                Localization.PopupManager.Instance.HidePopup();
             }
         }
 
