@@ -16,7 +16,7 @@ namespace Assets.Scripts
         public Transform player;
         [Tooltip("Аніматор монстра")]
         public Animator animator;
-        [Tooltip("Контролер здорового глузду")]
+        [Tooltip("Контролер ПСИХОЗУ")]
         public SanityController sanityController;
         #endregion
 
@@ -42,9 +42,9 @@ namespace Assets.Scripts
         public AudioClip patrolSound;
 
         [Header("Audio Sources (Прив'яжи вручну в Inspector)")]
-        [Tooltip("Створи на монстрі AudioSource для ГОЛОСУ і перетягни сюди")]
+        [Tooltip("Створення на монстрі AudioSource для ГОЛОСУ")]
         public AudioSource voiceSource; 
-        [Tooltip("Створи на монстрі AudioSource для НІГ і перетягни сюди")]
+        [Tooltip("Створення на монстрі AudioSource для НІГ")]
         public AudioSource feetSource;
 
         #endregion
@@ -124,7 +124,6 @@ namespace Assets.Scripts
         
         private PlayerMovement playerMovement;
         private CameraController playerCamera;
-
         void Start()
         {
             AudioListener.volume = 1f;
@@ -132,9 +131,7 @@ namespace Assets.Scripts
             navAgent = GetComponent<NavMeshAgent>();
             navAgent.updateRotation = true;
             navAgent.speed = patrolSpeed;
-            
-            // [NEW] Збільшуємо прискорення, щоб монстр не "ковзав" при старті/зупинці
-            // Це робить рух більш різким і точним
+
             navAgent.acceleration = 60f; 
 
             if (player == null)
@@ -166,7 +163,6 @@ namespace Assets.Scripts
 
             if (damageOverlay) damageOverlay.color = Color.clear;
         }
-
         void OnDestroy()
         {
             SoundManager.OnSoundEmitted -= OnSoundHeard;
@@ -174,7 +170,6 @@ namespace Assets.Scripts
             if (voiceSource) voiceSource.Stop();
             if (feetSource) feetSource.Stop();
         }
-
         void Update()
         {
             if (!player) return;
@@ -228,18 +223,15 @@ namespace Assets.Scripts
                     break;
             }
         }
-
-       void UpdateAnimator()
-    {
+        void UpdateAnimator()
+        {
             if (animator != null)
             {
             float currentSpeed = navAgent.isStopped ? 0 : navAgent.velocity.magnitude;
-            
-            // [NEW] Зменшив час згладжування з 0.1f до 0.05f
-            // Це допоможе ногам швидше зупинятися, коли монстр зупиняється (менше ковзання)
+
             animator.SetFloat("Speed", currentSpeed, 0.05f, Time.deltaTime);
         }
-    }
+        }
         public void PlayStepSound()
         {
             if (navAgent.velocity.magnitude > 0.1f && stepSound != null && feetSource != null)
@@ -249,10 +241,6 @@ namespace Assets.Scripts
                 float pitch = Mathf.Lerp(0.9f, 1.15f, currentSpeed / chaseSpeed);
                 
                 feetSource.pitch = pitch + Random.Range(-0.05f, 0.05f);
-                
-                // [OLD] feetSource.volume = 0.7f; 
-                // [NEW] Прибрали жорстке встановлення гучності. Тепер вона береться з налаштувань AudioSource в Inspector.
-                // Якщо треба зробити тихіше/гучніше - крути повзунок Volume на самому компоненті AudioSource (Feet).
 
                 feetSource.PlayOneShot(stepSound);
             }
@@ -426,7 +414,6 @@ namespace Assets.Scripts
             currentState = AIState.Chase;
             navAgent.isStopped = false;
         }
-
         IEnumerator HandleDeathSequence()
         {
             currentState = AIState.Kill;
@@ -495,7 +482,6 @@ namespace Assets.Scripts
         }
 
         #endregion
-
         public void TriggerChaseToLocation(Vector3 location)
         {
             Debug.Log("Monster-B: Чую вибух генератора! Біжу туди!");
