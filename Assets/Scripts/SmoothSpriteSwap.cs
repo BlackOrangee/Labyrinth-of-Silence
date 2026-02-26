@@ -25,6 +25,14 @@ namespace Assets.Scripts
         [Tooltip("Pressed state sprite (Ukrainian)")]
         public Sprite pressedSpriteUkr;
 
+        [Header("Sound Settings")]
+        [Tooltip("Sound played on pointer enter (hover)")]
+        public AudioClip hoverSound;
+        [Tooltip("Sound played on pointer down (click)")]
+        public AudioClip clickSound;
+        [Range(0f, 1f)]
+        public float soundVolume = 1f;
+
         [Header("Animation Settings")]
         [Tooltip("Transition duration (seconds)")]
         [Range(0.1f, 2f)]
@@ -111,14 +119,17 @@ namespace Assets.Scripts
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (button != null && !button.interactable) return;
-            
+
             isPointerOver = true;
-            
+
             if (!isPressed)
             {
                 UpdateButtonState();
             }
-            
+
+            if (hoverSound != null)
+                AudioSource.PlayClipAtPoint(hoverSound, Camera.main != null ? Camera.main.transform.position : Vector3.zero, soundVolume);
+
             Debug.Log("[SmoothButtonAnimation] Pointer entered");
         }
 
@@ -140,16 +151,20 @@ namespace Assets.Scripts
         public void OnPointerDown(PointerEventData eventData)
         {
             if (button != null && !button.interactable) return;
-            
+
             isPressed = true;
-            
+
             if (pressedDelayCoroutine != null)
             {
                 StopCoroutine(pressedDelayCoroutine);
                 pressedDelayCoroutine = null;
             }
-            
+
             UpdateButtonState();
+
+            if (clickSound != null)
+                AudioSource.PlayClipAtPoint(clickSound, Camera.main != null ? Camera.main.transform.position : Vector3.zero, soundVolume);
+
             Debug.Log("[SmoothButtonAnimation] Button pressed");
         }
 
