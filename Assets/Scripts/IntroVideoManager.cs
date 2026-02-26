@@ -300,12 +300,22 @@ namespace Assets.Scripts
 
             if (slideAudioSource != null)
             {
-                slideAudioSource.Stop();
                 if (slide.slideAudio != null)
                 {
-                    slideAudioSource.clip = slide.slideAudio;
-                    slideAudioSource.loop = true;
-                    slideAudioSource.Play();
+                    // Only restart if it's a different clip
+                    if (slideAudioSource.clip != slide.slideAudio)
+                    {
+                        slideAudioSource.Stop();
+                        slideAudioSource.clip = slide.slideAudio;
+                        slideAudioSource.loop = true;
+                        slideAudioSource.Play();
+                    }
+                }
+                else
+                {
+                    // No audio on this slide — stop whatever was playing
+                    slideAudioSource.Stop();
+                    slideAudioSource.clip = null;
                 }
             }
 
