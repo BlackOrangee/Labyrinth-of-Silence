@@ -16,7 +16,7 @@ namespace Assets.Scripts
         public Transform player;
         [Tooltip("Аніматор монстра")]
         public Animator animator;
-        [Tooltip("Контролер здорового глузду")]
+        [Tooltip("Контролер ПСИХОЗУ")]
         public SanityController sanityController;
         #endregion
 
@@ -42,9 +42,9 @@ namespace Assets.Scripts
         public AudioClip patrolSound;
 
         [Header("Audio Sources (Прив'яжи вручну в Inspector)")]
-        [Tooltip("Створи на монстрі AudioSource для ГОЛОСУ і перетягни сюди")]
+        [Tooltip("Створення на монстрі AudioSource для ГОЛОСУ")]
         public AudioSource voiceSource; 
-        [Tooltip("Створи на монстрі AudioSource для НІГ і перетягни сюди")]
+        [Tooltip("Створення на монстрі AudioSource для НІГ")]
         public AudioSource feetSource;
 
         #endregion
@@ -74,7 +74,10 @@ namespace Assets.Scripts
         [Tooltip("Дистанція (Синя), з якої починається атака")]
         public float attackRange = 1.8f;
         
-        [Tooltip("Затримка перед нанесенням шкоди (синхронізація з анімацією). Спробуй 0.3 - 0.4")]
+        [Tooltip("Точний час, коли має пролунати звук удару (сек)")]
+        public float attackSoundDelay = 0.3f; 
+
+        [Tooltip("Затримка перед нанесенням шкоди (синхронізація з анімацією).")]
         public float damageDelay = 0.4f; 
         
         [Tooltip("Час блокування гравця після першого удару (ШОК)")]
@@ -83,6 +86,9 @@ namespace Assets.Scripts
         [Tooltip("Час, який монстр стоїть і гарчить після 1-го удару (дає фору гравцю)")]
         public float monsterTauntDuration = 3.0f; 
         
+        [Tooltip("Скільки секунд гравець бачить монстра при смертельному ударі, перш ніж з'явиться екран смерті")]
+        public float deathVisibilityDuration = 0.01f; 
+
         [Tooltip("Час відновлення гравця (зникнення червоного екрану), якщо втік")]
         public float recoveryTime = 10f;
         #endregion
@@ -118,7 +124,6 @@ namespace Assets.Scripts
         
         private PlayerMovement playerMovement;
         private CameraController playerCamera;
-
         void Start()
         {
             AudioListener.volume = 1f;
@@ -126,6 +131,8 @@ namespace Assets.Scripts
             navAgent = GetComponent<NavMeshAgent>();
             navAgent.updateRotation = true;
             navAgent.speed = patrolSpeed;
+
+            navAgent.acceleration = 60f; 
 
             if (player == null)
             {
@@ -156,7 +163,6 @@ namespace Assets.Scripts
 
             if (damageOverlay) damageOverlay.color = Color.clear;
         }
-
         void OnDestroy()
         {
             SoundManager.OnSoundEmitted -= OnSoundHeard;
@@ -164,7 +170,6 @@ namespace Assets.Scripts
             if (voiceSource) voiceSource.Stop();
             if (feetSource) feetSource.Stop();
         }
-
         void Update()
         {
             if (!player) return;
@@ -218,16 +223,15 @@ namespace Assets.Scripts
                     break;
             }
         }
-
-       void UpdateAnimator()
-    {
+        void UpdateAnimator()
+        {
             if (animator != null)
             {
             float currentSpeed = navAgent.isStopped ? 0 : navAgent.velocity.magnitude;
-        
-            animator.SetFloat("Speed", currentSpeed, 0.1f, Time.deltaTime);
+
+            animator.SetFloat("Speed", currentSpeed, 0.05f, Time.deltaTime);
         }
-    }
+        }
         public void PlayStepSound()
         {
             if (navAgent.velocity.magnitude > 0.1f && stepSound != null && feetSource != null)
@@ -237,8 +241,6 @@ namespace Assets.Scripts
                 float pitch = Mathf.Lerp(0.9f, 1.15f, currentSpeed / chaseSpeed);
                 
                 feetSource.pitch = pitch + Random.Range(-0.05f, 0.05f);
-                
-                feetSource.volume = 0.7f; 
 
                 feetSource.PlayOneShot(stepSound);
             }
@@ -350,15 +352,15 @@ namespace Assets.Scripts
 
             Debug.Log("Monster-B: Початок атаки (Замах)...");
 
-            float timeBeforeSound = Mathf.Max(0f, damageDelay - 0.1f);
-            yield return new WaitForSeconds(timeBeforeSound);
+            yield return new WaitForSeconds(attackSoundDelay);
 
             if (attackSound && voiceSource)
             {
                 voiceSource.PlayOneShot(attackSound);
             }
 
-            yield return new WaitForSeconds(0.1f);
+            float remainingTime = Mathf.Max(0f, damageDelay - attackSoundDelay);
+            yield return new WaitForSeconds(remainingTime);
 
             float distance = Vector3.Distance(transform.position, player.position);
             
@@ -412,7 +414,6 @@ namespace Assets.Scripts
             currentState = AIState.Chase;
             navAgent.isStopped = false;
         }
-
         IEnumerator HandleDeathSequence()
         {
             currentState = AIState.Kill;
@@ -424,10 +425,11 @@ namespace Assets.Scripts
             if (damageOverlay) damageOverlay.gameObject.SetActive(false);
 
             var skillCheck = FindObjectOfType<SkillCheckSystem>(); 
+            if (skillCheck != null) skillCheck.ForceStop();
 
-            if (skillCheck != null)
+            if (deathVisibilityDuration > 0)
             {
-            skillCheck.ForceStop();
+                yield return new WaitForSeconds(deathVisibilityDuration);
             }
 
             if (deathScreenPanel != null)
@@ -442,7 +444,7 @@ namespace Assets.Scripts
                 yield break;
             }
 
-            yield return new WaitForSeconds(0.15f);
+            yield return null; 
 
             AudioListener.volume = 0f;
             
@@ -480,7 +482,6 @@ namespace Assets.Scripts
         }
 
         #endregion
-
         public void TriggerChaseToLocation(Vector3 location)
         {
             Debug.Log("Monster-B: Чую вибух генератора! Біжу туди!");
