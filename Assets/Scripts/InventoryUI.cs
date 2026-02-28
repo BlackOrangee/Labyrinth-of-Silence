@@ -131,6 +131,8 @@ namespace Assets.Scripts
 
         private LocalizedTextDynamic localizedCollectionCounter;
         private LocalizedTextDynamic localizedKeysCounter;
+        private CameraController cameraController;
+        private PauseBlurController blurController;
 
         private void Awake()
         {
@@ -203,6 +205,9 @@ namespace Assets.Scripts
             }
 
             SettingsManager.OnLanguageChanged += OnLanguageChanged;
+
+            cameraController = FindObjectOfType<CameraController>();
+            blurController = FindObjectOfType<PauseBlurController>();
         }
 
         /// <summary>
@@ -307,6 +312,9 @@ namespace Assets.Scripts
 
             Time.timeScale = 0f;
 
+            if (cameraController != null) cameraController.SetInputLock(true);
+            if (blurController != null) blurController.SetBlur(true);
+
             RefreshInventory();
         }
 
@@ -328,6 +336,9 @@ namespace Assets.Scripts
             Cursor.visible = false;
 
             Time.timeScale = 1f;
+
+            if (cameraController != null) cameraController.SetInputLock(false);
+            if (blurController != null) blurController.SetBlur(false);
         }
 
         /// <summary>

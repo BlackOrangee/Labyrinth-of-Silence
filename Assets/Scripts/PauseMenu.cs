@@ -34,6 +34,8 @@ namespace Assets.Scripts
         private GameObject optionsPanel;
         private GameObject developersPanel;
         private GameObject quitPanel;
+        private CameraController cameraController;
+        private PauseBlurController blurController;
 
         void Start()
         {
@@ -95,6 +97,9 @@ namespace Assets.Scripts
             Time.timeScale = 1f;
 
             SetCursorState(false);
+
+            cameraController = FindObjectOfType<CameraController>();
+            blurController = GetComponent<PauseBlurController>();
         }
 
         void Update()
@@ -120,6 +125,8 @@ namespace Assets.Scripts
             isPaused = true;
 
             SetCursorState(true);
+            if (cameraController != null) cameraController.SetInputLock(true);
+            if (blurController != null) blurController.SetBlur(true);
 
             SetUIAnimatorsUnscaledTime(true);
 
@@ -138,6 +145,8 @@ namespace Assets.Scripts
             isPaused = false;
 
             SetCursorState(false);
+            if (cameraController != null) cameraController.SetInputLock(false);
+            if (blurController != null) blurController.SetBlur(false);
 
             SetUIAnimatorsUnscaledTime(false);
 

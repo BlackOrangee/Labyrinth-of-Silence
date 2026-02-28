@@ -91,6 +91,8 @@ namespace Assets.Scripts
         private bool wasInventoryOpenBefore = false;
         private float showTime = 0f;
         private const float INPUT_DELAY = 0.3f;
+        private CameraController cameraController;
+        private PauseBlurController blurController;
         #endregion
 
         #region Initialization
@@ -118,6 +120,9 @@ namespace Assets.Scripts
             }
 
             HideImmediate();
+
+            cameraController = FindObjectOfType<CameraController>();
+            blurController = FindObjectOfType<PauseBlurController>();
         }
         #endregion
 
@@ -179,6 +184,9 @@ namespace Assets.Scripts
             Time.timeScale = 0f;
             showTime = Time.unscaledTime;
 
+            if (cameraController != null) cameraController.SetInputLock(true);
+            if (blurController != null) blurController.SetBlur(true);
+
             Debug.Log($"NewspaperUI: Showing newspaper '{newspaperData.GetLocalizedName()}' (ID: {newspaperData.newspaperId})");
         }
 
@@ -202,6 +210,9 @@ namespace Assets.Scripts
             PlaySound(closeSound);
 
             Time.timeScale = 1f;
+
+            if (cameraController != null) cameraController.SetInputLock(false);
+            if (blurController != null) blurController.SetBlur(false);
 
             if (wasInventoryOpenBefore && InventoryUI.Instance != null)
             {
