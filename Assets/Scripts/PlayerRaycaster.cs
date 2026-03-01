@@ -41,6 +41,8 @@ namespace Assets.Scripts
 
         private void Update()
         {
+            if (Time.timeScale == 0f) return;
+
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
 
