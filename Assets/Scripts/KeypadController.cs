@@ -36,17 +36,7 @@ namespace Assets.Scripts
             audioSource = GetComponent<AudioSource>();
             UpdateDisplay();
         }
-public void Interact(GameObject actor)
-{
-    PlayerRaycaster raycaster = FindObjectOfType<PlayerRaycaster>();
-    if (raycaster != null)
-    {
-        if (raycaster.aimMode == PlayerRaycaster.AimMode.CenterOfScreen)
-            raycaster.aimMode = PlayerRaycaster.AimMode.MouseCursor;
-        else
-            raycaster.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
-    }
-}
+public void Interact(GameObject actor) { }
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
@@ -110,15 +100,9 @@ public void Interact(GameObject actor)
             displayText.color = successColor;
             displayText.text = "OPEN";
 
-            yield return new WaitForSeconds(1f); 
+            yield return new WaitForSeconds(1f);
 
-            PlayerRaycaster playerCast = FindObjectOfType<PlayerRaycaster>();
-            if (playerCast != null)
-            {
-                playerCast.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
-            }
-
-            OnCodeCorrect?.Invoke(); 
+            OnCodeCorrect?.Invoke();
         }
         private void UpdateDisplay()
         {
