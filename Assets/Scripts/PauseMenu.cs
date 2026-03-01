@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -36,6 +37,8 @@ namespace Assets.Scripts
         private GameObject quitPanel;
         private CameraController cameraController;
         private PauseBlurController blurController;
+        private Canvas _ownCanvas;
+        private readonly List<Canvas> _hiddenCanvases = new List<Canvas>();
 
         void Start()
         {
@@ -100,6 +103,7 @@ namespace Assets.Scripts
 
             cameraController = FindObjectOfType<CameraController>();
             blurController = GetComponent<PauseBlurController>();
+            _ownCanvas = GetComponentInParent<Canvas>(includeInactive: true) ?? GetComponent<Canvas>();
         }
 
         void Update()
@@ -121,6 +125,8 @@ namespace Assets.Scripts
         {
             pausePanel.SetActive(true);
 
+            HideOtherCanvases();
+
             Time.timeScale = 0f;
             isPaused = true;
 
@@ -141,6 +147,8 @@ namespace Assets.Scripts
             developersPanel.SetActive(false);
             quitPanel.SetActive(false);
 
+            RestoreHiddenCanvases();
+
             Time.timeScale = 1f;
             isPaused = false;
 
@@ -151,6 +159,28 @@ namespace Assets.Scripts
             SetUIAnimatorsUnscaledTime(false);
 
             Debug.Log("Game Resumed");
+        }
+
+        private void HideOtherCanvases()
+        {
+            _hiddenCanvases.Clear();
+            foreach (Canvas canvas in FindObjectsOfType<Canvas>())
+            {
+                if (canvas == _ownCanvas || !canvas.isActiveAndEnabled) continue;
+                if (canvas.transform.parent != null && canvas.transform.parent.GetComponentInParent<Canvas>() != null) continue;
+                canvas.enabled = false;
+                _hiddenCanvases.Add(canvas);
+            }
+        }
+
+        private void RestoreHiddenCanvases()
+        {
+            foreach (Canvas canvas in _hiddenCanvases)
+            {
+                if (canvas != null)
+                    canvas.enabled = true;
+            }
+            _hiddenCanvases.Clear();
         }
 
         private void SetCursorState(bool visible)

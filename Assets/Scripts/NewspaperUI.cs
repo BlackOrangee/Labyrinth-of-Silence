@@ -1,6 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 namespace Assets.Scripts
 {
@@ -93,6 +94,8 @@ namespace Assets.Scripts
         private const float INPUT_DELAY = 0.3f;
         private CameraController cameraController;
         private PauseBlurController blurController;
+        private Canvas _ownCanvas;
+        private readonly List<Canvas> _hiddenCanvases = new List<Canvas>();
         #endregion
 
         #region Initialization
@@ -123,6 +126,7 @@ namespace Assets.Scripts
 
             cameraController = FindObjectOfType<CameraController>();
             blurController = FindObjectOfType<PauseBlurController>();
+            _ownCanvas = GetComponentInParent<Canvas>(includeInactive: true) ?? GetComponent<Canvas>();
         }
         #endregion
 
@@ -181,6 +185,7 @@ namespace Assets.Scripts
 
             PlaySound(openSound);
 
+            HideOtherCanvases();
             Time.timeScale = 0f;
             showTime = Time.unscaledTime;
 
@@ -209,6 +214,7 @@ namespace Assets.Scripts
 
             PlaySound(closeSound);
 
+            RestoreHiddenCanvases();
             Time.timeScale = 1f;
 
             if (cameraController != null) cameraController.SetInputLock(false);
@@ -331,6 +337,28 @@ namespace Assets.Scripts
             }
         }
         #endregion
+
+        private void HideOtherCanvases()
+        {
+            _hiddenCanvases.Clear();
+            foreach (Canvas canvas in FindObjectsOfType<Canvas>())
+            {
+                if (canvas == _ownCanvas || !canvas.isActiveAndEnabled) continue;
+                if (canvas.transform.parent != null && canvas.transform.parent.GetComponentInParent<Canvas>() != null) continue;
+                canvas.enabled = false;
+                _hiddenCanvases.Add(canvas);
+            }
+        }
+
+        private void RestoreHiddenCanvases()
+        {
+            foreach (Canvas canvas in _hiddenCanvases)
+            {
+                if (canvas != null)
+                    canvas.enabled = true;
+            }
+            _hiddenCanvases.Clear();
+        }
 
         #region Validation
         private void OnValidate()

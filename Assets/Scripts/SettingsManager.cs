@@ -57,7 +57,7 @@ namespace Assets.Scripts
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-            availableResolutions = Screen.resolutions;
+            availableResolutions = GetUniqueResolutions();
 
             LoadSettings();
 
@@ -327,11 +327,36 @@ namespace Assets.Scripts
             List<string> resolutionStrings = new List<string>();
             foreach (var res in availableResolutions)
             {
-                double refreshRate = (double)res.refreshRateRatio.numerator / res.refreshRateRatio.denominator;
-                resolutionStrings.Add($"{res.width} x {res.height} @ {refreshRate:F0}Hz");
+                resolutionStrings.Add($"{res.width} x {res.height}");
             }
 
             return resolutionStrings;
+        }
+
+        private Resolution[] GetUniqueResolutions()
+        {
+            Resolution[] all = Screen.resolutions;
+            var best = new Dictionary<(int, int), Resolution>();
+
+            foreach (var res in all)
+            {
+                var key = (res.width, res.height);
+                if (!best.ContainsKey(key))
+                {
+                    best[key] = res;
+                }
+                else
+                {
+                    double existing = (double)best[key].refreshRateRatio.numerator / best[key].refreshRateRatio.denominator;
+                    double current  = (double)res.refreshRateRatio.numerator / res.refreshRateRatio.denominator;
+                    if (current > existing)
+                        best[key] = res;
+                }
+            }
+
+            var list = new List<Resolution>(best.Values);
+            list.Sort((a, b) => a.width != b.width ? a.width.CompareTo(b.width) : a.height.CompareTo(b.height));
+            return list.ToArray();
         }
 
         #endregion

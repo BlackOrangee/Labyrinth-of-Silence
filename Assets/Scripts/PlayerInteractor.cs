@@ -85,46 +85,51 @@ namespace Assets.Scripts
             }
 
             Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            RaycastHit hit;
 
-            if (Physics.SphereCast(ray, rayRadius, out hit, interactDistance, interactLayers))
+            RaycastHit[] hits = Physics.SphereCastAll(ray, rayRadius, interactDistance, interactLayers);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            IInteractable foundInteractable = null;
+            GameObject foundGO = null;
+
+            foreach (RaycastHit hit in hits)
             {
-                GameObject hitGO = hit.collider.gameObject;
-                IInteractable interactable = hitGO.GetComponent<IInteractable>();
-
-                Debug.Log($"[PlayerInteractor] 🎯 Raycast hit: {hitGO.name}, hasInteractable: {interactable != null}");
-
+                IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
                 if (interactable != null)
                 {
-                    string popupID = interactable.GetPopupID();
+                    foundInteractable = interactable;
+                    foundGO = (interactable as MonoBehaviour)?.gameObject ?? hit.collider.gameObject;
+                    Debug.Log($"[PlayerInteractor] 🎯 Found interactable: {foundGO.name} (hit: {hit.collider.gameObject.name})");
+                    break;
+                }
+            }
 
-                    if (hitGO == lastHitGO && currentInteractable != null && currentPopupID == popupID)
-                    {
-                        return;
-                    }
+            if (foundInteractable != null)
+            {
+                string popupID = foundInteractable.GetPopupID();
 
-                    if (string.IsNullOrEmpty(popupID))
-                    {
-                        Debug.LogWarning($"[PlayerInteractor] PopupID is empty for {hitGO.name}! Clearing.");
-                        ClearCurrent();
-                    }
-                    else
-                    {
-                        currentInteractable = interactable;
-                        lastHitGO = hitGO;
-                        currentPopupID = popupID;
+                if (foundGO == lastHitGO && currentInteractable != null && currentPopupID == popupID)
+                {
+                    return;
+                }
 
-                        Debug.Log($"[PlayerInteractor] ✅ Set currentInteractable: {hitGO.name}, popupID: {popupID}");
-
-                        if (Localization.PopupManager.Instance != null)
-                        {
-                            Localization.PopupManager.Instance.ShowPopup(popupID, false, 0f);
-                        }
-                    }
+                if (string.IsNullOrEmpty(popupID))
+                {
+                    Debug.LogWarning($"[PlayerInteractor] PopupID is empty for {foundGO.name}! Clearing.");
+                    ClearCurrent();
                 }
                 else
                 {
-                    ClearCurrent();
+                    currentInteractable = foundInteractable;
+                    lastHitGO = foundGO;
+                    currentPopupID = popupID;
+
+                    Debug.Log($"[PlayerInteractor] ✅ Set currentInteractable: {foundGO.name}, popupID: {popupID}");
+
+                    if (Localization.PopupManager.Instance != null)
+                    {
+                        Localization.PopupManager.Instance.ShowPopup(popupID, false, 0f);
+                    }
                 }
             }
             else

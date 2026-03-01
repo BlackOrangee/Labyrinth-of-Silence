@@ -133,6 +133,8 @@ namespace Assets.Scripts
         private LocalizedTextDynamic localizedKeysCounter;
         private CameraController cameraController;
         private PauseBlurController blurController;
+        private Canvas _ownCanvas;
+        private readonly List<Canvas> _hiddenCanvases = new List<Canvas>();
 
         private void Awake()
         {
@@ -208,6 +210,7 @@ namespace Assets.Scripts
 
             cameraController = FindObjectOfType<CameraController>();
             blurController = FindObjectOfType<PauseBlurController>();
+            _ownCanvas = GetComponentInParent<Canvas>(includeInactive: true) ?? GetComponent<Canvas>();
         }
 
         /// <summary>
@@ -307,6 +310,8 @@ namespace Assets.Scripts
 
             inventoryPanel.SetActive(true);
 
+            HideOtherCanvases();
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
@@ -332,6 +337,8 @@ namespace Assets.Scripts
             isFading = true;
             fadeTimer = 0f;
 
+            RestoreHiddenCanvases();
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
@@ -339,6 +346,28 @@ namespace Assets.Scripts
 
             if (cameraController != null) cameraController.SetInputLock(false);
             if (blurController != null) blurController.SetBlur(false);
+        }
+
+        private void HideOtherCanvases()
+        {
+            _hiddenCanvases.Clear();
+            foreach (Canvas canvas in FindObjectsOfType<Canvas>())
+            {
+                if (canvas == _ownCanvas || !canvas.isActiveAndEnabled) continue;
+                if (canvas.transform.parent != null && canvas.transform.parent.GetComponentInParent<Canvas>() != null) continue;
+                canvas.enabled = false;
+                _hiddenCanvases.Add(canvas);
+            }
+        }
+
+        private void RestoreHiddenCanvases()
+        {
+            foreach (Canvas canvas in _hiddenCanvases)
+            {
+                if (canvas != null)
+                    canvas.enabled = true;
+            }
+            _hiddenCanvases.Clear();
         }
 
         /// <summary>

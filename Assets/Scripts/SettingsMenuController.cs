@@ -36,11 +36,23 @@ namespace Assets.Scripts
 
         public Dropdown gameLanguageDropdown;
 
+        [Header("Slider Sound")]
+        public AudioClip sliderSound;
+        [Range(0f, 1f)] public float sliderSoundVolume = 0.5f;
+
         private SettingsManager settingsManager;
+        private float _lastSliderSoundTime = -1f;
+        private const float SliderSoundCooldown = 0.1f;
+        private AudioSource _uiAudioSource;
 
         void Awake()
         {
             settingsManager = SettingsManager.Instance;
+
+            _uiAudioSource = gameObject.AddComponent<AudioSource>();
+            _uiAudioSource.playOnAwake = false;
+            _uiAudioSource.ignoreListenerPause = true;
+
             InitializeUI();
             SetupEventListeners();
         }
@@ -187,6 +199,14 @@ namespace Assets.Scripts
             }
         }
 
+        void PlaySliderSound()
+        {
+            if (sliderSound == null || _uiAudioSource == null) return;
+            if (Time.unscaledTime - _lastSliderSoundTime < SliderSoundCooldown) return;
+            _lastSliderSoundTime = Time.unscaledTime;
+            _uiAudioSource.PlayOneShot(sliderSound, sliderSoundVolume);
+        }
+
         #region Event Handlers
 
         void OnFullscreenChanged(bool value)
@@ -202,6 +222,7 @@ namespace Assets.Scripts
                 Resolution res = settingsManager.AvailableResolutions[index];
                 settingsManager.SetResolution(res);
                 settingsManager.SaveSettings();
+                PlaySliderSound();
             }
         }
 
@@ -210,6 +231,7 @@ namespace Assets.Scripts
             settingsManager.SetBrightness(value);
             UpdateBrightnessText(value);
             settingsManager.SaveSettings();
+            PlaySliderSound();
         }
 
         void OnMouseSensitivityChanged(float value)
@@ -217,6 +239,7 @@ namespace Assets.Scripts
             settingsManager.SetMouseSensitivity(value);
             UpdateSensitivityText(value);
             settingsManager.SaveSettings();
+            PlaySliderSound();
         }
 
         void OnMasterVolumeChanged(float value)
@@ -224,6 +247,7 @@ namespace Assets.Scripts
             settingsManager.SetMasterVolume(value);
             UpdateMasterVolumeText(value);
             settingsManager.SaveSettings();
+            PlaySliderSound();
         }
 
         void OnMusicVolumeChanged(float value)
@@ -231,6 +255,7 @@ namespace Assets.Scripts
             settingsManager.SetMusicVolume(value);
             UpdateMusicVolumeText(value);
             settingsManager.SaveSettings();
+            PlaySliderSound();
         }
 
         void OnSfxVolumeChanged(float value)
@@ -238,6 +263,7 @@ namespace Assets.Scripts
             settingsManager.SetSfxVolume(value);
             UpdateSfxVolumeText(value);
             settingsManager.SaveSettings();
+            PlaySliderSound();
         }
 
         void OnSubtitlesChanged(bool value)
@@ -252,6 +278,7 @@ namespace Assets.Scripts
             {
                 settingsManager.SetSubtitleLanguage(settingsManager.AvailableLanguages[index]);
                 settingsManager.SaveSettings();
+                PlaySliderSound();
             }
         }
 
@@ -261,6 +288,7 @@ namespace Assets.Scripts
             {
                 settingsManager.SetGameLanguage(settingsManager.AvailableLanguages[index]);
                 settingsManager.SaveSettings();
+                PlaySliderSound();
             }
         }
 

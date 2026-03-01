@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace Assets.Scripts
@@ -31,6 +32,11 @@ namespace Assets.Scripts
         [Tooltip("Player tag to detect")]
         public string playerTag = "Player";
 
+        [Header("Sound")]
+        [Tooltip("Sound to play before loading the scene")]
+        public AudioClip transitionSound;
+        [Range(0f, 1f)] public float transitionSoundVolume = 1f;
+
         [Header("UI Settings")]
         [Tooltip("Show prompt when player is near?")]
         public bool showPrompt = true;
@@ -49,15 +55,23 @@ namespace Assets.Scripts
 
         private bool playerInZone = false;
         private bool isLoading = false;
+        private AudioSource _audioSource;
 
         private void Start()
         {
-            // Ensure collider is trigger
             Collider col = GetComponent<Collider>();
             if (!col.isTrigger)
             {
                 Debug.LogWarning($"[SceneTrigger] Collider on {gameObject.name} is not a trigger! Setting isTrigger = true.");
                 col.isTrigger = true;
+            }
+
+            if (transitionSound != null)
+            {
+                _audioSource = gameObject.AddComponent<AudioSource>();
+                _audioSource.playOnAwake = false;
+                _audioSource.spatialBlend = 0f;
+                _audioSource.ignoreListenerPause = true;
             }
         }
 
@@ -112,15 +126,23 @@ namespace Assets.Scripts
 
             isLoading = true;
             HidePrompt();
+            StartCoroutine(PlaySoundThenLoad());
+        }
 
-            // Load scene through SceneLoader
+        private IEnumerator PlaySoundThenLoad()
+        {
+            if (_audioSource != null && transitionSound != null)
+            {
+                _audioSource.PlayOneShot(transitionSound, transitionSoundVolume);
+                yield return new WaitForSecondsRealtime(transitionSound.length);
+            }
+
             if (SceneLoader.Instance != null)
             {
                 LoadingScreenConfig config = customConfig;
 
                 if (config == null)
                 {
-                    // Get config automatically
                     string sceneName = useSceneName ? targetSceneName : SceneLoader.Instance.GetSceneNameFromBuildIndex(targetSceneIndex);
                     config = SceneLoader.Instance.GetConfigForScene(sceneName);
                 }
