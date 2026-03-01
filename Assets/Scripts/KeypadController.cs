@@ -9,7 +9,7 @@ namespace Assets.Scripts
     public class KeypadController : MonoBehaviour, IInteractable
     {
         [Header("Налаштування коду")]
-        [Tooltip("Правильна комбінація (тут можна змінювати пароль на будь-який)")]
+        [Tooltip("Правильна комбінація (можна змінювати пароль на будь-який)")]
         [SerializeField] private string correctCode = "1234";
         [Tooltip("Максимальна кількість цифр на екрані")]
         [SerializeField] private int maxDigits = 4;
@@ -36,10 +36,7 @@ namespace Assets.Scripts
             audioSource = GetComponent<AudioSource>();
             UpdateDisplay();
         }
-        public void Interact(GameObject actor)
-        {
-            Debug.Log("Взаємодія з клавіатурою");
-        }
+public void Interact(GameObject actor) { }
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
@@ -103,15 +100,9 @@ namespace Assets.Scripts
             displayText.color = successColor;
             displayText.text = "OPEN";
 
-            yield return new WaitForSeconds(1f); 
+            yield return new WaitForSeconds(1f);
 
-            PlayerRaycaster playerCast = FindObjectOfType<PlayerRaycaster>();
-            if (playerCast != null)
-            {
-                playerCast.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
-            }
-
-            OnCodeCorrect?.Invoke(); 
+            OnCodeCorrect?.Invoke();
         }
         private void UpdateDisplay()
         {
