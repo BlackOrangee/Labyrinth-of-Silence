@@ -8,11 +8,9 @@ namespace Assets.Scripts
     [RequireComponent(typeof(AudioSource))]
     public class KeypadController : MonoBehaviour, IInteractable
     {
-        private enum TargetAction { Light, Door }
-
-        [Tooltip("Пароль для відкриття дверей")]
-        [SerializeField] private string doorCode = "1234";
-        
+        [Header("Налаштування коду")]
+        [Tooltip("Правильна комбінація (можна змінювати пароль на будь-який)")]
+        [SerializeField] private string correctCode = "1234";
         [Tooltip("Максимальна кількість цифр на екрані")]
         [SerializeField] private int maxDigits = 4;
 
@@ -26,46 +24,37 @@ namespace Assets.Scripts
         [SerializeField] private AudioClip errorSound;
         [SerializeField] private AudioClip successSound;
 
-        [Header("Події (AAA-архітектура)")]
-        [Tooltip("Що має статися загалом, коли введено БУДЬ-ЯКИЙ правильний код?")]
+        [Header("Події")]
+        [Tooltip("Що має статися, коли код введено правильно? (Відкрити двері, запустити катсцену)")]
         public UnityEvent OnCodeCorrect;
-
-        [Header("Додатковий функціонал (Двері)")]
-        [Tooltip("Перетягни сюди об'єкт дверей зі скриптом DoorOpen.")]
-        [SerializeField] private DoorOpen _door;
-
-
         private string currentInput = "";
         private AudioSource audioSource;
         
         public bool IsLocked { get; private set; } = false; 
-
         private void Start()
         {
             audioSource = GetComponent<AudioSource>();
             UpdateDisplay();
         }
-
-        public void Interact(GameObject actor)
+public void Interact(GameObject actor)
+{
+    PlayerRaycaster raycaster = FindObjectOfType<PlayerRaycaster>();
+    if (raycaster != null)
+    {
+        if (raycaster.aimMode == PlayerRaycaster.AimMode.CenterOfScreen)
+            raycaster.aimMode = PlayerRaycaster.AimMode.MouseCursor;
+        else
+            raycaster.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
+    }
+}
+        public void OnInteract(GameObject actor)
         {
-            PlayerRaycaster raycaster = FindObjectOfType<PlayerRaycaster>();
-            if (raycaster != null)
-            {
-                if (raycaster.aimMode == PlayerRaycaster.AimMode.CenterOfScreen)
-                {
-                    raycaster.aimMode = PlayerRaycaster.AimMode.MouseCursor;
-                }
-                else
-                {
-                    raycaster.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
-                }
-            }
+            Interact(actor);
         }
-
-        public void OnInteract(GameObject actor) => Interact(actor);
-
-        public string GetPopupID() => "Ввести код (E)"; 
-
+        public string GetPopupID()
+        {
+            return "Use Keypad"; 
+        }
         public void ReceiveInput(string input)
         {
             if (IsLocked) return;
@@ -87,9 +76,9 @@ namespace Assets.Scripts
         {
             if (currentInput.Length == 0) return;
 
-            else if (currentInput == doorCode)
+            if (currentInput == correctCode)
             {
-                StartCoroutine(SuccessRoutine(TargetAction.Door));
+                StartCoroutine(SuccessRoutine());
             }
             else
             {
@@ -113,7 +102,7 @@ namespace Assets.Scripts
             UpdateDisplay();
             IsLocked = false; 
         }
-        private IEnumerator SuccessRoutine(TargetAction actionToPerform)
+        private IEnumerator SuccessRoutine()
         {
             IsLocked = true;
             if (successSound) audioSource.PlayOneShot(successSound);
@@ -129,31 +118,7 @@ namespace Assets.Scripts
                 playerCast.aimMode = PlayerRaycaster.AimMode.CenterOfScreen;
             }
 
-            currentInput = "";
-            UpdateDisplay();
-            IsLocked = false; 
-
-            try
-            {
-                OnCodeCorrect?.Invoke();
-
-                if (actionToPerform == TargetAction.Light)
-                {
-            
-                }
-                else if (actionToPerform == TargetAction.Door)
-                {
-                    if (_door != null)
-                    {
-                        _door.OpenDoor();
-                    }
-                }
-
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[KeypadController] Помилка під час виконання дії після правильного пароля: {ex.Message}");
-            }
+            OnCodeCorrect?.Invoke(); 
         }
         private void UpdateDisplay()
         {
