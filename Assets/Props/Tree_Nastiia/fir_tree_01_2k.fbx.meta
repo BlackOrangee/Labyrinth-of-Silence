@@ -3,7 +3,37 @@ guid: ea3d376999f132f47838097f6d936009
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_bark
+    second: {fileID: 2100000, guid: b9aa508ce5110de45bd86cd76531c51d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_dead_branches
+    second: {fileID: 2100000, guid: 1bfe3e098165e0f42869b5b99c8ed62c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_trunk_a
+    second: {fileID: 2100000, guid: 1d746bac9cd95d149b2dd9e4bf5f5227, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_trunk_b
+    second: {fileID: 2100000, guid: e29bc0bdcda62ca4fbf6e2e535b56829, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_trunk_c
+    second: {fileID: 2100000, guid: 7d93bf95873e3a447a78af46b773edd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fir_tree_01_twig
+    second: {fileID: 2100000, guid: bccfef212c2328640b05457637c1d0a8, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
