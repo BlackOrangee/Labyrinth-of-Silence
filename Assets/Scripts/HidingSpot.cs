@@ -106,6 +106,7 @@ namespace Assets.Scripts
 
             isOccupied = true;
             PlaySound(enterSound);
+            SetEnemiesPlayerHidden(true);
 
             controller.StartHiding(this);
         }
@@ -116,6 +117,7 @@ namespace Assets.Scripts
 
             isOccupied = false;
             PlaySound(exitSound);
+            SetEnemiesPlayerHidden(false);
 
             CharacterController cc = player.GetComponent<CharacterController>();
             if (cc != null) cc.enabled = false;
@@ -124,6 +126,12 @@ namespace Assets.Scripts
             player.transform.rotation = exitPoint.rotation;
 
             if (cc != null) cc.enabled = true;
+        }
+
+        private void SetEnemiesPlayerHidden(bool hidden)
+        {
+            foreach (MonsterAI enemy in Object.FindObjectsByType<MonsterAI>(FindObjectsSortMode.None))
+                enemy.isPlayerHidden = hidden;
         }
 
         private void PlaySound(AudioClip clip)
