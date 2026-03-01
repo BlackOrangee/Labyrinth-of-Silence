@@ -7,13 +7,13 @@ namespace Assets.Scripts
     public class DoorOpen : MonoBehaviour
     {
         [Header("Налаштування Дверей")]
-        [Tooltip("Об'єкт петлі (ближче до косяка), навколо якого крутяться двері.")]
+        [Tooltip("Об'єкт петлі, навколо якого крутяться двері.")]
         public Transform doorPivot;
 
-        [Tooltip("Вісь обертання. Якщо двері падають 'як стіл' - постав тут Z (0,0,1) або X (1,0,0) замість Y")]
+        [Tooltip("Вісь обертання.")]
         public Vector3 rotationAxis = new Vector3(0, 1, 0);
 
-        [Tooltip("Кут відчинення. Якщо двері відчиняються не в той бік, постав мінус (наприклад -90)")]
+        [Tooltip("Кут відчинення.")]
         public float openAngle = 90f;
         
         [Tooltip("Швидкість відчинення дверей")]
