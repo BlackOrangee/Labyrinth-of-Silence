@@ -671,7 +671,7 @@ namespace Assets.Scripts
                 if (damageOverlay != null)
                 {
                     damageOverlay.gameObject.SetActive(true);
-                    damageOverlay.color = new Color(0.6f, 0f, 0f, 1f);
+                    damageOverlay.color = new Color(0.8f, 0f, 0f, 0.5f);
                 }
                 yield return HandleDeathSequence();
                 yield break;
@@ -681,7 +681,7 @@ namespace Assets.Scripts
             if (damageOverlay != null)
             {
                 damageOverlay.gameObject.SetActive(true);
-                damageOverlay.color = new Color(0.8f, 0f, 0f, 0.3f);
+                damageOverlay.color = new Color(0.8f, 0f, 0f, 0.2f);
             }
 
             if (heartBeatAudio != null) heartBeatAudio.Play();
