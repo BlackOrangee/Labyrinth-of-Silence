@@ -15,7 +15,7 @@ namespace Assets.Scripts
 
         [Header("References")]
         [SerializeField] private SkillCheckSystem skillCheckSystem;
-        [SerializeField] private MonsterB_AI monsterAI; 
+        [SerializeField] private MonsterAI monsterAI; 
         
         [Tooltip("Система індикаторів на генераторі (Red/Orange/Green)")]
         [SerializeField] private GeneratorIndicators indicators;
@@ -34,7 +34,7 @@ namespace Assets.Scripts
         private void Start()
         {
             if (skillCheckSystem == null) skillCheckSystem = FindFirstObjectByType<SkillCheckSystem>();
-            if (monsterAI == null) monsterAI = FindFirstObjectByType<MonsterB_AI>();
+            if (monsterAI == null) monsterAI = FindFirstObjectByType<MonsterAI>();
             
             if (indicators != null)
             {

@@ -10,7 +10,7 @@ namespace Assets.Scripts
     {
         [Header("Налаштування коду")]
         [Tooltip("Правильна комбінація (можна змінювати пароль на будь-який)")]
-        [SerializeField] private string correctCode = "1234";
+        [SerializeField] private string correctCode = "2579";
         [Tooltip("Максимальна кількість цифр на екрані")]
         [SerializeField] private int maxDigits = 4;
 
