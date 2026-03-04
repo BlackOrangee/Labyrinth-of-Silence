@@ -36,12 +36,12 @@ namespace Assets.Scripts
         [Range(0f, 1f)]
         public float fadeThreshold = 0.2f;
 
-        // public Color normalTextColor = Color.green;
-        // public Color warningTextColor = Color.red;
+        public Color normalTextColor = Color.green;
+        public Color warningTextColor = Color.red;
 
         [Header("Main Light Intensity")]
-        public float dimIntensity = 3f; 
-        public float brightIntensity = 8f; 
+        public float dimIntensity = 20f; 
+        public float brightIntensity = 40f; 
         public float dimRange = 10f; 
         public float brightRange = 20f; 
         
@@ -265,14 +265,14 @@ namespace Assets.Scripts
 
                 fuelPercentageText.text = $"{percent}%";
 
-                // if (fraction <= fadeThreshold)
-                // {
-                //     fuelPercentageText.color = warningTextColor;
-                // }
-                // else
-                // {
-                //     fuelPercentageText.color = normalTextColor;
-                // }
+                if (fraction <= fadeThreshold)
+                {
+                    fuelPercentageText.color = warningTextColor;
+                }
+                else
+                {
+                    fuelPercentageText.color = normalTextColor;
+                }
             }
 
             if (GameHUDManager.Instance != null)
