@@ -48,12 +48,16 @@ namespace Assets.Scripts
         [Tooltip("AudioSource for footstep sounds. Called from animation events via PlayStepSound().")]
         public AudioSource feetSource;
         [Tooltip("Single footstep clip played from animation events.")]
+        [Range(0f, 1f)] public float stepVolume = 0.5f;
         public AudioClip stepSound;
         [Tooltip("Played once when the monster spots the player.")]
+        [Range(0f, 1f)] public float spotVolume = 1f;
         public AudioClip spotSound;
         [Tooltip("Played on attack swing.")]
+        [Range(0f, 1f)] public float attackVolume = 1f;
         public AudioClip attackSound;
         [Tooltip("Looped ambient roar during patrol.")]
+        [Range(0f, 1f)] public float patrolVolume = 0.5f;
         public AudioClip patrolLoopSound;
 
         // ── Detection ────────────────────────────────────────────────
@@ -260,6 +264,7 @@ namespace Assets.Scripts
             {
                 voiceSource.clip = patrolLoopSound;
                 voiceSource.loop = true;
+                voiceSource.volume = patrolVolume; 
                 voiceSource.Play();
             }
 
@@ -907,7 +912,7 @@ namespace Assets.Scripts
 
             feetSource.pitch = Mathf.Lerp(0.9f, 1.15f, navAgent.velocity.magnitude / chaseSpeed)
                             + Random.Range(-0.05f, 0.05f);
-            feetSource.PlayOneShot(stepSound);
+            feetSource.PlayOneShot(stepSound, stepVolume);
         }
 
         #endregion
@@ -930,13 +935,13 @@ namespace Assets.Scripts
         void PlaySpotSound()
         {
             if (audioSystem != null) { audioSystem.PlaySpotSound(); return; }
-            if (voiceSource != null && spotSound != null) voiceSource.PlayOneShot(spotSound);
+            if (voiceSource != null && spotSound != null) voiceSource.PlayOneShot(spotSound, spotVolume); 
         }
 
         void PlayAttackSound()
         {
             if (audioSystem != null) { audioSystem.PlayScream(); return; }
-            if (voiceSource != null && attackSound != null) voiceSource.PlayOneShot(attackSound);
+            if (voiceSource != null && attackSound != null) voiceSource.PlayOneShot(attackSound, attackVolume);
         }
 
         void GoToNextPatrolPoint()
