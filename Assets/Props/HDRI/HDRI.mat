@@ -82,7 +82,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Tex:
-        m_Texture: {fileID: 8900000, guid: 27855cd6d2f208e4c98d3bab2acf6b6c, type: 3}
+        m_Texture: {fileID: 8900000, guid: f1611bfcc7f07a24d866cffb675a4bec, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -116,8 +116,8 @@ Material:
     - _EnvironmentReflections: 1
     - _Exposure: 1.08
     - _FogBottom: 0
-    - _FogEnd: 0.231
-    - _FogIntens: 0.86
+    - _FogEnd: 0.43
+    - _FogIntens: 0.887
     - _FogStart: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -144,9 +144,9 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FogCol: {r: 0.8392157, g: 0.8784314, b: 0.9607843, a: 1}
+    - _FogCol: {r: 0.51548594, g: 0.5439658, b: 0.6037736, a: 1}
     - _MieTint: {r: 0.8113208, g: 0.6467604, b: 0.6467604, a: 0.5}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _Tint: {r: 0.6132076, g: 0.6132076, b: 0.6132076, a: 0.5}
+    - _Tint: {r: 0.5076095, g: 0.53272533, b: 0.5754717, a: 0.5}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
