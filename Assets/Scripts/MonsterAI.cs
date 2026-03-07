@@ -899,7 +899,7 @@ namespace Assets.Scripts
             lastKnownPlayerPosition = location;
             loseTargetTimer = 0f;
             PlaySpotSound();
-            ChangeState(MonsterState.Chase);
+            ChangeState(MonsterState.Alert);
         }
 
         /// <summary>
