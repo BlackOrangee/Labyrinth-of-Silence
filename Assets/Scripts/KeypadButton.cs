@@ -34,6 +34,13 @@ namespace Assets.Scripts
         {
             if (mainController == null || mainController.IsLocked) return;
 
+            if (!mainController.IsAccessible())
+            {
+                mainController.PlayDeniedSound();
+                StartCoroutine(FlashDenied());
+                return;
+            }
+
             if (buttonAudioSource != null && clickSound != null)
             {
                 buttonAudioSource.PlayOneShot(clickSound, clickVolume);
@@ -43,6 +50,7 @@ namespace Assets.Scripts
 
             mainController.ReceiveInput(buttonValue);
         }
+
         private IEnumerator FlashHighlight()
         {
             if (highlightEffect != null)
@@ -51,6 +59,20 @@ namespace Assets.Scripts
                 yield return new WaitForSeconds(flashDuration);
                 highlightEffect.SetActive(false);
             }
+        }
+
+        private IEnumerator FlashDenied()
+        {
+            if (highlightEffect == null) yield break;
+            Renderer r = highlightEffect.GetComponent<Renderer>();
+            if (r == null) yield break;
+
+            Color original = r.material.color;
+            highlightEffect.SetActive(true);
+            r.material.color = Color.red;
+            yield return new WaitForSeconds(flashDuration);
+            r.material.color = original;
+            highlightEffect.SetActive(false);
         }
     }
 }

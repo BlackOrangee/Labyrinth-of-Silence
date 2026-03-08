@@ -59,10 +59,10 @@ MonoBehaviour:
     spriteNormalUkrainian: {fileID: -89557993, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
     spritePressedUkrainian: {fileID: -1836775397, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
   - popupID: doorLocked
-    spriteNormalEnglish: {fileID: -1866126785, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
-    spritePressedEnglish: {fileID: 402034055, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
-    spriteNormalUkrainian: {fileID: 815458669, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
-    spritePressedUkrainian: {fileID: 2066667917, guid: 37ab6766fd180bc4185c6090a4021cef, type: 3}
+    spriteNormalEnglish: {fileID: -1168471675, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -1812192998, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 212511698, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 1887562605, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
   - popupID: canOpenDoor
     spriteNormalEnglish: {fileID: -1246528503, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}
     spritePressedEnglish: {fileID: -673561756, guid: bbea30f7c67981a49a75fc5865f8fb13, type: 3}

@@ -4,6 +4,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
@@ -137,6 +138,17 @@ namespace Assets.Scripts
         [Tooltip("Optional: specific transform the camera locks onto during attack (e.g. head bone).")]
         public Transform faceTarget;
 
+        // ── Thought ───────────────────────────────────────────────────
+        [Header("Thought on First Sight")]
+        [Tooltip("ThoughtUI component on the player canvas.")]
+        public ThoughtUI thoughtUI;
+        [Tooltip("Thought shown the first time the player encounters this monster (English).")]
+        public string monsterSpotThought = "";
+        [Tooltip("Thought shown the first time the player encounters this monster (Ukrainian).")]
+        public string monsterSpotThoughtUkr = "";
+        [Tooltip("How long the thought stays on screen (seconds).")]
+        public float thoughtDuration = 4f;
+
         // ── Debug ─────────────────────────────────────────────────────
         [Header("Debug")]
         [Tooltip("Flag set externally when the player is hiding. Suppresses detection.")]
@@ -174,6 +186,7 @@ namespace Assets.Scripts
         private int currentHits = 0;
         private float recoveryTimer = 0f;
         private bool isEventActive = false;
+        private bool thoughtShown = false;
 
         // Cached values
         private float visionRangeSqr;
@@ -391,8 +404,25 @@ namespace Assets.Scripts
                 currentState == MonsterState.Search)
             {
                 PlaySpotSound();
+                TryShowSpotThought();
                 ChangeState(MonsterState.Chase);
             }
+        }
+
+        void TryShowSpotThought()
+        {
+            if (thoughtShown || thoughtUI == null) return;
+
+            string text = (SettingsManager.Instance != null &&
+                           SettingsManager.Instance.GetCurrentLanguage() == Language.Ukrainian &&
+                           !string.IsNullOrEmpty(monsterSpotThoughtUkr))
+                ? monsterSpotThoughtUkr
+                : monsterSpotThought;
+
+            if (string.IsNullOrEmpty(text)) return;
+
+            thoughtShown = true;
+            thoughtUI.ShowThought(text, thoughtDuration);
         }
 
         #endregion
@@ -745,11 +775,11 @@ namespace Assets.Scripts
             if (voiceSource != null) voiceSource.Stop();
             if (feetSource != null)  feetSource.Stop();
 
+            PauseMenu.NotifyGameOver();
+
             if (deathVisibilityDuration > 0f)
                 yield return new WaitForSeconds(deathVisibilityDuration);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
             AudioListener.volume = 0f;
 
             if (deathScreenPanel != null)
@@ -772,6 +802,7 @@ namespace Assets.Scripts
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
+
         }
 
         #endregion

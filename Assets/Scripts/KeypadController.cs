@@ -19,6 +19,12 @@ namespace Assets.Scripts
         [SerializeField] private Color defaultColor = Color.white;
         [SerializeField] private Color errorColor = new Color(1f, 0.4f, 0.7f);
         [SerializeField] private Color successColor = Color.green;
+        [SerializeField] private Renderer glowRenderer;
+        [SerializeField] private Color glowColor = Color.green;
+
+        [Header("Key Requirement")]
+        [SerializeField] private bool requireKey = false;
+        [SerializeField] private KeyColorType requiredKey = KeyColorType.None;
 
         [Header("Аудіо")]
         [SerializeField] private AudioClip errorSound;
@@ -29,25 +35,59 @@ namespace Assets.Scripts
         public UnityEvent OnCodeCorrect;
         private string currentInput = "";
         private AudioSource audioSource;
-        
-        public bool IsLocked { get; private set; } = false; 
+        private SimpleInventory playerInventory;
+
+        public bool IsLocked { get; private set; } = false;
+
         private void Start()
         {
             audioSource = GetComponent<AudioSource>();
+
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) playerInventory = p.GetComponent<SimpleInventory>();
+
+            SimpleInventory.OnInventoryChanged += UpdateGlow;
+            UpdateGlow();
             UpdateDisplay();
         }
-public void Interact(GameObject actor) { }
+
+        private void OnDestroy()
+        {
+            SimpleInventory.OnInventoryChanged -= UpdateGlow;
+        }
+
+        private bool HasRequiredKey()
+        {
+            if (!requireKey) return true;
+            return playerInventory != null && playerInventory.HasKey(requiredKey);
+        }
+
+        private void UpdateGlow()
+        {
+            if (glowRenderer == null) return;
+            Material mat = glowRenderer.material;
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", HasRequiredKey() ? glowColor : Color.black);
+        }
+        public bool IsAccessible() => HasRequiredKey();
+
+        public void PlayDeniedSound()
+        {
+            if (errorSound != null) audioSource.PlayOneShot(errorSound);
+        }
+
+        public void Interact(GameObject actor) { }
         public void OnInteract(GameObject actor)
         {
             Interact(actor);
         }
         public string GetPopupID()
         {
-            return "Use Keypad"; 
+            return HasRequiredKey() ? "Use Keypad" : "";
         }
         public void ReceiveInput(string input)
         {
-            if (IsLocked) return;
+            if (IsLocked || !HasRequiredKey()) return;
 
             if (input == "E")
             {

@@ -297,5 +297,14 @@ namespace Assets.Scripts
         {
             return lightMode != 0 && currentFuel > 0;
         }
+
+        public void TurnOff()
+        {
+            if (lightMode == 0) return;
+            lightMode = 0;
+            if (lampAudioSource != null) lampAudioSource.Stop();
+            if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
+            UpdateLightTargets();
+        }
     }
 }

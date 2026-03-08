@@ -277,10 +277,14 @@ namespace Assets.Scripts
                 yield return null;
             }
 
+            float minTime = (currentConfig != null && currentConfig.minimumLoadTime > 0f)
+                ? currentConfig.minimumLoadTime
+                : minimumLoadTime;
+
             float elapsedTime = Time.time - startTime;
-            if (elapsedTime < minimumLoadTime)
+            if (elapsedTime < minTime)
             {
-                yield return new WaitForSeconds(minimumLoadTime - elapsedTime);
+                yield return new WaitForSeconds(minTime - elapsedTime);
             }
 
             loadingOperation.allowSceneActivation = true;

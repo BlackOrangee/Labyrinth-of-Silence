@@ -245,6 +245,12 @@ namespace Assets.Scripts
         /// </summary>
         public void ActivateManually()
         {
+            if (playerInventory == null)
+            {
+                GameObject p = GameObject.FindGameObjectWithTag("Player");
+                if (p != null) playerInventory = p.GetComponent<SimpleInventory>();
+            }
+
             if (!isActivated || !oneTimeActivation)
             {
                 Activate();

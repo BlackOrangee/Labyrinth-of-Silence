@@ -15,7 +15,7 @@ namespace Assets.Scripts
 
         [Header("References")]
         [SerializeField] private SkillCheckSystem skillCheckSystem;
-        [SerializeField] private MonsterB_AI monsterAI; 
+        private MonsterAI monsterAI;
         
         [Tooltip("Система індикаторів на генераторі (Red/Orange/Green)")]
         [SerializeField] private GeneratorIndicators indicators;
@@ -34,7 +34,7 @@ namespace Assets.Scripts
         private void Start()
         {
             if (skillCheckSystem == null) skillCheckSystem = FindFirstObjectByType<SkillCheckSystem>();
-            if (monsterAI == null) monsterAI = FindFirstObjectByType<MonsterB_AI>();
+            if (monsterAI == null) monsterAI = FindFirstObjectByType<MonsterAI>();
             
             if (indicators != null)
             {
@@ -104,6 +104,8 @@ namespace Assets.Scripts
             skillCheckSystem.OnSeriesComplete = null;
             skillCheckSystem.OnFail = null;
 
+            GetComponent<ActivatableObject>()?.ActivateManually();
+
             if (indicators != null)
             {
                 indicators.SetState(GeneratorIndicators.IndicatorState.Success);
@@ -138,7 +140,9 @@ namespace Assets.Scripts
         public void OnInteract(GameObject actor) => Interact(actor);
         public string GetPopupID()
         {
-            return "turnOn"; 
+            if (isRepaired) return "generatorIsOn";
+            if (hasFuel || debugHasFuel || IsPlayerHoldingFuel()) return "refuel";
+            return "needFuel";
         }
     }
 }

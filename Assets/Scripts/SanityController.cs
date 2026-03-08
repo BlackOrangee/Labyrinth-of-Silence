@@ -75,6 +75,14 @@ namespace Assets.Scripts
 
         private bool _isHeartbeatMuted = false;
 
+        public bool IsDead => _isDead;
+
+        public void MarkAsDead()
+        {
+            _isDead = true;
+        }
+        private PlayerHideController _playerHideController;
+
         private void Start()
         {
             _currentSanity = maxSanity;
@@ -117,18 +125,24 @@ namespace Assets.Scripts
 
             if (lampController == null) lampController = GetComponentInChildren<LampController>();
             if (playerCollider == null) playerCollider = GetComponent<Collider>();
+            _playerHideController = GetComponent<PlayerHideController>();
+            if (_playerHideController == null) _playerHideController = FindObjectOfType<PlayerHideController>();
         }
 
         private void Update()
         {
             if (_isDead) return;
 
+            bool isHiding = _playerHideController != null && _playerHideController.IsHiding;
             bool isLightOn = (lampController != null && lampController.IsLightOn());
 
-            if (isLightOn)
-                _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
-            else
-                _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
+            if (!isHiding)
+            {
+                if (isLightOn)
+                    _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
+                else
+                    _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
+            }
 
             _currentSanity = Mathf.Clamp(_currentSanity, 0, maxSanity);
 
@@ -221,10 +235,11 @@ namespace Assets.Scripts
             }
         }
 
-private void Die()
+        private void Die()
         {
             if (_isDead) return;
             _isDead = true;
+            PauseMenu.NotifyGameOver();
 
             if (GlobalSoundManager.Instance != null)
             {

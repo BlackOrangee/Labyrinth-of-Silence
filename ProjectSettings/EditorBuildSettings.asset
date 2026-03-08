@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Laboratory 2.unity
     guid: 588da95a1000ceb4281896f3ef2f5a68
   - enabled: 1
+    path: Assets/Scenes/Ending.unity
+    guid: 373d8e279bb9ecd4b9c4acf7d147b71a
+  - enabled: 1
     path: Assets/Scenes/Loader.unity
     guid: aafd9384c59d8e74cbb4657e8d9413ce
   - enabled: 1

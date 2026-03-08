@@ -9,6 +9,10 @@ namespace Assets.Scripts
         [Tooltip("Колір ключа (Green, Yellow, Blue, Pink)")]
         [SerializeField] private KeyColorType keyColor = KeyColorType.None;
 
+        [Header("Interaction")]
+        [Tooltip("Popup ID що показується при наведенні")]
+        [SerializeField] private string popupID = "open";
+
         [Header("Visuals")]
         [SerializeField] private string displayName = "Key";
         [Tooltip("Іконка для UI")]
@@ -90,7 +94,7 @@ namespace Assets.Scripts
 
         public string GetPopupID()
         {
-            return isCollected ? "" : "open";
+            return isCollected ? "" : popupID;
         }
     }
 }

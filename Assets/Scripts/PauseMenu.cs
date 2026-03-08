@@ -29,6 +29,15 @@ namespace Assets.Scripts
         [Tooltip("Quit panel name")]
         public string quitPanelName = "QuitPanel";
 
+        public static bool IsGameOver { get; private set; } = false;
+
+        public static void NotifyGameOver()
+        {
+            IsGameOver = true;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
         private bool isPaused = false;
         private GameObject pausePanel;
         private GameObject loadSavePanel;
@@ -37,11 +46,15 @@ namespace Assets.Scripts
         private GameObject quitPanel;
         private CameraController cameraController;
         private PauseBlurController blurController;
+        private PlayerHideController playerHideController;
+        private SanityController sanityController;
         private Canvas _ownCanvas;
         private readonly List<Canvas> _hiddenCanvases = new List<Canvas>();
 
         void Start()
         {
+            IsGameOver = false;
+
             pausePanel = transform.GetComponentsInChildren<Transform>(includeInactive: true)
                 .FirstOrDefault(t => t.name == pausePanelName)?.gameObject;
 
@@ -103,6 +116,8 @@ namespace Assets.Scripts
 
             cameraController = FindObjectOfType<CameraController>();
             blurController = GetComponent<PauseBlurController>();
+            playerHideController = FindObjectOfType<PlayerHideController>();
+            sanityController = FindObjectOfType<SanityController>();
             _ownCanvas = GetComponentInParent<Canvas>(includeInactive: true) ?? GetComponent<Canvas>();
         }
 
@@ -110,6 +125,9 @@ namespace Assets.Scripts
         {
             if (Input.GetKeyDown(pauseKey))
             {
+                if (IsGameOver) return;
+                if (playerHideController != null && playerHideController.IsHiding) return;
+
                 if (isPaused)
                 {
                     ResumeGame();

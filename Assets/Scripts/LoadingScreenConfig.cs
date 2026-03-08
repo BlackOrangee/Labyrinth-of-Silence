@@ -26,6 +26,10 @@ namespace Assets.Scripts
         [TextArea(2, 4)]
         public string tipTextUkr = "";
 
+        [Header("Timing")]
+        [Tooltip("Minimum time to show this loading screen (in seconds). 0 = use SceneLoader default")]
+        public float minimumLoadTime = 0f;
+
         [Header("Animation")]
         [Tooltip("Animation frames for loading icon (will cycle through)")]
         public Sprite[] animationFrames;

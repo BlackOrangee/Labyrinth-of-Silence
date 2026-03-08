@@ -18,6 +18,7 @@ namespace Assets.Scripts
         [Header("Settings")]
         [SerializeField] private float openAngle = 90f;
         [SerializeField] private float openSpeed = 2f;
+        [SerializeField] private Vector3 rotationAxis = new Vector3(0, 1, 0);
         [SerializeField] private Transform doorPivot;
 
         [Header("Audio")]
@@ -91,7 +92,7 @@ namespace Assets.Scripts
         private IEnumerator RotateDoorRoutine()
         {
             Quaternion startRot = doorPivot.localRotation;
-            Quaternion targetRot = Quaternion.Euler(0, openAngle, 0);
+            Quaternion targetRot = startRot * Quaternion.AngleAxis(openAngle, rotationAxis);
             float time = 0;
             while (time < 1)
             {

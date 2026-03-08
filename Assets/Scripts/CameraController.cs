@@ -104,7 +104,7 @@ namespace Assets.Scripts
                 yVelocity = 0;
             }
 
-            if (!locked) 
+            if (!locked && !PauseMenu.IsGameOver)
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;

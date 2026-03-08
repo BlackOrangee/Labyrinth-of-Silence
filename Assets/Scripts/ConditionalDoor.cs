@@ -29,6 +29,9 @@ namespace Assets.Scripts
         [Tooltip("Door opening speed")]
         [SerializeField] private float openSpeed = 2f;
 
+        [Tooltip("Rotation axis (0,1,0 = Y, 1,0,0 = X, 0,0,1 = Z)")]
+        [SerializeField] private Vector3 rotationAxis = new Vector3(0, 1, 0);
+
         [Tooltip("Door pivot transform")]
         [SerializeField] private Transform doorPivot;
 
@@ -85,7 +88,7 @@ namespace Assets.Scripts
             }
 
             closedRotation = doorPivot.localRotation;
-            openRotation = Quaternion.Euler(0, openAngle, 0);
+            openRotation = closedRotation * Quaternion.AngleAxis(openAngle, rotationAxis);
 
             // Check if door should start unlocked
             CheckLockState();
@@ -146,7 +149,8 @@ namespace Assets.Scripts
 
         public string GetPopupID()
         {
-            return isOpen ? "" : popupID;
+            if (isOpen) return "";
+            return isLocked ? lockedMessageID : popupID;
         }
 
         /// <summary>

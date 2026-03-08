@@ -23,6 +23,12 @@ namespace Assets.Scripts
         [Tooltip("Where player appears after exit")]
         public Transform exitPoint;
 
+        [Header("Closet Camera")]
+        [Tooltip("Fixed camera view point inside the closet. Assign a child Transform where the camera should sit.")]
+        public Transform cameraPoint;
+        [Tooltip("Max rotation angle (degrees) the player can look around from cameraPoint forward")]
+        public float cameraRotationLimit = 15f;
+
         [Header("Wardrobe Specifics (Optional for Table)")]
         public Transform leftDoorPivot;
         public Transform rightDoorPivot;
@@ -155,6 +161,13 @@ namespace Assets.Scripts
                 Gizmos.DrawWireSphere(exitPoint.position, 0.3f);
                 Gizmos.DrawLine(transform.position, exitPoint.position);
                 Gizmos.DrawRay(exitPoint.position, exitPoint.forward * 0.5f);
+            }
+
+            if (cameraPoint != null)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(cameraPoint.position, 0.15f);
+                Gizmos.DrawRay(cameraPoint.position, cameraPoint.forward * 0.5f);
             }
         }
     }

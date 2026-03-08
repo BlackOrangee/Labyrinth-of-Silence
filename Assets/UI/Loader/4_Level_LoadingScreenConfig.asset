@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a139e15df9ce5d46b793958935d1878, type: 3}
+  m_Name: 4_Level_LoadingScreenConfig
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.LoadingScreenConfig
+  backgroundSprite: {fileID: -1915445020, guid: 941493023c51ebe4b87aa3985504b483, type: 3}
+  backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  tipText: ' '
+  tipTextUkr: ' '
+  animationFrames:
+  - {fileID: -979537548, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: -81650152, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: 1871084549, guid: 4145b63233a822240b14665429093a71, type: 3}
+  - {fileID: 2078840042, guid: 4145b63233a822240b14665429093a71, type: 3}
+  frameRate: 0.12
