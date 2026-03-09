@@ -182,7 +182,7 @@ namespace Assets.Scripts
 
                 if (damageOverlay)
                 {
-                    float alpha = Mathf.Lerp(0, 0.5f, hitRecoveryTimer / recoveryTime);
+                    float alpha = Mathf.Lerp(0, 0.6f, hitRecoveryTimer / recoveryTime);
                     damageOverlay.color = new Color(1, 0, 0, alpha);
                 }
 

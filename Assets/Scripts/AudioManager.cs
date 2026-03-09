@@ -13,10 +13,17 @@ namespace Assets.Scripts
     public class AudioManager : MonoBehaviour
     {
         private static AudioManager instance;
+        private static bool applicationIsQuitting = false;
+
         public static AudioManager Instance
         {
             get
             {
+                if (applicationIsQuitting)
+                {
+                    return null;
+                }
+
                 if (instance == null)
                 {
                     instance = FindFirstObjectByType<AudioManager>();
@@ -180,7 +187,13 @@ namespace Assets.Scripts
             currentMusicVolume = SettingsManager.Instance.currentSettings.musicVolume;
             currentSfxVolume = SettingsManager.Instance.currentSettings.sfxVolume;
 
-            if (audioMixer == null)
+            if (audioMixer != null)
+            {
+                audioMixer.SetFloat("MasterVolume", Mathf.Log10(Mathf.Clamp(currentMasterVolume, 0.0001f, 1f)) * 20f);
+                audioMixer.SetFloat("MusicVolume", Mathf.Log10(Mathf.Clamp(currentMusicVolume, 0.0001f, 1f)) * 20f);
+                audioMixer.SetFloat("SFXVolume", Mathf.Log10(Mathf.Clamp(currentSfxVolume, 0.0001f, 1f)) * 20f);
+            }
+            else
             {
                 ApplyVolumesToAllSources();
             }
@@ -261,6 +274,13 @@ namespace Assets.Scripts
                     return currentSfxVolume * currentMasterVolume;
                 default:
                     return currentMasterVolume;
+            }
+        }
+        void OnDestroy()
+        {
+            if (instance == this)
+            {
+                applicationIsQuitting = true;
             }
         }
     }

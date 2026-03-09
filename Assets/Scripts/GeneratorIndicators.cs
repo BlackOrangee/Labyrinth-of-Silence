@@ -5,99 +5,91 @@ namespace Assets.Scripts
 {
     public class GeneratorIndicators : MonoBehaviour
     {
-        #region UI References (Посилання на Image компоненти)
-        
-        [Header("Посилання на індикатори (перетягни з Canvas)")]
-        [Tooltip("Image компонент червоного індикатора")]
-        public Image redIndicator;
-        
-        [Tooltip("Image компонент оранжевого індикатора")]
-        public Image orangeIndicator;
-        
-        [Tooltip("Image компонент зеленого індикатора")]
-        public Image greenIndicator;
-        
-        #endregion
+        public enum IndicatorState { Idle, Waiting, Success, Failed }
+        [SerializeField] private IndicatorState currentState = IndicatorState.Idle;
 
-        #region Pulse Settings (Налаштування пульсації)
-        
-        [Header("Налаштування пульсації")]
-        [Tooltip("Швидкість пульсації (1.0 = 1 спалах за секунду)")]
-        [Range(0.1f, 5f)]
-        public float pulseSpeed = 1.0f;
-        
-        [Tooltip("Мінімальна яскравість при пульсації (0 = повністю темно)")]
-        [Range(0f, 0.9f)]
-        public float minAlpha = 0.1f;
-        
-        [Tooltip("Максимальна яскравість при пульсації (1 = повна яскравість)")]
-        [Range(0.1f, 1f)]
-        public float maxAlpha = 1.0f;
-        
-        #endregion
-        private float currentPulse = 0f;
-        private IndicatorState currentState = IndicatorState.Idle;
-        public enum IndicatorState
-        {
-            Idle,
-            Waiting,
-            Success,
-            Failed
-        }
+        [Header("UI Images (Картинки лампочок)")]
+        public Image redIndicator;
+        public Image orangeIndicator;
+        public Image greenIndicator;
+
+        [Header("Physical Lights (Реальне світло - Опціонально)")]
+        public Light redLight;
+        public Light orangeLight;
+        public Light greenLight;
+
+        [Header("HDR Colors (Колір УВІМКНЕНОЇ лампочки)")]
+        [ColorUsage(true, true)] public Color redGlowColor = Color.red * 2f;
+        [ColorUsage(true, true)] public Color orangeGlowColor = new Color(1f, 0.5f, 0f) * 2f;
+        [ColorUsage(true, true)] public Color greenGlowColor = Color.green * 2f;
+
+        [Header("Off Colors (Колір ВИМКНЕНОЇ лампочки)")] // НОВИЙ БЛОК!
+        public Color redOffColor = new Color(0.3f, 0f, 0f, 1f);       // Темно-бордовий
+        public Color orangeOffColor = new Color(0.3f, 0.15f, 0f, 1f); // Темно-коричневий
+        public Color greenOffColor = new Color(0f, 0.3f, 0f, 1f);     // Темно-зелений
+
+        [Header("Налаштування пульсації та світла")]
+        [Range(0.1f, 10f)] public float pulseSpeed = 3.0f;
+        [Range(0f, 1f)] public float minIntensity = 0.2f;
+        [Range(0f, 1f)] public float maxIntensity = 1.0f;
+        [Range(0f, 5f)] public float lightMultiplier = 0.5f;
+
         void Start()
         {
-            SetState(IndicatorState.Idle);
+            SetAllOff();
+            SetState(currentState);
         }
+
         void Update()
         {
             if (currentState == IndicatorState.Idle) return;
 
-            currentPulse = (Mathf.Sin(Time.time * pulseSpeed * Mathf.PI * 2f) + 1f) / 2f;
-
-            float alpha = Mathf.Lerp(minAlpha, maxAlpha, currentPulse);
+            float wave = (Mathf.Sin(Time.time * pulseSpeed * Mathf.PI) + 1f) / 2f;
+            float currentIntensity = Mathf.Lerp(minIntensity, maxIntensity, wave);
 
             switch (currentState)
             {
                 case IndicatorState.Waiting:
-                    SetAlpha(orangeIndicator, alpha);
+                    UpdateIndicator(orangeIndicator, orangeLight, orangeOffColor, orangeGlowColor, currentIntensity);
                     break;
                 case IndicatorState.Success:
-                    SetAlpha(greenIndicator, alpha);
+                    UpdateIndicator(greenIndicator, greenLight, greenOffColor, greenGlowColor, currentIntensity);
                     break;
                 case IndicatorState.Failed:
-                    SetAlpha(redIndicator, alpha);
+                    UpdateIndicator(redIndicator, redLight, redOffColor, redGlowColor, currentIntensity);
                     break;
             }
         }
+
         public void SetState(IndicatorState newState)
         {
             currentState = newState;
+            SetAllOff(); 
+        }
 
-            if (redIndicator) redIndicator.gameObject.SetActive(false);
-            if (orangeIndicator) orangeIndicator.gameObject.SetActive(false);
-            if (greenIndicator) greenIndicator.gameObject.SetActive(false);
-
-            switch (newState)
+        // Оновлено: тепер функція приймає індивідуальний offColor
+        private void UpdateIndicator(Image img, Light pLight, Color offColor, Color hdrColor, float intensity)
+        {
+            if (img != null)
             {
-                case IndicatorState.Waiting:
-                    if (orangeIndicator) orangeIndicator.gameObject.SetActive(true);
-                    break;
-                case IndicatorState.Success:
-                    if (greenIndicator) greenIndicator.gameObject.SetActive(true);
-                    break;
-                case IndicatorState.Failed:
-                    if (redIndicator) redIndicator.gameObject.SetActive(true);
-                    break;
-                case IndicatorState.Idle:
-                    break;
+                img.color = Color.Lerp(offColor, hdrColor, intensity);
+            }
+
+            if (pLight != null)
+            {
+                pLight.intensity = intensity * lightMultiplier; 
             }
         }
-        private void SetAlpha(Image img, float alpha)
+
+        private void SetAllOff()
         {
-            if (img == null) return;
-            Color c = img.color;
-            c.a = alpha;
-            img.color = c;
+            if (redIndicator) redIndicator.color = redOffColor;
+            if (orangeIndicator) orangeIndicator.color = orangeOffColor;
+            if (greenIndicator) greenIndicator.color = greenOffColor;
+
+            if (redLight) redLight.intensity = 0f;
+            if (orangeLight) orangeLight.intensity = 0f;
+            if (greenLight) greenLight.intensity = 0f;
         }
     }
 }
