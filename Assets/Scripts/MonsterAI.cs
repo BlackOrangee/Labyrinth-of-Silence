@@ -4,6 +4,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using Assets.Scripts.Localization;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal; 
 
@@ -112,6 +113,8 @@ namespace Assets.Scripts
         public float searchDuration = 10f;
         [Tooltip("Seconds between picking new random search waypoints.")]
         public float searchPointInterval = 3f;
+        [Tooltip("Movement speed during Search. Defaults to patrolSpeed if 0.")]
+        public float searchSpeed = 0f;
 
         // ── Attack ────────────────────────────────────────────────────
         [Header("Attack")]
@@ -170,6 +173,17 @@ namespace Assets.Scripts
             "R=1 G=0 B=0 = чисто червоний × темний спрайт = криваво-червоний результат.")]
         public Color damageOverlayHitColor = new Color(1f, 0f, 0f, 0.85f);
 
+        // ── Thought ───────────────────────────────────────────────────
+        [Header("Thought on First Sight")]
+        [Tooltip("ThoughtUI component on the player canvas.")]
+        public ThoughtUI thoughtUI;
+        [Tooltip("Thought shown the first time the player encounters this monster (English).")]
+        public string monsterSpotThought = "";
+        [Tooltip("Thought shown the first time the player encounters this monster (Ukrainian).")]
+        public string monsterSpotThoughtUkr = "";
+        [Tooltip("How long the thought stays on screen (seconds).")]
+        public float thoughtDuration = 4f;
+
         // ── Debug ─────────────────────────────────────────────────────
         [Header("Debug")]
         [Tooltip("Flag set externally when the player is hiding. Suppresses detection.")]
@@ -206,6 +220,7 @@ namespace Assets.Scripts
 
         private int currentHits = 0;
         private bool isEventActive = false;
+        private bool thoughtShown = false;
 
         private Vignette  damageVignette; 
         private Coroutine recoveryCoroutine;
@@ -227,7 +242,7 @@ namespace Assets.Scripts
             navAgent.speed = patrolSpeed;
             navAgent.acceleration = navAcceleration;
 
-            audioSystem  = GetComponent<MonsterAudio>();
+            audioSystem = GetComponent<MonsterAudio>();
             lightDetector = GetComponent<LightDetector>();
 
             if (player == null)
@@ -239,7 +254,7 @@ namespace Assets.Scripts
             if (player != null)
             {
                 playerMovement = player.GetComponent<PlayerMovement>();
-                playerCamera   = player.GetComponentInChildren<CameraController>();
+                playerCamera = player.GetComponentInChildren<CameraController>();
                 if (sanityController == null)
                     sanityController = player.GetComponent<SanityController>();
             }
@@ -274,11 +289,11 @@ namespace Assets.Scripts
                 GoToNextPatrolPoint();
 
             // Cache squared ranges for performance
-            visionRangeSqr        = visionRange * visionRange;
-            attackRangeSqr        = attackRange * attackRange;
+            visionRangeSqr = visionRange * visionRange;
+            attackRangeSqr = attackRange * attackRange;
             closeDetectionRangeSqr = closeDetectionRange * closeDetectionRange;
-            halfFOV    = fieldOfViewAngle * 0.5f;
-            eyeOffset  = Vector3.up * 1.6f;
+            halfFOV = fieldOfViewAngle * 0.5f;
+            eyeOffset = Vector3.up * 1.6f;
 
             InitDamageVignette();
         }
@@ -316,7 +331,7 @@ namespace Assets.Scripts
                     currentHits = 0;
                     if (heartBeatAudio != null) heartBeatAudio.Stop();
                     if (sanityController != null) sanityController.SetHeartbeatMute(false);
-                    ResetDamageVisuals(); // NEW — вимикаємо overlay і вінєтку
+                    ResetDamageVisuals();
                 }
 
                 FadeOutOverlay(2f);
@@ -325,17 +340,15 @@ namespace Assets.Scripts
                 switch (currentState)
                 {
                     case MonsterState.Patrol: PatrolBehavior(); break;
-                    case MonsterState.Alert:  AlertBehavior();  break;
+                    case MonsterState.Alert:  AlertBehavior(); break;
                     case MonsterState.Search: SearchBehavior(); break;
-                    default: ChangeState(MonsterState.Search);  break;
+                    default: ChangeState(MonsterState.Search); break;
                 }
                 return;
             }
 
-            // ── Scripted attack coroutine is running ──────────────────
             if (currentState == MonsterState.Scripted) return;
 
-            // ── Kill-distance check ───────────────────────────────────
             float dist = Vector3.Distance(transform.position, player.position);
             bool blocked = Physics.Linecast(
                 transform.position + Vector3.up * 1.6f,
@@ -398,9 +411,9 @@ namespace Assets.Scripts
             // 3. FOV vision cone (disabled when visionRange == 0)
             if (visionRange > 0f && distSqr <= visionRangeSqr)
             {
-                Vector3 eyePos    = transform.position + eyeOffset;
+                Vector3 eyePos = transform.position + eyeOffset;
                 Vector3 dirToPlayer = player.position - eyePos;
-                float angle       = Vector3.Angle(transform.forward, dirToPlayer);
+                float angle = Vector3.Angle(transform.forward, dirToPlayer);
 
                 if (angle <= halfFOV)
                 {
@@ -433,8 +446,25 @@ namespace Assets.Scripts
                 currentState == MonsterState.Search)
             {
                 PlaySpotSound();
+                TryShowSpotThought();
                 ChangeState(MonsterState.Chase);
             }
+        }
+
+        void TryShowSpotThought()
+        {
+            if (thoughtShown || thoughtUI == null) return;
+
+            string text = (SettingsManager.Instance != null &&
+                           SettingsManager.Instance.GetCurrentLanguage() == Language.Ukrainian &&
+                           !string.IsNullOrEmpty(monsterSpotThoughtUkr))
+                ? monsterSpotThoughtUkr
+                : monsterSpotThought;
+
+            if (string.IsNullOrEmpty(text)) return;
+
+            thoughtShown = true;
+            thoughtUI.ShowThought(text, thoughtDuration);
         }
 
         #endregion
@@ -453,11 +483,14 @@ namespace Assets.Scripts
 
             lastKnownPlayerPosition = soundPosition;
 
-            if (currentState == MonsterState.Patrol ||
-                currentState == MonsterState.Alert  ||
-                currentState == MonsterState.Search)
+            if (currentState == MonsterState.Patrol || currentState == MonsterState.Alert)
             {
                 ChangeState(MonsterState.Alert);
+            }
+            else if (currentState == MonsterState.Search)
+            {
+                // Already hunting — heard something, go straight to Chase
+                ChangeState(MonsterState.Chase);
             }
             else if (currentState == MonsterState.Chase && !playerInSight)
             {
@@ -563,7 +596,7 @@ namespace Assets.Scripts
 
         void SearchBehavior()
         {
-            searchTimer      += Time.deltaTime;
+            searchTimer += Time.deltaTime;
             searchPointTimer += Time.deltaTime;
 
             if (searchTimer >= searchDuration)
@@ -581,13 +614,18 @@ namespace Assets.Scripts
             }
         }
 
+        /// <summary>
+        /// Picks a random NavMesh point around <paramref name="center"/> that the monster
+        /// can actually reach (full path, no wall in the way). Falls back to the monster's
+        /// current position if no valid point is found after <paramref name="maxAttempts"/> tries.
+        /// </summary>
         Vector3 GetReachableSearchPoint(Vector3 center, float radius, int maxAttempts = 10)
         {
             NavMeshPath path = new NavMeshPath();
 
             for (int i = 0; i < maxAttempts; i++)
             {
-                Vector2 circle    = Random.insideUnitCircle * radius;
+                Vector2 circle = Random.insideUnitCircle * radius;
                 Vector3 candidate = center + new Vector3(circle.x, 0f, circle.y);
 
                 NavMeshHit hit;
@@ -616,41 +654,41 @@ namespace Assets.Scripts
             switch (newState)
             {
                 case MonsterState.Patrol:
-                    navAgent.isStopped       = false;
-                    navAgent.updateRotation  = true;
-                    navAgent.speed           = patrolSpeed;
+                    navAgent.isStopped = false;
+                    navAgent.updateRotation = true;
+                    navAgent.speed = patrolSpeed;
                     navAgent.ResetPath();
-                    loseTargetTimer          = 0f;
-                    lookAroundTimer          = 0f;
+                    loseTargetTimer = 0f;
+                    lookAroundTimer = 0f;
                     reachedLastKnownPosition = false;
-                    alertLookTimer           = 0f;
-                    reachedAlertPosition     = false;
+                    alertLookTimer = 0f;
+                    reachedAlertPosition = false;
                     GoToNearestPatrolPoint();
                     break;
 
                 case MonsterState.Alert:
-                    alertLookTimer       = 0f;
+                    alertLookTimer = 0f;
                     reachedAlertPosition = false;
-                    navAgent.isStopped   = false;
-                    navAgent.speed       = chaseSpeed;
+                    navAgent.isStopped = false;
+                    navAgent.speed = chaseSpeed;
                     navAgent.SetDestination(lastKnownPlayerPosition);
                     break;
 
                 case MonsterState.Chase:
-                    loseTargetTimer          = 0f;
-                    lookAroundTimer          = 0f;
+                    loseTargetTimer = 0f;
+                    lookAroundTimer = 0f;
                     reachedLastKnownPosition = false;
-                    navAgent.isStopped       = false;
-                    navAgent.speed           = chaseSpeed;
+                    navAgent.isStopped = false;
+                    navAgent.speed = chaseSpeed;
                     if (BackgroundMusic.Instance != null) BackgroundMusic.Instance.PlayChaseMusic();
                     break;
 
                 case MonsterState.Search:
                     searchTimer = 0f;
-                    searchPointTimer         = searchPointInterval;
-                    lookAroundTimer          = 0f;
+                    searchPointTimer = searchPointInterval;
+                    lookAroundTimer = 0f;
                     reachedLastKnownPosition = false;
-                    navAgent.speed           = patrolSpeed;
+                    navAgent.speed = searchSpeed > 0f ? searchSpeed : patrolSpeed;
                     navAgent.isStopped = false;
                     if (BackgroundMusic.Instance != null) BackgroundMusic.Instance.StopChaseMusic();
                     break;
@@ -666,8 +704,8 @@ namespace Assets.Scripts
             isEventActive = true;
             ChangeState(MonsterState.Scripted);
 
-            navAgent.isStopped      = true;
-            navAgent.velocity       = Vector3.zero;
+            navAgent.isStopped = true;
+            navAgent.velocity = Vector3.zero;
             navAgent.updateRotation = false;
 
             if (animator != null)
@@ -746,7 +784,7 @@ namespace Assets.Scripts
             // Unlock player after stun window
             yield return new WaitForSeconds(playerLockDuration);
             if (playerMovement != null) playerMovement.SetMovementLock(false);
-            if (playerCamera   != null) playerCamera.SetInputLock(false);
+            if (playerCamera != null) playerCamera.SetInputLock(false);
 
             // Monster stands still (taunt window — player can run)
             navAgent.isStopped = true;
@@ -757,8 +795,10 @@ namespace Assets.Scripts
             // Resume chase
             if (animator != null) animator.applyRootMotion = false;
             navAgent.updateRotation = true;
-            navAgent.isStopped      = false;
+            navAgent.isStopped = false;
 
+            // Update last known position so monster chases where player IS now, not where they were
+            lastKnownPlayerPosition = player.position;
             isEventActive = false;
             ChangeState(MonsterState.Chase);
             navAgent.SetDestination(player.position);
@@ -779,7 +819,7 @@ namespace Assets.Scripts
             if (heartBeatAudio != null) heartBeatAudio.Stop();
             if (sanityController != null) sanityController.SetHeartbeatMute(true);
             if (voiceSource != null) voiceSource.Stop();
-            if (feetSource  != null) feetSource.Stop();
+            if (feetSource != null) feetSource.Stop();
 
             if (hudStatsObject != null)
                 hudStatsObject.SetActive(false);
@@ -791,11 +831,11 @@ namespace Assets.Scripts
 
             if (damageVolume != null) damageVolume.weight = 0f;
 
+            PauseMenu.NotifyGameOver();
+
             if (deathVisibilityDuration > 0f)
                 yield return new WaitForSeconds(deathVisibilityDuration);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
             AudioListener.volume = 0f;
 
             if (deathScreenPanel != null)
@@ -818,6 +858,7 @@ namespace Assets.Scripts
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
+
         }
 
         #endregion
@@ -935,7 +976,7 @@ namespace Assets.Scripts
         void PlaySpotSound()
         {
             if (audioSystem != null) { audioSystem.PlaySpotSound(); return; }
-            if (voiceSource != null && spotSound != null) voiceSource.PlayOneShot(spotSound, spotVolume); 
+            if (voiceSource != null && spotSound != null) voiceSource.PlayOneShot(spotSound, spotVolume);
         }
 
         void PlayAttackSound()

@@ -21,6 +21,9 @@ namespace Assets.Scripts
         public AudioClip clickSound;
         [Range(0f, 1f)] public float clickVolume = 0.5f;
         private KeypadController mainController;
+        private float _lastPressTime = -1f;
+        private const float DebounceTime = 0.2f;
+
         private void Start()
         {
             mainController = GetComponentInParent<KeypadController>();
@@ -32,6 +35,9 @@ namespace Assets.Scripts
         }
         public void PressButton()
         {
+            if (Time.unscaledTime - _lastPressTime < DebounceTime) return;
+            _lastPressTime = Time.unscaledTime;
+
             if (mainController == null || mainController.IsLocked) return;
 
             if (!mainController.IsAccessible())
