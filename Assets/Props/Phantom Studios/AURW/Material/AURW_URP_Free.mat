@@ -22,7 +22,7 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _Water_Near_Color
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -152,7 +152,7 @@ Material:
     - _QueueOffset: 0
     - _REFRACTION: 1
     - _ReceiveShadows: 1
-    - _Refraction_Strength: 0.25
+    - _Refraction_Strength: 0.37
     - _Second_Direction_Factor: -0.1
     - _Smoothness: 0.9
     - _SmoothnessTextureChannel: 0
