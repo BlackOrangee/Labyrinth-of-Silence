@@ -62,6 +62,14 @@ namespace Assets.Scripts
         [Header("VIDEO GLITCH")]
         public CanvasGroup videoGlitchCanvasGroup;
         public VideoPlayer glitchVideoPlayer;
+        
+        // --НОВЕ-- Змінні для шейдера динамічної дірки
+        public UnityEngine.UI.RawImage videoGlitchRawImage; 
+        [Tooltip("Розмір дірки при 100% розуму (здоровий)")]
+        [Range(0f, 1.5f)] public float maxHoleSize = 0.8f; 
+        [Tooltip("Розмір дірки при 0% розуму (смерть)")]
+        [Range(0f, 1.5f)] public float minHoleSize = 0.2f;
+        // --------
 
         private RectTransform _overlayRect;
         private Vector2 _originalPos;
@@ -178,11 +186,23 @@ namespace Assets.Scripts
 
             if (videoGlitchCanvasGroup != null && glitchVideoPlayer != null)
             {
-                videoGlitchCanvasGroup.alpha = impact * 1.5f;
+                // --НОВЕ-- Робимо відео видимим постійно при психозі, а удари серця додають яскравість
+                videoGlitchCanvasGroup.alpha = insanityFactor + (impact * 0.5f);
+
                 if (insanityFactor > 0.1f)
                 {
                     if (!glitchVideoPlayer.isPlaying) glitchVideoPlayer.Play();
                     glitchVideoPlayer.playbackSpeed = 0.5f + (insanityFactor * 2.0f);
+
+                    // --НОВЕ-- Керування шейдером дірки
+                    if (videoGlitchRawImage != null && videoGlitchRawImage.material != null)
+                    {
+                        // Плавно обчислюємо розмір дірки: від великого (max) до малого (min)
+                        float currentHoleSize = Mathf.Lerp(maxHoleSize, minHoleSize, insanityFactor);
+                        // Звертаємось до властивості шейдера _HoleSize
+                        videoGlitchRawImage.material.SetFloat("_HoleSize", currentHoleSize);
+                    }
+                    // --------
                 }
                 else
                 {
@@ -221,7 +241,7 @@ namespace Assets.Scripts
             }
         }
 
-private void Die()
+        private void Die()
         {
             if (_isDead) return;
             _isDead = true;
