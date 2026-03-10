@@ -42,6 +42,7 @@ namespace Assets.Scripts
         private void Update()
         {
             if (Time.timeScale == 0f) return;
+            if (PauseMenu.IsGameOver) return;
 
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
