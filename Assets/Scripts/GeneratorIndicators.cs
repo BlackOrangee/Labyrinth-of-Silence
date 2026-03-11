@@ -13,7 +13,7 @@ namespace Assets.Scripts
         public Image orangeIndicator;
         public Image greenIndicator;
 
-        [Header("Physical Lights (Реальне світло - Опціонально)")]
+        [Header("Physical Lights (Реальне світло)")]
         public Light redLight;
         public Light orangeLight;
         public Light greenLight;
@@ -23,10 +23,10 @@ namespace Assets.Scripts
         [ColorUsage(true, true)] public Color orangeGlowColor = new Color(1f, 0.5f, 0f) * 2f;
         [ColorUsage(true, true)] public Color greenGlowColor = Color.green * 2f;
 
-        [Header("Off Colors (Колір ВИМКНЕНОЇ лампочки)")] // НОВИЙ БЛОК!
-        public Color redOffColor = new Color(0.3f, 0f, 0f, 1f);       // Темно-бордовий
-        public Color orangeOffColor = new Color(0.3f, 0.15f, 0f, 1f); // Темно-коричневий
-        public Color greenOffColor = new Color(0f, 0.3f, 0f, 1f);     // Темно-зелений
+        [Header("Off Colors (Колір ВИМКНЕНОЇ лампочки)")]
+        public Color redOffColor = new Color(0.3f, 0f, 0f, 1f);
+        public Color orangeOffColor = new Color(0.3f, 0.15f, 0f, 1f);
+        public Color greenOffColor = new Color(0f, 0.3f, 0f, 1f); 
 
         [Header("Налаштування пульсації та світла")]
         [Range(0.1f, 10f)] public float pulseSpeed = 3.0f;
@@ -67,7 +67,6 @@ namespace Assets.Scripts
             SetAllOff(); 
         }
 
-        // Оновлено: тепер функція приймає індивідуальний offColor
         private void UpdateIndicator(Image img, Light pLight, Color offColor, Color hdrColor, float intensity)
         {
             if (img != null)
