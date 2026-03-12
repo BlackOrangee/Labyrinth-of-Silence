@@ -9,9 +9,6 @@ namespace Assets.Scripts
         [Tooltip("Поточний запас палива в цій каністрі (може бути більше 100)")]
         [SerializeField] private float canisterCapacity = 200f;
         
-        // [Tooltip("Що ми вважаємо за 100%? (Зазвичай це повний бак ліхтаря)")]
-        // [SerializeField] private float standardRefuelAmount = 100f; 
-        
         [SerializeField] private bool destroyOnEmpty = true;
 
         [Header("Audio")]

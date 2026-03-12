@@ -67,10 +67,13 @@ namespace Assets.Scripts
         /// <summary>
         /// Set slot to display a key
         /// </summary>
-        public void SetKey(KeyColorType keyType, Sprite keyIcon, string keyName)
+        private string keyDescription;
+
+        public void SetKey(KeyColorType keyType, Sprite keyIcon, string keyName, string description = "")
         {
             slotType = InventorySlotType.Key;
             keyData = keyType;
+            keyDescription = description;
             newspaperData = null;
             itemData = null;
 
@@ -215,11 +218,10 @@ namespace Assets.Scripts
 
         private void OnKeyClicked()
         {
-            // if (PopupManager.Instance != null)
-            // {
-            //     string keyName = keyData.ToString() + " Key";
-            //     PopupManager.Instance.ShowPopup($"Key: {keyName}", null, this, "Close", null);
-            // }
+            if (InventoryUI.Instance != null)
+            {
+                InventoryUI.Instance.SelectKey(iconImage?.sprite, nameText?.text, keyDescription, this);
+            }
         }
 
         private void OnNewspaperClicked()
@@ -242,10 +244,10 @@ namespace Assets.Scripts
             if (itemData == null)
                 return;
 
-            // if (PopupManager.Instance != null)
-            // {
-            //     PopupManager.Instance.ShowPopup(itemData.description, null, this, "Close", itemData.inventoryIcon);
-            // }
+            if (InventoryUI.Instance != null)
+            {
+                InventoryUI.Instance.SelectItem(itemData, this);
+            }
         }
 
         /// <summary>

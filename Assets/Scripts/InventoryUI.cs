@@ -97,6 +97,10 @@ namespace Assets.Scripts
         [Tooltip("Maximum length for description preview text")]
         public int maxDescriptionLength = 150;
 
+        [Header("Item Database")]
+        [Tooltip("List of ItemData assets for generic inventory items (canister, etc.)")]
+        public List<ItemData> itemDatabase = new List<ItemData>();
+
         [Header("Key Icons")]
         [Tooltip("Green key icon")]
         public Sprite greenKeyIcon;
@@ -127,6 +131,10 @@ namespace Assets.Scripts
         private float fadeTimer = 0f;
         private bool isFading = false;
         private NewspaperData selectedNewspaper = null;
+        private ItemData selectedItem = null;
+        private Sprite selectedKeyIcon = null;
+        private string selectedKeyName = null;
+        private string selectedKeyDescription = null;
         private InventorySlot selectedSlot = null;
 
         private LocalizedTextDynamic localizedCollectionCounter;
@@ -412,6 +420,17 @@ namespace Assets.Scripts
                 }
             }
 
+            if (currentFilter == InventoryFilter.All || currentFilter == InventoryFilter.Items)
+            {
+                List<string> genericItems = inventory.GetItems();
+                foreach (string itemName in genericItems)
+                {
+                    ItemData data = itemDatabase.Find(d => d != null && d.itemId == itemName);
+                    if (data != null)
+                        CreateItemSlot(data);
+                }
+            }
+
             // UpdateTitle();
             UpdateCollectionCounter();
             UpdateKeysCounter();
@@ -432,7 +451,25 @@ namespace Assets.Scripts
             {
                 Sprite keyIcon = GetKeyIcon(keyType);
                 string keyName = GetKeyName(keyType);
-                slot.SetKey(keyType, keyIcon, keyName);
+                slot.SetKey(keyType, keyIcon, keyName, GetKeyDescription(keyType));
+                slots.Add(slot);
+            }
+        }
+
+        /// <summary>
+        /// Create slot for a generic item
+        /// </summary>
+        private void CreateItemSlot(ItemData item)
+        {
+            if (slotPrefab == null || slotsContainer == null || item == null)
+                return;
+
+            GameObject slotObj = Instantiate(slotPrefab, slotsContainer);
+            InventorySlot slot = slotObj.GetComponent<InventorySlot>();
+
+            if (slot != null)
+            {
+                slot.SetItem(item);
                 slots.Add(slot);
             }
         }
@@ -568,10 +605,8 @@ namespace Assets.Scripts
 
             foreach (KeyColorType key in keys)
             {
-                if (!key.IsVirtual())
-                {
+                if (key == KeyColorType.Green || key == KeyColorType.Yellow)
                     count++;
-                }
             }
 
             return count;
@@ -600,6 +635,27 @@ namespace Assets.Scripts
         /// <summary>
         /// Get localized key name by type
         /// </summary>
+        private string GetKeyDescription(KeyColorType keyType)
+        {
+            Language currentLanguage = SettingsManager.Instance != null
+                ? SettingsManager.Instance.GetCurrentLanguage()
+                : Language.English;
+
+            switch (keyType)
+            {
+                case KeyColorType.Green:
+                    return currentLanguage == Language.Ukrainian
+                        ? "На ключі вигравіювано «GBY 844». Судячи з маркування — це службовий ключ."
+                        : "The key is engraved with «GBY 844». Judging by the marking — this is a service key.";
+                case KeyColorType.Yellow:
+                    return currentLanguage == Language.Ukrainian
+                        ? "Звичайний ключ. Від одного з кабінетів у цьому коридорі — тільки б знайти, від якого."
+                        : "An ordinary key. From one of the offices in this corridor — if only I knew which one.";
+                default:
+                    return "";
+            }
+        }
+
         private string GetKeyName(KeyColorType keyType)
         {
             Language currentLanguage = SettingsManager.Instance != null
@@ -609,13 +665,13 @@ namespace Assets.Scripts
             switch (keyType)
             {
                 case KeyColorType.Green:
-                    return currentLanguage == Language.Ukrainian ? "Зелений ключ" : "Green Key";
+                    return currentLanguage == Language.Ukrainian ? "Службовий ключ" : "Service Key";
                 case KeyColorType.Yellow:
-                    return currentLanguage == Language.Ukrainian ? "Жовтий ключ" : "Yellow Key";
-                case KeyColorType.Blue:
-                    return currentLanguage == Language.Ukrainian ? "Синій ключ" : "Blue Key";
-                case KeyColorType.Pink:
-                    return currentLanguage == Language.Ukrainian ? "Рожевий ключ" : "Pink Key";
+                    return currentLanguage == Language.Ukrainian ? "Ключ від кабінету" : "Cabinet Key";
+                // case KeyColorType.Blue:
+                //     return currentLanguage == Language.Ukrainian ? "Синій ключ" : "Blue Key";
+                // case KeyColorType.Pink:
+                //     return currentLanguage == Language.Ukrainian ? "Рожевий ключ" : "Pink Key";
                 default:
                     return currentLanguage == Language.Ukrainian ? "Невідомий ключ" : "Unknown Key";
             }
@@ -632,10 +688,24 @@ namespace Assets.Scripts
             }
 
             selectedNewspaper = null;
+            selectedItem = null;
+            selectedKeyIcon = null;
+            selectedKeyName = null;
             selectedSlot = null;
 
             UpdatePreview();
             UpdateDescriptionPanel();
+        }
+
+        private void ApplySlotSelection(InventorySlot slot)
+        {
+            if (selectedSlot != null)
+                selectedSlot.SetSelected(false);
+
+            selectedSlot = slot;
+
+            if (selectedSlot != null)
+                selectedSlot.SetSelected(true);
         }
 
         /// <summary>
@@ -643,47 +713,66 @@ namespace Assets.Scripts
         /// </summary>
         public void SelectNewspaper(NewspaperData newspaper, InventorySlot slot = null)
         {
-            // Deselect previous slot
-            if (selectedSlot != null)
-            {
-                selectedSlot.SetSelected(false);
-            }
-
             selectedNewspaper = newspaper;
-            selectedSlot = slot;
-
-            // Select new slot
-            if (selectedSlot != null)
-            {
-                selectedSlot.SetSelected(true);
-            }
-
+            selectedItem = null;
+            selectedKeyIcon = null;
+            selectedKeyName = null;
+            ApplySlotSelection(slot);
             UpdatePreview();
             UpdateDescriptionPanel();
         }
 
         /// <summary>
-        /// Update preview image based on selected newspaper
+        /// Select a key to preview
+        /// </summary>
+        public void SelectKey(Sprite icon, string keyName, string keyDescription = "", InventorySlot slot = null)
+        {
+            selectedNewspaper = null;
+            selectedItem = null;
+            selectedKeyIcon = icon;
+            selectedKeyName = keyName;
+            selectedKeyDescription = keyDescription;
+            ApplySlotSelection(slot);
+            UpdatePreview();
+            UpdateDescriptionPanel();
+        }
+
+        /// <summary>
+        /// Select a generic item to preview
+        /// </summary>
+        public void SelectItem(ItemData item, InventorySlot slot = null)
+        {
+            selectedNewspaper = null;
+            selectedItem = item;
+            selectedKeyIcon = null;
+            selectedKeyName = null;
+            ApplySlotSelection(slot);
+            UpdatePreview();
+            UpdateDescriptionPanel();
+        }
+
+        /// <summary>
+        /// Update preview image based on selected item
         /// </summary>
         private void UpdatePreview()
         {
             if (previewImage == null)
                 return;
 
+            Sprite sprite = null;
+
             if (selectedNewspaper != null)
+                sprite = selectedNewspaper.GetLocalizedImage();
+            else if (selectedItem != null)
+                sprite = selectedItem.inventoryIcon;
+            else if (selectedKeyIcon != null)
+                sprite = selectedKeyIcon;
+
+            if (sprite != null)
             {
-                Sprite localizedImage = selectedNewspaper.GetLocalizedImage();
-                if (localizedImage != null)
-                {
-                    previewImage.sprite = localizedImage;
-                    previewImage.color = Color.white;
-                    previewImage.enabled = true;
-                }
-                else
-                {
-                    previewImage.sprite = null;
-                    previewImage.enabled = false;
-                }
+                previewImage.sprite = sprite;
+                previewImage.color = Color.white;
+                previewImage.enabled = true;
             }
             else
             {
@@ -693,58 +782,64 @@ namespace Assets.Scripts
         }
 
         /// <summary>
-        /// Update description panel with selected newspaper info
+        /// Update description panel with selected item info
         /// </summary>
         private void UpdateDescriptionPanel()
         {
+            bool hasSelection = selectedNewspaper != null || selectedItem != null || selectedKeyName != null;
+
+            if (descriptionPanel != null)
+                descriptionPanel.SetActive(hasSelection);
+
+            // Details button only for newspapers
+            if (detailsButton != null)
+                detailsButton.gameObject.SetActive(selectedNewspaper != null);
+
+            if (!hasSelection)
+            {
+                if (descriptionNameText != null) descriptionNameText.text = "";
+                if (descriptionTitleText != null) descriptionTitleText.text = "";
+                if (descriptionContentText != null) descriptionContentText.text = "";
+                return;
+            }
+
             if (selectedNewspaper != null)
             {
-                if (descriptionPanel != null)
-                {
-                    descriptionPanel.SetActive(true);
-                }
-
                 if (descriptionNameText != null)
-                {
                     descriptionNameText.text = selectedNewspaper.GetLocalizedName();
-                }
 
                 if (descriptionTitleText != null)
-                {
                     descriptionTitleText.text = selectedNewspaper.GetLocalizedTitle();
-                }
 
                 if (descriptionContentText != null)
                 {
                     string content = selectedNewspaper.GetLocalizedContent();
                     if (!string.IsNullOrEmpty(content) && content.Length > maxDescriptionLength)
-                    {
                         content = content.Substring(0, maxDescriptionLength) + "...";
-                    }
                     descriptionContentText.text = content;
                 }
             }
-            else
+            else if (selectedItem != null)
             {
-                if (descriptionPanel != null)
-                {
-                    descriptionPanel.SetActive(false);
-                }
-
                 if (descriptionNameText != null)
-                {
-                    descriptionNameText.text = "";
-                }
+                    descriptionNameText.text = selectedItem.GetLocalizedName();
 
                 if (descriptionTitleText != null)
-                {
                     descriptionTitleText.text = "";
-                }
 
                 if (descriptionContentText != null)
-                {
-                    descriptionContentText.text = "";
-                }
+                    descriptionContentText.text = selectedItem.GetLocalizedDescription();
+            }
+            else if (selectedKeyName != null)
+            {
+                if (descriptionNameText != null)
+                    descriptionNameText.text = selectedKeyName;
+
+                if (descriptionTitleText != null)
+                    descriptionTitleText.text = "";
+
+                if (descriptionContentText != null)
+                    descriptionContentText.text = selectedKeyDescription ?? "";
             }
         }
 

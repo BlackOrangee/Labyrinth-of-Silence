@@ -1,4 +1,5 @@
 using UnityEngine;
+using Assets.Scripts.Localization;
 
 namespace Assets.Scripts
 {
@@ -20,8 +21,11 @@ namespace Assets.Scripts
         [Tooltip("Unique identifier for this item")]
         public string itemId;
 
-        [Tooltip("Display name of the item")]
+        [Tooltip("Display name (English)")]
         public string itemName;
+
+        [Tooltip("Display name (Ukrainian)")]
+        public string itemNameUA;
 
         [Tooltip("Icon for inventory display")]
         public Sprite inventoryIcon;
@@ -31,9 +35,13 @@ namespace Assets.Scripts
         public ItemType itemType = ItemType.General;
 
         [Header("Optional")]
-        [Tooltip("Additional description or content")]
+        [Tooltip("Description (English)")]
         [TextArea(3, 5)]
         public string description;
+
+        [Tooltip("Description (Ukrainian)")]
+        [TextArea(3, 5)]
+        public string descriptionUA;
 
         [Tooltip("Can this item be used")]
         public bool isUsable = false;
@@ -43,5 +51,19 @@ namespace Assets.Scripts
 
         [Tooltip("Maximum stack size")]
         public int maxStackSize = 1;
+
+        public string GetLocalizedName()
+        {
+            bool isUA = SettingsManager.Instance != null &&
+                        SettingsManager.Instance.GetCurrentLanguage() == Language.Ukrainian;
+            return isUA && !string.IsNullOrEmpty(itemNameUA) ? itemNameUA : itemName;
+        }
+
+        public string GetLocalizedDescription()
+        {
+            bool isUA = SettingsManager.Instance != null &&
+                        SettingsManager.Instance.GetCurrentLanguage() == Language.Ukrainian;
+            return isUA && !string.IsNullOrEmpty(descriptionUA) ? descriptionUA : description;
+        }
     }
 }
