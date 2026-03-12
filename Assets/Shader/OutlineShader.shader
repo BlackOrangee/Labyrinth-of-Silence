@@ -59,23 +59,9 @@ Shader "Custom/URP_Outline"
                 Varyings OUT;
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
-
-                // ── Крок 1: переводимо нормаль у world space ──────────────
-                // TransformObjectToWorldNormal — безпечна функція URP,
-                // враховує масштаб об'єкта правильно
                 float3 worldNormal = TransformObjectToWorldNormal(IN.normalOS);
-
-                // ── Крок 2: переводимо нормаль у view space ───────────────
-                // (view space = система координат камери)
                 float3 viewNormal = TransformWorldToViewDir(worldNormal, true);
-
-                // ── Крок 3: отримуємо clip-позицію вершини ────────────────
                 float4 clipPos = TransformObjectToHClip(IN.positionOS.xyz);
-
-                // ── Крок 4: зсуваємо вершину вздовж нормалі в clip space ──
-                // Ділимо на _ScreenParams.xy щоб товщина була в пікселях,
-                // а не у відносних одиницях — тому контур не залежить від
-                // розміру об'єкта та відстані до камери
                 float2 screenOffset = normalize(viewNormal.xy)
                                       * (_OutlineWidth / _ScreenParams.xy)
                                       * clipPos.w * 2.0;
@@ -89,11 +75,9 @@ Shader "Custom/URP_Outline"
             {
                 float t = _Time.y + _PhaseOffset;
 
-                // ── Плавна пульсація ──────────────────────────────────────
                 float pulse = sin(t * _PulseSpeed) * 0.5 + 0.5;
                 float alpha = lerp(_PulseMinAlpha, 1.0, pulse);
 
-                // ── Органічне мерехтіння (без step — без смикання!) ───────
                 if (_FlickerAmount > 0.0)
                 {
                     float f1 = sin(t * 7.3  + 1.1) * 0.5 + 0.5;
@@ -109,6 +93,5 @@ Shader "Custom/URP_Outline"
         }
     }
 
-    // Якщо шейдер не підтримується — замість рожевого показуємо прозорий
     FallBack "Hidden/InternalErrorShader"
 }
