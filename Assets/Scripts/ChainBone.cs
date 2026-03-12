@@ -10,6 +10,18 @@ namespace Assets.Scripts
 
         [Range(0.01f, 0.3f)]
         public float damping = 0.08f;
+
+        [Header("Колізія (щоб не проходило крізь тіло)")]
+        [Tooltip("Об'єкт, від якого треба відштовхуватися (наприклад, кістка коліна або стегна)")]
+        public Transform collisionTarget; 
+
+        [Tooltip("Розмір сфери відштовхування")]
+        [Range(0f, 1f)]
+        public float collisionRadius = 0.15f; 
+
+        [Tooltip("Зміщення сфери відносно центру collisionTarget")]
+        public Vector3 collisionOffset = Vector3.zero;
+
         private Vector3    _simTip;
         private Vector3    _prevTip;
         private float      _linkLength;
@@ -18,6 +30,7 @@ namespace Assets.Scripts
 
         void OnEnable()  => Initialize();
         void OnDisable() => _initialized = false;
+        
         private void Initialize()
         {
             if (transform.parent == null) return;
@@ -52,6 +65,7 @@ namespace Assets.Scripts
             _prevTip = startTip;
             _initialized = true;
         }
+
         void LateUpdate()
         {
             if (!_initialized)            return;
@@ -63,6 +77,24 @@ namespace Assets.Scripts
 
             _prevTip = _simTip;
             _simTip += vel + grav;
+
+            if (collisionTarget != null && collisionRadius > 0f)
+            {
+                Vector3 sphereCenter = collisionTarget.position + collisionTarget.TransformDirection(collisionOffset);
+                
+                Vector3 fromCenterToTip = _simTip - sphereCenter;
+                
+                float distanceToTip = fromCenterToTip.magnitude;
+
+                if (distanceToTip < collisionRadius)
+                {
+                    Vector3 pushDirection = fromCenterToTip.normalized;
+                    
+                    if (distanceToTip == 0) pushDirection = Vector3.forward; 
+
+                    _simTip = sphereCenter + (pushDirection * collisionRadius);
+                }
+            }
 
             Vector3 anchor = transform.position;
             Vector3 toTip  = _simTip - anchor;
@@ -97,6 +129,15 @@ namespace Assets.Scripts
                 transform.position,
                 transform.TransformDirection(_localChainAxis) * _linkLength
             );
+
+            if (collisionTarget != null && collisionRadius > 0f)
+            {
+                Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+                Vector3 sphereCenter = collisionTarget.position + collisionTarget.TransformDirection(collisionOffset);
+                Gizmos.DrawSphere(sphereCenter, collisionRadius);
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(sphereCenter, collisionRadius);
+            }
         }
 #endif
     }

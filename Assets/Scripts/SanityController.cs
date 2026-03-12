@@ -62,6 +62,12 @@ namespace Assets.Scripts
         [Header("VIDEO GLITCH")]
         public CanvasGroup videoGlitchCanvasGroup;
         public VideoPlayer glitchVideoPlayer;
+        
+        public UnityEngine.UI.RawImage videoGlitchRawImage; 
+        [Tooltip("Розмір дірки при 100% розуму (здоровий)")]
+        [Range(0f, 1.5f)] public float maxHoleSize = 0.8f; 
+        [Tooltip("Розмір дірки при 0% розуму (смерть)")]
+        [Range(0f, 1.5f)] public float minHoleSize = 0.2f;
 
         private RectTransform _overlayRect;
         private Vector2 _originalPos;
@@ -74,14 +80,6 @@ namespace Assets.Scripts
         private Vignette _vignette;
 
         private bool _isHeartbeatMuted = false;
-
-        public bool IsDead => _isDead;
-
-        public void MarkAsDead()
-        {
-            _isDead = true;
-        }
-        private PlayerHideController _playerHideController;
 
         private void Start()
         {
@@ -125,24 +123,18 @@ namespace Assets.Scripts
 
             if (lampController == null) lampController = GetComponentInChildren<LampController>();
             if (playerCollider == null) playerCollider = GetComponent<Collider>();
-            _playerHideController = GetComponent<PlayerHideController>();
-            if (_playerHideController == null) _playerHideController = FindObjectOfType<PlayerHideController>();
         }
 
         private void Update()
         {
             if (_isDead) return;
 
-            bool isHiding = _playerHideController != null && _playerHideController.IsHiding;
             bool isLightOn = (lampController != null && lampController.IsLightOn());
 
-            if (!isHiding)
-            {
-                if (isLightOn)
-                    _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
-                else
-                    _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
-            }
+            if (isLightOn)
+                _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
+            else
+                _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
 
             _currentSanity = Mathf.Clamp(_currentSanity, 0, maxSanity);
 
@@ -192,11 +184,18 @@ namespace Assets.Scripts
 
             if (videoGlitchCanvasGroup != null && glitchVideoPlayer != null)
             {
-                videoGlitchCanvasGroup.alpha = impact * 1.5f;
+                videoGlitchCanvasGroup.alpha = insanityFactor + (impact * 0.5f);
+
                 if (insanityFactor > 0.1f)
                 {
                     if (!glitchVideoPlayer.isPlaying) glitchVideoPlayer.Play();
                     glitchVideoPlayer.playbackSpeed = 0.5f + (insanityFactor * 2.0f);
+
+                    if (videoGlitchRawImage != null && videoGlitchRawImage.material != null)
+                    {
+                        float currentHoleSize = Mathf.Lerp(maxHoleSize, minHoleSize, insanityFactor);
+                        videoGlitchRawImage.material.SetFloat("_HoleSize", currentHoleSize);
+                    }
                 }
                 else
                 {
@@ -239,7 +238,6 @@ namespace Assets.Scripts
         {
             if (_isDead) return;
             _isDead = true;
-            PauseMenu.NotifyGameOver();
 
             if (GlobalSoundManager.Instance != null)
             {
