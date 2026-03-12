@@ -72,7 +72,8 @@ namespace Assets.Scripts
                 
                 if (inventory != null && inventory.GetItems().Contains(fuelItemName))
                 {
-                    hasFuel = true; 
+                    hasFuel = true;
+                    inventory.RemoveItem(fuelItemName);
                     Debug.Log("Generator: Refueling complete!");
 
                     if (generatorAudio && refuelSound) generatorAudio.PlayOneShot(refuelSound);

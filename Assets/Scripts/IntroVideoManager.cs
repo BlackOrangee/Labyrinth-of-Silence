@@ -78,6 +78,7 @@ namespace Assets.Scripts
         private float holdTime = 0f;
         private bool isHolding = false;
         private bool isTransitioningToPressed = false;
+        private bool sceneLoadStarted = false;
         private Coroutine crossfadeCoroutine;
 
         private bool isTyping = false;
@@ -124,6 +125,8 @@ namespace Assets.Scripts
 
         private void Start()
         {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
             StartCoroutine(PlayIntroSequence());
         }
 
@@ -359,42 +362,38 @@ namespace Assets.Scripts
 
         private void UpdateSkipInput()
         {
-            bool skipPressed = Input.GetKey(skipKey) || Input.GetKey(skipKeyAlt);
+            bool skipDown = Input.GetKeyDown(skipKey) || Input.GetKeyDown(skipKeyAlt);
+            bool skipHeld = Input.GetKey(skipKey) || Input.GetKey(skipKeyAlt);
 
-            if (skipPressed)
+            // Single tap — skip current stage
+            if (skipDown)
             {
-                if (!isHolding)
-                {
-                    isHolding = true;
-                    holdTime = 0f;
-                }
-                else
-                {
-                    holdTime += Time.deltaTime;
-
-                    if (fillCircleImage != null)
-                    {
-                        fillCircleImage.fillAmount = Mathf.Clamp01(holdTime / introDatabase.holdDuration);
-                    }
-
-                    if (holdTime >= introDatabase.holdDuration && !isTransitioningToPressed)
-                    {
-                        OnSkipHoldCompleted();
-                    }
-                }
+                isHolding = true;
+                holdTime = 0f;
+                ExecuteSkipAction();
+                return;
             }
-            else
-            {
-                if (isHolding)
-                {
-                    isHolding = false;
-                    holdTime = 0f;
 
-                    if (fillCircleImage != null)
-                    {
-                        fillCircleImage.fillAmount = 0f;
-                    }
-                }
+            // Holding — fill circle, skip all on complete
+            if (skipHeld)
+            {
+                if (!isHolding) { isHolding = true; holdTime = 0f; }
+
+                holdTime += Time.deltaTime;
+
+                if (fillCircleImage != null)
+                    fillCircleImage.fillAmount = Mathf.Clamp01(holdTime / introDatabase.holdDuration);
+
+                if (holdTime >= introDatabase.holdDuration && !isTransitioningToPressed)
+                    OnSkipHoldCompleted();
+            }
+            else if (isHolding)
+            {
+                isHolding = false;
+                holdTime = 0f;
+
+                if (fillCircleImage != null)
+                    fillCircleImage.fillAmount = 0f;
             }
         }
 
@@ -439,7 +438,7 @@ namespace Assets.Scripts
 
             yield return new WaitForSeconds(pressedHold);
 
-            ExecuteSkipAction();
+            SkipAllIntro();
 
             elapsed = 0f;
             while (elapsed < crossfade)
@@ -518,6 +517,18 @@ namespace Assets.Scripts
         private void AdvanceToNextSlide()
         {
             currentState = IntroState.Transitioning;
+        }
+
+        private void SkipAllIntro()
+        {
+            if (sceneLoadStarted) return;
+
+            if (typewriterCoroutine != null) { StopCoroutine(typewriterCoroutine); typewriterCoroutine = null; }
+            if (secondTypewriterCoroutine != null) { StopCoroutine(secondTypewriterCoroutine); secondTypewriterCoroutine = null; }
+
+            currentState = IntroState.Completed;
+            ResetSkipButton();
+            LoadNextScene();
         }
 
         private void ResetSkipButton()
@@ -625,6 +636,8 @@ namespace Assets.Scripts
 
         private void LoadNextScene()
         {
+            if (sceneLoadStarted) return;
+            sceneLoadStarted = true;
             Debug.Log("[IntroVideoManager] Loading next scene...");
 
             if (SceneLoader.Instance == null)
