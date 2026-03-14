@@ -16,7 +16,8 @@ namespace Assets.Scripts
         [Header("Visuals")]
         [SerializeField] private string displayName = "Key";
         [Tooltip("Іконка для UI")]
-        public Sprite itemIcon; 
+        public Sprite itemIcon;
+        [SerializeField] private ItemData itemData;
         [SerializeField] private bool destroyOnCollect = true;
 
         [Header("Audio")]
@@ -63,8 +64,9 @@ namespace Assets.Scripts
                 }
                 else
                 {
-                    inv.AddItem(displayName);
-                    Debug.Log($"Picked up item: {displayName}");
+                    string itemKey = (itemData != null) ? itemData.itemId : displayName;
+                    inv.AddItem(itemKey);
+                    Debug.Log($"Picked up item: {itemKey}");
                 }
             }
             else
@@ -77,7 +79,7 @@ namespace Assets.Scripts
                 AudioSource.PlayClipAtPoint(pickupSound, transform.position, pickupVolume);
             }
 
-            if (destroyOnCollect)
+            if (destroyOnCollect && GetComponent<SaveableObject>() == null)
             {
                 Destroy(gameObject);
             }

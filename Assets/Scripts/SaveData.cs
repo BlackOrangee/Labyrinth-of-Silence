@@ -20,6 +20,7 @@ namespace Assets.Scripts
         public List<QuestData> questsData;
 
         public string sceneName;
+        public int sceneBuildIndex = -1;
 
         public List<GameObjectState> gameObjectStates;
 
@@ -45,6 +46,13 @@ namespace Assets.Scripts
         public EnemyState enemyState;
         public CollectItemState collectItemState;
         public LanternState lanternState;
+        public LampState lampState;
+        public ActivatableState activatableState;
+        public GeneratorTaskState generatorTaskState;
+        public KeypadState keypadState;
+        public FuelCanisterState fuelCanisterState;
+        public NewspaperPickupState newspaperPickupState;
+        public ThoughtTriggerState thoughtTriggerState;
     }
 
     [Serializable]
@@ -81,7 +89,12 @@ namespace Assets.Scripts
     public class DoorState
     {
         public bool isOpen;
-        public float currentRotationY;
+        public bool isLocked;
+        public float pivotRotX, pivotRotY, pivotRotZ;
+        public float pivotRotW = 1f;
+        public bool hasPivotB;
+        public float pivotBRotX, pivotBRotY, pivotBRotZ;
+        public float pivotBRotW = 1f;
     }
 
     [Serializable]
@@ -105,6 +118,50 @@ namespace Assets.Scripts
         public float currentRange;
         public float currentIntensity;
         public int currentModeIndex;
+    }
+
+    [Serializable]
+    public class LampState
+    {
+        public float currentFuel;
+        public int lightMode;
+    }
+
+    [Serializable]
+    public class ActivatableState
+    {
+        public bool isActivated;
+    }
+
+    [Serializable]
+    public class GeneratorTaskState
+    {
+        public bool isRepaired;
+        public bool hasFuel;
+    }
+
+    [Serializable]
+    public class KeypadState
+    {
+        public bool isUnlocked;
+    }
+
+    [Serializable]
+    public class FuelCanisterState
+    {
+        public float canisterCapacity;
+    }
+
+    [Serializable]
+    public class NewspaperPickupState
+    {
+        public bool isPickedUp;
+    }
+
+    [Serializable]
+    public class ThoughtTriggerState
+    {
+        public bool hasBeenTriggered;
     }
 
     [Serializable]
@@ -135,6 +192,8 @@ namespace Assets.Scripts
         public float rotY;
         public float rotZ;
         public float rotW;
+
+        public float currentSanity = -1f;
 
         public PlayerData()
         {
@@ -176,6 +235,14 @@ namespace Assets.Scripts
             collectedKeys = new List<KeyColorType>();
             collectedNewspaperIds = new List<string>();
         }
+    }
+
+    [Serializable]
+    public class PlayerStatsTransitData
+    {
+        public float sanity = -1f;
+        public float fuel = -1f;
+        public int lampMode = -1;
     }
 
     [Serializable]

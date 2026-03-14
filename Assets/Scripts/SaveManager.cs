@@ -49,6 +49,9 @@ namespace Assets.Scripts
         private string saveFolderPath => Path.Combine(Application.persistentDataPath, "Saves");
         private string screenshotFolderPath => Path.Combine(Application.persistentDataPath, "Screenshots");
 
+        private Canvas loadOverlayCanvas;
+        private UnityEngine.UI.Image loadOverlayImage;
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -59,6 +62,7 @@ namespace Assets.Scripts
 
             instance = this;
             DontDestroyOnLoad(gameObject);
+            CreateLoadOverlay();
 
             if (!Directory.Exists(saveFolderPath))
             {
@@ -71,6 +75,29 @@ namespace Assets.Scripts
             }
 
             Debug.Log($"[SaveManager] Initialized. Save folder: {saveFolderPath}");
+        }
+
+        private void CreateLoadOverlay()
+        {
+            GameObject go = new GameObject("SaveManager_LoadOverlay");
+            DontDestroyOnLoad(go);
+
+            loadOverlayCanvas = go.AddComponent<Canvas>();
+            loadOverlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            loadOverlayCanvas.sortingOrder = 9999;
+            go.AddComponent<UnityEngine.UI.CanvasScaler>();
+            go.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            GameObject panel = new GameObject("Panel");
+            panel.transform.SetParent(go.transform, false);
+            loadOverlayImage = panel.AddComponent<UnityEngine.UI.Image>();
+            loadOverlayImage.color = Color.black;
+            RectTransform rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+            go.SetActive(false);
         }
 
         #region Save/Load Methods
@@ -105,6 +132,7 @@ namespace Assets.Scripts
             }
 
             saveData.sceneName = SceneManager.GetActiveScene().name;
+            saveData.sceneBuildIndex = SceneManager.GetActiveScene().buildIndex;
 
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
@@ -143,6 +171,14 @@ namespace Assets.Scripts
             //     }
             // }
 
+            SanityController sanity = FindFirstObjectByType<SanityController>();
+            if (sanity != null)
+            {
+                var sanityField = typeof(SanityController).GetField("_currentSanity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (sanityField != null)
+                    saveData.playerData.currentSanity = (float)sanityField.GetValue(sanity);
+            }
+
             SaveAllSceneObjects(saveData);
 
             string screenshotPath = Path.Combine(screenshotFolderPath, $"save_{slotIndex}.png");
@@ -152,7 +188,7 @@ namespace Assets.Scripts
             string savePath = GetSaveFilePath(slotIndex);
             try
             {
-                string json = JsonUtility.ToJson(saveData, true);
+                string json = JsonUtility.ToJson(saveData, false);
                 File.WriteAllText(savePath, json);
                 Debug.Log($"[SaveManager] Game saved to slot {slotIndex}: {savePath}");
             }
@@ -191,8 +227,15 @@ namespace Assets.Scripts
 
                 currentLoadData = saveData;
 
+                Time.timeScale = 1f;
+                SimpleInventory.ClearTransit();
+                LampController.ClearPlayerTransit();
+
                 LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(saveData.sceneName);
-                SceneLoader.Instance.LoadScene(saveData.sceneName, config);
+                if (saveData.sceneBuildIndex >= 0)
+                    SceneLoader.Instance.LoadScene(saveData.sceneBuildIndex, config);
+                else
+                    SceneLoader.Instance.LoadScene(saveData.sceneName, config);
             }
             catch (Exception e)
             {
@@ -201,6 +244,101 @@ namespace Assets.Scripts
         }
 
         private SaveData currentLoadData;
+
+        public static bool IsLoadingGame { get; private set; }
+
+        #region Checkpoint
+
+        private static string CheckpointPath =>
+            Path.Combine(Application.persistentDataPath, "checkpoint.json");
+
+        private void SaveCheckpoint()
+        {
+            try
+            {
+                SaveData saveData = new SaveData();
+                saveData.sceneName = SceneManager.GetActiveScene().name;
+                saveData.sceneBuildIndex = SceneManager.GetActiveScene().buildIndex;
+
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                    saveData.playerData = new PlayerData(player.transform);
+
+                SanityController sanity = FindFirstObjectByType<SanityController>();
+                if (sanity != null)
+                {
+                    var f = typeof(SanityController).GetField("_currentSanity",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (f != null)
+                        saveData.playerData.currentSanity = (float)f.GetValue(sanity);
+                }
+
+                SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>(FindObjectsInactive.Include);
+                if (inventory != null)
+                {
+                    saveData.inventoryData.items = new List<string>(inventory.GetItems());
+                    saveData.inventoryData.collectedKeys = new List<KeyColorType>(inventory.GetCollectedKeys());
+                    saveData.inventoryData.collectedNewspaperIds = new List<string>();
+                    foreach (var n in inventory.GetCollectedNewspapers())
+                        if (n != null) saveData.inventoryData.collectedNewspaperIds.Add(n.newspaperId);
+                }
+
+                SaveAllSceneObjects(saveData);
+
+                File.WriteAllText(CheckpointPath, JsonUtility.ToJson(saveData, false));
+                Debug.Log($"[SaveManager] Checkpoint saved for scene: {saveData.sceneName}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveManager] Checkpoint save failed: {e.Message}");
+            }
+        }
+
+        private IEnumerator SaveCheckpointDelayed(string sceneName)
+        {
+            yield return null;
+            yield return null;
+            while (IsLoadingGame) yield return null;
+            yield return null;
+            if (SceneManager.GetActiveScene().name == sceneName)
+                SaveCheckpoint();
+        }
+
+        public void LoadCheckpoint()
+        {
+            if (!File.Exists(CheckpointPath))
+            {
+                Debug.LogWarning("[SaveManager] No checkpoint found — fresh restart.");
+                SimpleInventory.ClearTransit();
+                LampController.ClearPlayerTransit();
+                Time.timeScale = 1f;
+                string scene = SceneManager.GetActiveScene().name;
+                LoadingScreenConfig cfg = SceneLoader.Instance.GetConfigForScene(scene);
+                SceneLoader.Instance.LoadScene(scene, cfg);
+                return;
+            }
+
+            try
+            {
+                SaveData saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(CheckpointPath));
+                currentLoadData = saveData;
+                Time.timeScale = 1f;
+                SimpleInventory.ClearTransit();
+                LampController.ClearPlayerTransit();
+                LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(saveData.sceneName);
+                if (saveData.sceneBuildIndex >= 0)
+                    SceneLoader.Instance.LoadScene(saveData.sceneBuildIndex, config);
+                else
+                    SceneLoader.Instance.LoadScene(saveData.sceneName, config);
+                Debug.Log("[SaveManager] Loading from checkpoint...");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveManager] Checkpoint load failed: {e.Message}");
+            }
+        }
+
+        #endregion
 
         private void OnEnable()
         {
@@ -214,8 +352,24 @@ namespace Assets.Scripts
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (currentLoadData != null)
+            StartCoroutine(SaveCheckpointDelayed(scene.name));
+
+            if (currentLoadData == null) return;
+
+            bool isTarget = currentLoadData.sceneBuildIndex >= 0
+                ? scene.buildIndex == currentLoadData.sceneBuildIndex
+                : scene.name == currentLoadData.sceneName;
+
+            if (isTarget)
             {
+                IsLoadingGame = true;
+
+                if (loadOverlayCanvas != null)
+                {
+                    loadOverlayCanvas.gameObject.SetActive(true);
+                    loadOverlayImage.color = Color.black;
+                }
+
                 StartCoroutine(ApplyLoadDataDelayed(currentLoadData));
                 currentLoadData = null;
             }
@@ -223,9 +377,8 @@ namespace Assets.Scripts
 
         private IEnumerator ApplyLoadDataDelayed(SaveData saveData)
         {
-            yield return new WaitForEndOfFrame();
-
-            Time.timeScale = 1f;
+            yield return null;
+            yield return null;
 
             Debug.Log($"[SaveManager] Applying save data...");
 
@@ -247,14 +400,15 @@ namespace Assets.Scripts
                 }
             }
 
-            SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>();
+            SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>(FindObjectsInactive.Include);
+            Debug.Log($"[SaveManager] Save data contents — items: [{string.Join(", ", saveData.inventoryData.items)}], keys: [{string.Join(", ", saveData.inventoryData.collectedKeys)}], newspapers: [{string.Join(", ", saveData.inventoryData.collectedNewspaperIds)}]");
             if (inventory != null)
             {
                 inventory.ClearInventory();
 
                 foreach (string item in saveData.inventoryData.items)
                 {
-                    // inventory.AddItem(item);
+                    inventory.AddItem(item);
                 }
 
                 if (saveData.inventoryData.collectedKeys != null)
@@ -262,14 +416,24 @@ namespace Assets.Scripts
                     inventory.SetCollectedKeys(saveData.inventoryData.collectedKeys);
                 }
 
-                if (saveData.inventoryData.collectedNewspaperIds != null && newspaperDatabase != null)
+                if (saveData.inventoryData.collectedNewspaperIds != null && saveData.inventoryData.collectedNewspaperIds.Count > 0)
                 {
-                    List<NewspaperData> newspapers = newspaperDatabase.GetNewspapersByIds(saveData.inventoryData.collectedNewspaperIds);
-                    foreach (NewspaperData newspaper in newspapers)
+                    if (newspaperDatabase != null)
                     {
-                        inventory.AddNewspaper(newspaper);
+                        List<NewspaperData> newspapers = newspaperDatabase.GetNewspapersByIds(saveData.inventoryData.collectedNewspaperIds);
+                        foreach (NewspaperData newspaper in newspapers)
+                            inventory.AddNewspaper(newspaper);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[SaveManager] newspaperDatabase не назначена — газеты восстановлены как pending IDs");
+                        inventory.RestoreNewspaperIds(saveData.inventoryData.collectedNewspaperIds);
                     }
                 }
+            }
+            else
+            {
+                Debug.LogWarning("[SaveManager] SimpleInventory not found — inventory not restored!");
             }
 
             // if (QuestTracker.Instance != null)
@@ -292,9 +456,44 @@ namespace Assets.Scripts
             //     }
             // }
 
+            if (saveData.playerData.currentSanity >= 0f)
+            {
+                SanityController sanity = FindFirstObjectByType<SanityController>();
+                if (sanity != null)
+                {
+                    typeof(SanityController).GetField("_currentSanity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(sanity, saveData.playerData.currentSanity);
+                }
+            }
+
             RestoreAllSceneObjects(saveData);
 
+            if (inventory != null)
+                HideAlreadyCollectedItems(inventory);
+
+            IsLoadingGame = false;
+
             Debug.Log($"[SaveManager] Save data applied successfully!");
+
+            yield return StartCoroutine(FadeOutLoadOverlay());
+        }
+
+        private IEnumerator FadeOutLoadOverlay()
+        {
+            if (loadOverlayCanvas == null) yield break;
+
+            float duration = 0.4f;
+            float t = 0f;
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                Color c = loadOverlayImage.color;
+                c.a = 1f - Mathf.Clamp01(t / duration);
+                loadOverlayImage.color = c;
+                yield return null;
+            }
+
+            loadOverlayCanvas.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -385,7 +584,7 @@ namespace Assets.Scripts
         /// </summary>
         private void SaveAllSceneObjects(SaveData saveData)
         {
-            SaveableObject[] saveableObjects = FindObjectsByType<SaveableObject>(FindObjectsSortMode.None);
+            SaveableObject[] saveableObjects = FindObjectsByType<SaveableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             Debug.Log($"[SaveManager] Found {saveableObjects.Length} saveable objects in scene");
 
@@ -418,14 +617,70 @@ namespace Assets.Scripts
         private void SaveComponentStates(GameObject obj, GameObjectState state)
         {
             DoorController door = obj.GetComponent<DoorController>();
-            // if (door != null)
-            // {
-            //     state.doorState = new DoorState
-            //     {
-            //         isOpen = (bool)typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(door),
-            //         currentRotationY = door.doorPivot != null ? door.doorPivot.localRotation.eulerAngles.y : 0f
-            //     };
-            // }
+            if (door != null)
+            {
+                var isOpenField = typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var pivotField = typeof(DoorController).GetField("doorPivot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                Transform pivot = pivotField?.GetValue(door) as Transform;
+                Quaternion rot = pivot != null ? pivot.localRotation : Quaternion.identity;
+                state.doorState = new DoorState
+                {
+                    isOpen = (bool)(isOpenField?.GetValue(door) ?? false),
+                    pivotRotX = rot.x, pivotRotY = rot.y, pivotRotZ = rot.z, pivotRotW = rot.w
+                };
+            }
+
+            if (state.doorState == null)
+            {
+                ConditionalDoor cDoor = obj.GetComponent<ConditionalDoor>();
+                if (cDoor != null)
+                {
+                    var isOpenField = typeof(ConditionalDoor).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var isLockedField = typeof(ConditionalDoor).GetField("isLocked", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var pivotField = typeof(ConditionalDoor).GetField("doorPivot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    Transform pivot = pivotField?.GetValue(cDoor) as Transform;
+                    Quaternion rot = pivot != null ? pivot.localRotation : Quaternion.identity;
+                    state.doorState = new DoorState
+                    {
+                        isOpen = (bool)(isOpenField?.GetValue(cDoor) ?? false),
+                        isLocked = (bool)(isLockedField?.GetValue(cDoor) ?? true),
+                        pivotRotX = rot.x, pivotRotY = rot.y, pivotRotZ = rot.z, pivotRotW = rot.w
+                    };
+                }
+            }
+
+            if (state.doorState == null)
+            {
+                DoorOpen doorOpen = obj.GetComponent<DoorOpen>();
+                if (doorOpen != null)
+                {
+                    var isOpenField = typeof(DoorOpen).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    Quaternion rot = doorOpen.doorPivot != null ? doorOpen.doorPivot.localRotation : Quaternion.identity;
+                    state.doorState = new DoorState
+                    {
+                        isOpen = (bool)(isOpenField?.GetValue(doorOpen) ?? false),
+                        pivotRotX = rot.x, pivotRotY = rot.y, pivotRotZ = rot.z, pivotRotW = rot.w
+                    };
+                }
+            }
+
+            if (state.doorState == null)
+            {
+                DoorOpen2 doorOpen2 = obj.GetComponent<DoorOpen2>();
+                if (doorOpen2 != null)
+                {
+                    var isOpenField = typeof(DoorOpen2).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    Quaternion rotA = doorOpen2.doorPivotA != null ? doorOpen2.doorPivotA.localRotation : Quaternion.identity;
+                    Quaternion rotB = doorOpen2.doorPivotB != null ? doorOpen2.doorPivotB.localRotation : Quaternion.identity;
+                    state.doorState = new DoorState
+                    {
+                        isOpen = (bool)(isOpenField?.GetValue(doorOpen2) ?? false),
+                        pivotRotX = rotA.x, pivotRotY = rotA.y, pivotRotZ = rotA.z, pivotRotW = rotA.w,
+                        hasPivotB = true,
+                        pivotBRotX = rotB.x, pivotBRotY = rotB.y, pivotBRotZ = rotB.z, pivotBRotW = rotB.w
+                    };
+                }
+            }
 
             EnemyAI enemy = obj.GetComponent<EnemyAI>();
             if (enemy != null)
@@ -468,6 +723,75 @@ namespace Assets.Scripts
                     currentModeIndex = (int)(modeIndexField?.GetValue(lantern) ?? 1)
                 };
             }
+
+            LampController lamp = obj.GetComponent<LampController>();
+            if (lamp != null)
+            {
+                var fuelField = typeof(LampController).GetField("currentFuel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var modeField = typeof(LampController).GetField("lightMode", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                state.lampState = new LampState
+                {
+                    currentFuel = (float)(fuelField?.GetValue(lamp) ?? lamp.maxFuel),
+                    lightMode = (int)(modeField?.GetValue(lamp) ?? 0)
+                };
+            }
+
+            ActivatableObject activatable = obj.GetComponent<ActivatableObject>();
+            if (activatable != null)
+            {
+                state.activatableState = new ActivatableState
+                {
+                    isActivated = activatable.IsActivated()
+                };
+            }
+
+            GeneratorTask generator = obj.GetComponent<GeneratorTask>();
+            if (generator != null)
+            {
+                var isRepairedField = typeof(GeneratorTask).GetField("isRepaired", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var hasFuelField = typeof(GeneratorTask).GetField("hasFuel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                state.generatorTaskState = new GeneratorTaskState
+                {
+                    isRepaired = (bool)(isRepairedField?.GetValue(generator) ?? false),
+                    hasFuel = (bool)(hasFuelField?.GetValue(generator) ?? false)
+                };
+            }
+
+            KeypadController keypad = obj.GetComponent<KeypadController>();
+            if (keypad != null)
+            {
+                state.keypadState = new KeypadState { isUnlocked = keypad.IsLocked };
+            }
+
+            FuelCanister fuelCanister = obj.GetComponent<FuelCanister>();
+            if (fuelCanister != null)
+            {
+                var capacityField = typeof(FuelCanister).GetField("canisterCapacity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                state.fuelCanisterState = new FuelCanisterState
+                {
+                    canisterCapacity = (float)(capacityField?.GetValue(fuelCanister) ?? 0f)
+                };
+            }
+
+            NewspaperPickup newspaperPickup = obj.GetComponent<NewspaperPickup>();
+            if (newspaperPickup != null)
+            {
+                var isPickedUpField = typeof(NewspaperPickup).GetField("isPickedUp", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                state.newspaperPickupState = new NewspaperPickupState
+                {
+                    isPickedUp = (bool)(isPickedUpField?.GetValue(newspaperPickup) ?? false)
+                };
+            }
+
+            ThoughtTrigger thoughtTrigger = obj.GetComponent<ThoughtTrigger>();
+            if (thoughtTrigger != null)
+            {
+                var triggeredField = typeof(ThoughtTrigger).GetField("hasBeenTriggered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                state.thoughtTriggerState = new ThoughtTriggerState
+                {
+                    hasBeenTriggered = (bool)(triggeredField?.GetValue(thoughtTrigger) ?? false)
+                };
+            }
         }
 
         /// <summary>
@@ -481,7 +805,7 @@ namespace Assets.Scripts
                 return;
             }
 
-            SaveableObject[] saveableObjects = FindObjectsByType<SaveableObject>(FindObjectsSortMode.None);
+            SaveableObject[] saveableObjects = FindObjectsByType<SaveableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             var objectsById = new System.Collections.Generic.Dictionary<string, SaveableObject>();
 
             foreach (SaveableObject obj in saveableObjects)
@@ -535,16 +859,55 @@ namespace Assets.Scripts
         {
             if (state.doorState != null)
             {
-                // DoorController door = obj.GetComponent<DoorController>();
-                // if (door != null)
-                // {
-                //     typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(door, state.doorState.isOpen);
-                //
-                //     if (door.doorPivot != null && state.doorState.isOpen)
-                //     {
-                //         door.doorPivot.localRotation = Quaternion.Euler(0, state.doorState.currentRotationY, 0);
-                //     }
-                // }
+                Quaternion pivotRot = new Quaternion(
+                    state.doorState.pivotRotX, state.doorState.pivotRotY,
+                    state.doorState.pivotRotZ, state.doorState.pivotRotW);
+
+                DoorController door = obj.GetComponent<DoorController>();
+                if (door != null)
+                {
+                    typeof(DoorController).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(door, state.doorState.isOpen);
+                    var pivotField = typeof(DoorController).GetField("doorPivot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    Transform pivot = pivotField?.GetValue(door) as Transform;
+                    if (pivot != null) pivot.localRotation = pivotRot;
+                }
+
+                ConditionalDoor cDoor = obj.GetComponent<ConditionalDoor>();
+                if (cDoor != null)
+                {
+                    typeof(ConditionalDoor).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(cDoor, state.doorState.isOpen);
+                    typeof(ConditionalDoor).GetField("isLocked", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(cDoor, state.doorState.isLocked);
+                    var pivotField = typeof(ConditionalDoor).GetField("doorPivot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    Transform pivot = pivotField?.GetValue(cDoor) as Transform;
+                    if (pivot != null) pivot.localRotation = pivotRot;
+                    typeof(ConditionalDoor).GetMethod("UpdateIndicator", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.Invoke(cDoor, null);
+                }
+
+                DoorOpen doorOpen = obj.GetComponent<DoorOpen>();
+                if (doorOpen != null)
+                {
+                    typeof(DoorOpen).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(doorOpen, state.doorState.isOpen);
+                    if (doorOpen.doorPivot != null) doorOpen.doorPivot.localRotation = pivotRot;
+                }
+
+                DoorOpen2 doorOpen2 = obj.GetComponent<DoorOpen2>();
+                if (doorOpen2 != null)
+                {
+                    typeof(DoorOpen2).GetField("isOpen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(doorOpen2, state.doorState.isOpen);
+                    if (doorOpen2.doorPivotA != null) doorOpen2.doorPivotA.localRotation = pivotRot;
+                    if (state.doorState.hasPivotB && doorOpen2.doorPivotB != null)
+                    {
+                        doorOpen2.doorPivotB.localRotation = new Quaternion(
+                            state.doorState.pivotBRotX, state.doorState.pivotBRotY,
+                            state.doorState.pivotBRotZ, state.doorState.pivotBRotW);
+                    }
+                }
             }
 
             if (state.enemyState != null)
@@ -611,6 +974,144 @@ namespace Assets.Scripts
                     lantern.SetRange(state.lanternState.currentRange);
                     lantern.SetIntensity(state.lanternState.currentIntensity);
                 }
+            }
+
+            if (state.lampState != null)
+            {
+                LampController lamp = obj.GetComponent<LampController>();
+                if (lamp != null)
+                {
+                    typeof(LampController).GetField("currentFuel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(lamp, state.lampState.currentFuel);
+                    typeof(LampController).GetField("lightMode", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.SetValue(lamp, state.lampState.lightMode);
+                    typeof(LampController).GetMethod("UpdateLightTargets", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.Invoke(lamp, null);
+                    typeof(LampController).GetMethod("UpdateUI", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.Invoke(lamp, null);
+                }
+            }
+
+            if (state.activatableState != null && state.activatableState.isActivated)
+            {
+                ActivatableObject activatable = obj.GetComponent<ActivatableObject>();
+                activatable?.RestoreActivatedState();
+            }
+
+            if (state.generatorTaskState != null)
+            {
+                GeneratorTask generator = obj.GetComponent<GeneratorTask>();
+                generator?.RestoreState(state.generatorTaskState.isRepaired, state.generatorTaskState.hasFuel);
+            }
+
+            if (state.keypadState != null && state.keypadState.isUnlocked)
+            {
+                KeypadController keypad = obj.GetComponent<KeypadController>();
+                keypad?.RestoreUnlockedState();
+            }
+
+            if (state.fuelCanisterState != null)
+            {
+                FuelCanister fuelCanister = obj.GetComponent<FuelCanister>();
+                if (fuelCanister != null)
+                {
+                    var capacityField = typeof(FuelCanister).GetField("canisterCapacity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    capacityField?.SetValue(fuelCanister, state.fuelCanisterState.canisterCapacity);
+                    // Если канистра пуста — скрываем (она была уничтожена в игре)
+                    if (state.fuelCanisterState.canisterCapacity <= 0.1f)
+                        obj.SetActive(false);
+                }
+            }
+
+            if (state.newspaperPickupState != null && state.newspaperPickupState.isPickedUp)
+            {
+                NewspaperPickup np = obj.GetComponent<NewspaperPickup>();
+                if (np != null)
+                {
+                    var isPickedUpField = typeof(NewspaperPickup).GetField("isPickedUp", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    isPickedUpField?.SetValue(np, true);
+                    var col = obj.GetComponent<Collider>();
+                    if (col != null) col.enabled = false;
+                    obj.SetActive(false);
+                }
+            }
+
+            if (state.thoughtTriggerState != null)
+            {
+                ThoughtTrigger thoughtTrigger = obj.GetComponent<ThoughtTrigger>();
+                if (thoughtTrigger != null)
+                {
+                    var triggeredField = typeof(ThoughtTrigger).GetField("hasBeenTriggered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    triggeredField?.SetValue(thoughtTrigger, state.thoughtTriggerState.hasBeenTriggered);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Hides CollectItem objects whose content already exists in the restored inventory.
+        /// Covers items that were destroyed on pickup (destroyOnCollect=true) and therefore
+        /// have no SaveableObject entry in the save file — they respawn fresh on scene load.
+        /// </summary>
+        private void HideAlreadyCollectedItems(SimpleInventory inventory)
+        {
+            List<string> inventoryItems = inventory.GetItems();
+            List<KeyColorType> inventoryKeys = inventory.GetCollectedKeys();
+            List<NewspaperData> inventoryNewspapers = inventory.GetCollectedNewspapers();
+            HashSet<string> newspaperIds = new HashSet<string>();
+            foreach (var n in inventoryNewspapers)
+                if (n != null) newspaperIds.Add(n.newspaperId);
+
+            NewspaperPickup[] allNewspapers = FindObjectsByType<NewspaperPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (NewspaperPickup np in allNewspapers)
+            {
+                if (!np.gameObject.activeSelf) continue;
+                if (np.newspaperData == null) continue;
+                if (!newspaperIds.Contains(np.newspaperData.newspaperId)) continue;
+
+                var isPickedUpField = typeof(NewspaperPickup).GetField("isPickedUp", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if ((bool)(isPickedUpField?.GetValue(np) ?? false)) continue;
+
+                isPickedUpField?.SetValue(np, true);
+                var col = np.GetComponent<Collider>();
+                if (col != null) col.enabled = false;
+                np.gameObject.SetActive(false);
+                Debug.Log($"[SaveManager] HideCollected: {np.gameObject.name} (newspaper already in inventory)");
+            }
+
+            CollectItem[] allCollectItems = FindObjectsByType<CollectItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            var keyColorField = typeof(CollectItem).GetField("keyColor", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var displayNameField = typeof(CollectItem).GetField("displayName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var isCollectedField = typeof(CollectItem).GetField("isCollected", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            Debug.Log($"[SaveManager] HideCollected: {allCollectItems.Length} CollectItems in scene, inventory has {inventoryItems.Count} items / {inventoryKeys.Count} keys");
+
+            foreach (CollectItem ci in allCollectItems)
+            {
+                if (keyColorField == null || displayNameField == null || isCollectedField == null) break;
+
+                if ((bool)isCollectedField.GetValue(ci)) continue;
+                if (!ci.gameObject.activeSelf) continue;
+
+                KeyColorType keyColor = (KeyColorType)keyColorField.GetValue(ci);
+                string displayName = (string)displayNameField.GetValue(ci);
+
+                bool inInventory = keyColor != KeyColorType.None
+                    ? inventoryKeys.Contains(keyColor)
+                    : !string.IsNullOrEmpty(displayName) && inventoryItems.Contains(displayName);
+
+                if (!inInventory) continue;
+
+                isCollectedField.SetValue(ci, true);
+                var collider = ci.GetComponent<Collider>();
+                if (collider != null) collider.enabled = false;
+                var renderer = ci.GetComponent<Renderer>();
+                if (renderer != null) renderer.enabled = false;
+                foreach (Transform child in ci.transform)
+                    child.gameObject.SetActive(false);
+                ci.gameObject.SetActive(false);
+
+                Debug.Log($"[SaveManager] HideCollected: {ci.gameObject.name} (already in inventory)");
             }
         }
 

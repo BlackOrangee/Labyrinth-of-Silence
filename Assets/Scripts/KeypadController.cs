@@ -149,5 +149,18 @@ namespace Assets.Scripts
             displayText.text = currentInput.Length > 0 ? currentInput : "----";
             displayText.color = defaultColor;
         }
+
+        /// <summary>
+        /// Restore unlocked state on save load (visual only — OnCodeCorrect not fired again)
+        /// </summary>
+        public void RestoreUnlockedState()
+        {
+            IsLocked = true;
+            if (displayText != null)
+            {
+                displayText.text = "OPEN";
+                displayText.color = successColor;
+            }
+        }
     }
 }

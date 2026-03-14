@@ -266,6 +266,15 @@ namespace Assets.Scripts
         }
 
         /// <summary>
+        /// Restore activated state on save load (visual only — key already in inventory)
+        /// </summary>
+        public void RestoreActivatedState()
+        {
+            isActivated = true;
+            SetVisualState(true);
+        }
+
+        /// <summary>
         /// Trigger thought if ThoughtTrigger component is attached
         /// </summary>
         private void TriggerThought()

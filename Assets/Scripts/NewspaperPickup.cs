@@ -137,7 +137,10 @@ namespace Assets.Scripts
 
             yield return new WaitForSeconds(0.1f);
 
-            Destroy(gameObject);
+            if (GetComponent<SaveableObject>() != null)
+                gameObject.SetActive(false);
+            else
+                Destroy(gameObject);
         }
 
         /// <summary>

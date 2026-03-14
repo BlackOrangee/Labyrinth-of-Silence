@@ -4,6 +4,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 using System.Collections;
+using System.IO;
 
 namespace Assets.Scripts
 {
@@ -81,9 +82,52 @@ namespace Assets.Scripts
 
         private bool _isHeartbeatMuted = false;
 
+        private void LoadTransit()
+        {
+            string path = Path.Combine(Application.persistentDataPath, "transit_player_stats.json");
+            if (!File.Exists(path)) return;
+            try
+            {
+                var data = JsonUtility.FromJson<PlayerStatsTransitData>(File.ReadAllText(path));
+                if (data != null && data.sanity >= 0f)
+                {
+                    _currentSanity = data.sanity;
+                    Debug.Log($"[SanityController] Transit loaded: sanity={_currentSanity}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SanityController] Transit load failed: {e.Message}");
+            }
+        }
+
+        private void SaveTransit()
+        {
+            string path = Path.Combine(Application.persistentDataPath, "transit_player_stats.json");
+            try
+            {
+                PlayerStatsTransitData data = null;
+                if (File.Exists(path))
+                    data = JsonUtility.FromJson<PlayerStatsTransitData>(File.ReadAllText(path));
+                if (data == null) data = new PlayerStatsTransitData();
+                data.sanity = _currentSanity;
+                File.WriteAllText(path, JsonUtility.ToJson(data));
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SanityController] Transit save failed: {e.Message}");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            SaveTransit();
+        }
+
         private void Start()
         {
             _currentSanity = maxSanity;
+            LoadTransit();
 
             if (deathPanel != null) deathPanel.SetActive(false);
 
@@ -273,7 +317,13 @@ namespace Assets.Scripts
             StartCoroutine(CameraDropEffect());
         }
 
-        public void RestartGame() { SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
+        public void RestartGame()
+        {
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.LoadCheckpoint();
+            else
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
 
         private IEnumerator CameraDropEffect()
         {

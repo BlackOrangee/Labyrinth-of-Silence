@@ -53,7 +53,10 @@ namespace Assets.Scripts
 
                 if (destroyOnEmpty && canisterCapacity <= 0.1f)
                 {
-                    Destroy(gameObject);
+                    if (GetComponent<SaveableObject>() != null)
+                        gameObject.SetActive(false);
+                    else
+                        Destroy(gameObject);
                 }
 
             }

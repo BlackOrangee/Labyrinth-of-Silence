@@ -229,6 +229,18 @@ namespace Assets.Scripts
 
         public int GetCollectedNewspapersCount() => collectedNewspapers.Count + pendingNewspaperIds.Count;
 
+        public void RestoreNewspaperIds(List<string> ids)
+        {
+            foreach (string id in ids)
+            {
+                if (!HasNewspaper(id))
+                    pendingNewspaperIds.Add(id);
+            }
+            ResolveNewspaperIds();
+            SaveTransit();
+            OnInventoryChanged?.Invoke();
+        }
+
         public void ClearInventory()
         {
             collectedKeys.Clear();

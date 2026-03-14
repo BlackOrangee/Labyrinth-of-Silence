@@ -16,6 +16,9 @@ namespace Assets.Scripts
         [Tooltip("Automatically save this object")]
         public bool autoSave = true;
 
+        [Tooltip("Save transform (position/rotation/scale). Enable for moving objects like enemies. Disable for static doors/items to reduce save file size.")]
+        public bool saveTransform = true;
+
         public string UniqueId => uniqueId;
 
         private void Awake()

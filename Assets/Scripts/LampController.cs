@@ -1,11 +1,75 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
+using System.IO;
 
 namespace Assets.Scripts
 {
     public class LampController : MonoBehaviour
     {
+        private static string PlayerStatsTransitPath =>
+            Path.Combine(Application.persistentDataPath, "transit_player_stats.json");
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void ClearTransitOnSessionStart()
+        {
+            ClearPlayerTransit();
+        }
+
+        public static void ClearPlayerTransit()
+        {
+            try
+            {
+                if (File.Exists(PlayerStatsTransitPath))
+                    File.Delete(PlayerStatsTransitPath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[LampController] Transit clear failed: {e.Message}");
+            }
+        }
+
+        private void LoadTransit()
+        {
+            if (!File.Exists(PlayerStatsTransitPath)) return;
+            try
+            {
+                var data = JsonUtility.FromJson<PlayerStatsTransitData>(File.ReadAllText(PlayerStatsTransitPath));
+                if (data == null) return;
+                if (data.fuel >= 0f) currentFuel = data.fuel;
+                if (data.lampMode >= 0) lightMode = data.lampMode;
+                Debug.Log($"[LampController] Transit loaded: fuel={currentFuel}, mode={lightMode}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[LampController] Transit load failed: {e.Message}");
+            }
+        }
+
+        private void SaveTransit()
+        {
+            try
+            {
+                PlayerStatsTransitData data = null;
+                if (File.Exists(PlayerStatsTransitPath))
+                    data = JsonUtility.FromJson<PlayerStatsTransitData>(File.ReadAllText(PlayerStatsTransitPath));
+                if (data == null) data = new PlayerStatsTransitData();
+                data.fuel = currentFuel;
+                data.lampMode = lightMode;
+                File.WriteAllText(PlayerStatsTransitPath, JsonUtility.ToJson(data));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[LampController] Transit save failed: {e.Message}");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            SaveTransit();
+        }
+
         [Header("MAIN GROUP")]
         [Tooltip("Перетягни сюди об'єкт Light_Group, в якому лежать світло і вогонь")]
         public GameObject lightGroupObject; 
@@ -70,6 +134,8 @@ namespace Assets.Scripts
         private void Start()
         {
             currentFuel = maxFuel;
+            lightMode = 0;
+            LoadTransit();
 
             if (fuelSlider != null)
             {

@@ -84,6 +84,11 @@ public class ThoughtTrigger : MonoBehaviour
             return;
         }
 
+        if (SaveManager.IsLoadingGame)
+        {
+            return;
+        }
+
         if (showOnlyOnce && hasBeenTriggered)
         {
             return;

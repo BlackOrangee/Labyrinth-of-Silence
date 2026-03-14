@@ -304,10 +304,16 @@ namespace Assets.Scripts
 
         public void RestartLevel()
         {
-            Time.timeScale = 1f;
-            string currentScene = SceneManager.GetActiveScene().name;
-            LoadingScreenConfig config = SceneLoader.Instance.GetConfigForScene(currentScene);
-            SceneLoader.Instance.LoadScene(currentScene, config);
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.LoadCheckpoint();
+            }
+            else
+            {
+                Time.timeScale = 1f;
+                string currentScene = SceneManager.GetActiveScene().name;
+                SceneLoader.Instance.LoadScene(currentScene);
+            }
         }
 
         public void LoadMainMenu()

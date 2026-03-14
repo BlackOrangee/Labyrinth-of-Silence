@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Assets.Scripts
@@ -23,6 +24,11 @@ namespace Assets.Scripts
         [Header("Items Needed")]
         [Tooltip("ID предмета в SimpleInventory")]
         [SerializeField] private string fuelItemName = "FuelCanister";
+
+        [Header("Skill Check Cancel")]
+        [SerializeField] private float cancelDistance = 2.5f;
+
+        private bool isSkillCheckActive = false;
 
         [Header("Effects")]
         [SerializeField] private AudioSource generatorAudio;
@@ -93,14 +99,34 @@ namespace Assets.Scripts
             if (hasFuel || debugHasFuel)
             {
                 Debug.Log("Generator: Starting Skill Check...");
+                isSkillCheckActive = true;
                 skillCheckSystem.OnSeriesComplete = OnSuccess;
                 skillCheckSystem.OnFail = OnFail;
-                skillCheckSystem.StartRepair(); 
+                skillCheckSystem.StartRepair();
+                StartCoroutine(MonitorPlayerDistance(actor));
             }
         }
+        private IEnumerator MonitorPlayerDistance(GameObject player)
+        {
+            while (isSkillCheckActive)
+            {
+                if (player == null || Vector3.Distance(transform.position, player.transform.position) > cancelDistance)
+                {
+                    isSkillCheckActive = false;
+                    skillCheckSystem.ForceStop();
+                    skillCheckSystem.OnSeriesComplete = null;
+                    skillCheckSystem.OnFail = null;
+                    Debug.Log("Generator: Skill check cancelled — player moved away.");
+                    yield break;
+                }
+                yield return null;
+            }
+        }
+
         private void OnSuccess()
         {
             isRepaired = true;
+            isSkillCheckActive = false;
             Debug.Log("Generator: REPAIRED! Power Restored.");
             skillCheckSystem.OnSeriesComplete = null;
             skillCheckSystem.OnFail = null;
@@ -121,6 +147,7 @@ namespace Assets.Scripts
         }
         private void OnFail()
         {
+            isSkillCheckActive = false;
             Debug.Log("Generator Failed! Monster Alerted!");
             
             if (indicators != null)
@@ -138,6 +165,30 @@ namespace Assets.Scripts
                 monsterAI.TriggerChaseToLocation(transform.position);
             }
         }
+        public void RestoreState(bool repaired, bool fuel)
+        {
+            isRepaired = repaired;
+            hasFuel = fuel;
+
+            if (isRepaired)
+            {
+                if (indicators != null)
+                    indicators.SetState(GeneratorIndicators.IndicatorState.Success);
+
+                if (generatorAudio && workingSound)
+                {
+                    generatorAudio.clip = workingSound;
+                    generatorAudio.loop = true;
+                    generatorAudio.Play();
+                }
+            }
+            else if (hasFuel)
+            {
+                if (indicators != null)
+                    indicators.SetState(GeneratorIndicators.IndicatorState.Waiting);
+            }
+        }
+
         public void OnInteract(GameObject actor) => Interact(actor);
         public string GetPopupID()
         {
