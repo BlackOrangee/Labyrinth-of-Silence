@@ -187,8 +187,8 @@ namespace Assets.Scripts
                     ? Mathf.Log10(currentSettings.musicVolume) * 20
                     : -80f;
 
-                float sfxVolumeDb = currentSettings.sfxVolume > 0
-                    ? Mathf.Log10(currentSettings.sfxVolume) * 20
+                float sfxVolumeDb = currentSettings.masterVolume > 0
+                    ? Mathf.Log10(currentSettings.masterVolume) * 20
                     : -80f;
 
                 audioMixer.SetFloat("MasterVolume", masterVolumeDb);

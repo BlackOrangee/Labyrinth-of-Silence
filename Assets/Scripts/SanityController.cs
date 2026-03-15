@@ -81,6 +81,7 @@ namespace Assets.Scripts
         private Vignette _vignette;
 
         private bool _isHeartbeatMuted = false;
+        private bool _initialized = false;
 
         private void LoadTransit()
         {
@@ -103,6 +104,8 @@ namespace Assets.Scripts
 
         private void SaveTransit()
         {
+            if (!_initialized) return;
+            if (_isDead) return;
             string path = Path.Combine(Application.persistentDataPath, "transit_player_stats.json");
             try
             {
@@ -128,6 +131,7 @@ namespace Assets.Scripts
         {
             _currentSanity = maxSanity;
             LoadTransit();
+            _initialized = true;
 
             if (deathPanel != null) deathPanel.SetActive(false);
 
@@ -282,6 +286,8 @@ namespace Assets.Scripts
         {
             if (_isDead) return;
             _isDead = true;
+
+            PauseMenu.NotifyGameOver();
 
             if (GlobalSoundManager.Instance != null)
             {

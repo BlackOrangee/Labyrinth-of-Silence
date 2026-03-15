@@ -185,7 +185,7 @@ namespace Assets.Scripts
 
             currentMasterVolume = SettingsManager.Instance.currentSettings.masterVolume;
             currentMusicVolume = SettingsManager.Instance.currentSettings.musicVolume;
-            currentSfxVolume = SettingsManager.Instance.currentSettings.sfxVolume;
+            currentSfxVolume = SettingsManager.Instance.currentSettings.masterVolume;
 
             if (audioMixer != null)
             {

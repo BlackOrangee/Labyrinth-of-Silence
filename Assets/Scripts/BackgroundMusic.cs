@@ -7,8 +7,11 @@ namespace Assets.Scripts
         public static BackgroundMusic Instance;
 
         [Header("Music Settings")]
+        [Tooltip("Якщо увімкнено — музика грає одразу при старті (наприклад, головне меню). Якщо вимкнено — тільки під час погоні.")]
+        public bool playAlways = false;
+
         [Tooltip("Максимальна гучність під час погоні/атаки")]
-        [Range(0f, 1f)] public float chaseVolume = 0.6f; 
+        [Range(0f, 1f)] public float chaseVolume = 0.6f;
         
         [Tooltip("Скільки секунд музика плавно вмикається")]
         public float fadeIncDuration = 1.5f; 
@@ -45,6 +48,12 @@ namespace Assets.Scripts
             {
                 AudioManager.Instance.RegisterAudioSource(audioSource, AudioType.Music);
                 isRegistered = true;
+            }
+
+            if (playAlways)
+            {
+                targetVolume = 1f;
+                if (!audioSource.isPlaying) audioSource.Play();
             }
         }
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   slides:
   - backgroundIntroVideo: {fileID: 32900000, guid: 9e50de154356a9845ac0291d9c6b9d15, type: 3}
     backgroundLoopVideo: {fileID: 32900000, guid: 03965543b54700948b6c6a2dea596e6f, type: 3}
-    slideAudio: {fileID: 0}
+    slideAudio: {fileID: 8300000, guid: fe2b9cddf8899244a8b1518d6e88e262, type: 3}
     textEnglish: "February 12, 1950. \r\nWorking as a journalist, I realized one
       thing - I will never be successful unless I find a truly sensational story"
     textUkrainian: "12 \u043B\u044E\u0442\u043E\u0433\u043E 1950 \u0440\u043E\u043A\u0443.
@@ -31,7 +31,7 @@ MonoBehaviour:
     secondTextUkrainian: 
   - backgroundIntroVideo: {fileID: 0}
     backgroundLoopVideo: {fileID: 32900000, guid: e2d91222818e6a84d8e4034c04356d7a, type: 3}
-    slideAudio: {fileID: 0}
+    slideAudio: {fileID: 8300000, guid: 3369d16c6e3a4854c8a3d7c74c2145ba, type: 3}
     textEnglish: I love rereading old newspapers for several reasons. One of them
       is the forgotten stories. They just stop being written about and are covered
       up by other unnecessary news. But this time I was lucky.
@@ -50,7 +50,7 @@ MonoBehaviour:
     secondTextUkrainian: 
   - backgroundIntroVideo: {fileID: 0}
     backgroundLoopVideo: {fileID: 32900000, guid: 8c9671f700388bd45a8612e4ee6d12ad, type: 3}
-    slideAudio: {fileID: 0}
+    slideAudio: {fileID: 8300000, guid: 52a9a4454247c8e4cb1567f2fcaee20a, type: 3}
     textEnglish: Recently, I found a news about an event that happened in the town
       of Penraddock. An old, abandoned town with beautiful nature. One of the latest
       news is a mass disappearance of people.
@@ -70,7 +70,7 @@ MonoBehaviour:
     secondTextUkrainian: 
   - backgroundIntroVideo: {fileID: 0}
     backgroundLoopVideo: {fileID: 32900000, guid: aae04e45cc3b4794487b2ac2a05d94bc, type: 3}
-    slideAudio: {fileID: 0}
+    slideAudio: {fileID: 8300000, guid: 52a9a4454247c8e4cb1567f2fcaee20a, type: 3}
     textEnglish: No one could explain where they had gone. Surprisingly, this town
       is nothing special, except for the forest nearby, but there are no animals
       in it that could attack so many people! And they would have written about this
@@ -94,7 +94,7 @@ MonoBehaviour:
     secondTextUkrainian: 
   - backgroundIntroVideo: {fileID: 0}
     backgroundLoopVideo: {fileID: 32900000, guid: bdcf61bac74af4a4eae52dc14484464f, type: 3}
-    slideAudio: {fileID: 0}
+    slideAudio: {fileID: 8300000, guid: 52a9a4454247c8e4cb1567f2fcaee20a, type: 3}
     textEnglish: ' '
     textUkrainian: ' '
     hasSecondText: 1
