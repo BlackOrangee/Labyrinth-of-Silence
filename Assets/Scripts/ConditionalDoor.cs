@@ -361,6 +361,15 @@ namespace Assets.Scripts
         }
 
         /// <summary>
+        /// Force open (for scripts/cutscenes — bypasses lock/key requirements)
+        /// </summary>
+        public void ForceOpen()
+        {
+            isLocked = false;
+            OpenDoor();
+        }
+
+        /// <summary>
         /// Manual unlock (for scripts/triggers)
         /// </summary>
         public void UnlockManually()

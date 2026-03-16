@@ -24,6 +24,9 @@ public class FlythroughWaypointEditor : Editor
             return;
         }
 
+        DrawDefaultInspector();
+        EditorGUILayout.Space(4);
+
         // ── info ────────────────────────────────────────────────
         EditorGUILayout.LabelField($"Route:  {fly.gameObject.name}", EditorStyles.miniLabel);
         EditorGUILayout.LabelField($"Waypoint {idx + 1} of {total}", EditorStyles.boldLabel);
@@ -33,8 +36,9 @@ public class FlythroughWaypointEditor : Editor
         if (!isLast)
         {
             EditorGUILayout.Space(2);
+            Transform next = fly.waypoints[idx + 1];
             EditorGUILayout.HelpBox(
-                $"Next → {fly.waypoints[idx + 1]?.name ?? "null"}",
+                $"Next → {(next != null ? next.name : "null")}",
                 MessageType.None);
         }
         else

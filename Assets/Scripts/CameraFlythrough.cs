@@ -201,6 +201,11 @@ public class CameraFlythrough : MonoBehaviour
         }
 
         _segIdx = next;
+
+        var wp = waypoints[WrapIdx(_segIdx)].GetComponent<FlythroughWaypoint>();
+        if (wp != null && wp.doorToOpen != null)
+            wp.doorToOpen.SendMessage("ForceOpen", SendMessageOptions.DontRequireReceiver);
+
         return false;
     }
 
