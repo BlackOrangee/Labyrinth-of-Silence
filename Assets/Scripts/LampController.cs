@@ -372,5 +372,33 @@ namespace Assets.Scripts
             if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
             UpdateLightTargets();
         }
+
+        /// <summary>Sets lamp mode directly: 0=off, 1=dim, 2=bright.</summary>
+        public void SetMode(int mode)
+        {
+            mode = Mathf.Clamp(mode, 0, 2);
+            if (mode == lightMode) return;
+
+            int prev = lightMode;
+            lightMode = mode;
+
+            if (lampAudioSource != null)
+            {
+                if (lightMode == 0)
+                {
+                    lampAudioSource.Stop();
+                    if (turnOffProfile != null) turnOffProfile.Play(lampAudioSource);
+                }
+                else if (prev == 0)
+                {
+                    if (turnOnProfile != null) turnOnProfile.Play(lampAudioSource);
+                    if (burningSoundLoop != null) lampAudioSource.Play();
+                }
+            }
+
+            UpdateLightTargets();
+        }
+
+        public int GetMode() => lightMode;
     }
 }

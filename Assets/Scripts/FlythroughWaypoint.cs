@@ -12,6 +12,9 @@ public class FlythroughWaypoint : MonoBehaviour
     [HideInInspector]
     public CameraFlythrough owner;
 
-    [Tooltip("Двері що відкриються коли камера досягне цієї точки (опціонально)")]
+    [Tooltip("Одинарні двері що відкриються коли камера досягне цієї точки (опціонально)")]
     public GameObject doorToOpen;
+
+    [Tooltip("Подвійні двері (DoorOpen2) що відкриються коли камера досягне цієї точки (опціонально)")]
+    public Assets.Scripts.DoorOpen2 doorToOpen2;
 }

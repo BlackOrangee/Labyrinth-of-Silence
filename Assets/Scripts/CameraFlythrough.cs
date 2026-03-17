@@ -44,6 +44,15 @@ public class CameraFlythrough : MonoBehaviour
     public KeyCode speedUpKey  = KeyCode.W;
     public KeyCode slowDownKey = KeyCode.S;
 
+    [Header("Lamp")]
+    [Tooltip("Клавиша вкл/выкл лампы во время полёта (только режим dim)")]
+    public KeyCode lampToggleKey = KeyCode.L;
+
+    // ── lamp state ──────────────────────────────────────────────
+    private Assets.Scripts.LampController _lamp;
+    private Transform _lampLightOriginalParent;
+    private bool      _lampLightStolen;
+
     // ── arc-length tables ───────────────────────────────────────
     // Per segment: array of cumulative arc lengths at ARC_SAMPLES points.
     // Converts "meters traveled" → spline parameter t.
@@ -71,6 +80,7 @@ public class CameraFlythrough : MonoBehaviour
 
         BuildArcTables();
         DoReset();
+        GrabPlayerLamp();
 
         if (autoPlay)
         {
@@ -128,6 +138,7 @@ public class CameraFlythrough : MonoBehaviour
     void Update()
     {
         HandleInput();
+        UpdateLamp();
 
         if (!_playing || _finished || _arcTable == null || waypoints == null || waypoints.Length < 2)
             return;
@@ -203,8 +214,13 @@ public class CameraFlythrough : MonoBehaviour
         _segIdx = next;
 
         var wp = waypoints[WrapIdx(_segIdx)].GetComponent<FlythroughWaypoint>();
-        if (wp != null && wp.doorToOpen != null)
-            wp.doorToOpen.SendMessage("ForceOpen", SendMessageOptions.DontRequireReceiver);
+        if (wp != null)
+        {
+            if (wp.doorToOpen != null)
+                wp.doorToOpen.SendMessage("ForceOpen", SendMessageOptions.DontRequireReceiver);
+            if (wp.doorToOpen2 != null)
+                wp.doorToOpen2.OpenDoor();
+        }
 
         return false;
     }
@@ -254,6 +270,66 @@ public class CameraFlythrough : MonoBehaviour
         if (loop) return ((i % n) + n) % n;
         return Mathf.Clamp(i, 0, n - 1);
     }
+
+    // ── input ───────────────────────────────────────────────────
+    // ── lamp update ─────────────────────────────────────────────
+    private void UpdateLamp()
+    {
+        if (_lamp == null) return;
+
+        // Keep fuel full (infinite)
+        float missing = _lamp.GetMaxFuel() - _lamp.GetCurrentFuel();
+        if (missing > 0f) _lamp.Refuel(missing);
+
+        // Toggle dim/off only (no bright mode during flythrough)
+        if (Input.GetKeyDown(lampToggleKey))
+            _lamp.SetMode(_lamp.GetMode() == 0 ? 1 : 0);
+    }
+
+    // ── lamp grab ───────────────────────────────────────────────
+    private void GrabPlayerLamp()
+    {
+        _lamp = FindObjectOfType<Assets.Scripts.LampController>();
+        if (_lamp == null) return;
+
+        // Infinite fuel
+        _lamp.Refuel(_lamp.GetMaxFuel());
+
+        // Try to find an own child Light first (not the camera itself)
+        Light ownLight = null;
+        foreach (Light l in GetComponentsInChildren<Light>())
+        {
+            if (l.gameObject != gameObject) { ownLight = l; break; }
+        }
+
+        if (ownLight != null)
+        {
+            // Redirect LampController to our own child light
+            _lamp.lampLight = ownLight;
+            _lampLightStolen = false;
+            Debug.Log("[CameraFlythrough] Lamp light replaced with camera child.");
+        }
+        else if (_lamp.lampLight != null)
+        {
+            // Steal and reparent player's PointLight to us
+            _lampLightOriginalParent = _lamp.lampLight.transform.parent;
+            _lamp.lampLight.transform.SetParent(transform, true);
+            _lampLightStolen = true;
+            Debug.Log("[CameraFlythrough] Player lamp light reparented to camera.");
+        }
+    }
+
+    private void ReleaseLamp()
+    {
+        if (_lamp == null) return;
+        if (_lampLightStolen && _lamp.lampLight != null && _lampLightOriginalParent != null)
+        {
+            _lamp.lampLight.transform.SetParent(_lampLightOriginalParent, true);
+            _lampLightStolen = false;
+        }
+    }
+
+    void OnDestroy() => ReleaseLamp();
 
     // ── input ───────────────────────────────────────────────────
     private void HandleInput()
