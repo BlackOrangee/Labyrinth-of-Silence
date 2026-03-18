@@ -46,6 +46,8 @@ namespace Assets.Scripts
 
                 Debug.Log($"Refueled: {amountToTransfer}. Remaining in canister: {canisterCapacity}");
 
+                SaveManager.Instance?.TriggerAutoSave();
+
                 if (refuelSound != null)
                 {
                     AudioSource.PlayClipAtPoint(refuelSound, transform.position, soundVolume);

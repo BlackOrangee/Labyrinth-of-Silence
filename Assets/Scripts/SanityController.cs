@@ -82,6 +82,7 @@ namespace Assets.Scripts
 
         private bool _isHeartbeatMuted = false;
         private bool _initialized = false;
+        private PlayerHideController _hideController;
 
         private void LoadTransit()
         {
@@ -171,6 +172,7 @@ namespace Assets.Scripts
 
             if (lampController == null) lampController = GetComponentInChildren<LampController>();
             if (playerCollider == null) playerCollider = GetComponent<Collider>();
+            _hideController = FindFirstObjectByType<PlayerHideController>();
         }
 
         private void Update()
@@ -178,11 +180,15 @@ namespace Assets.Scripts
             if (_isDead) return;
 
             bool isLightOn = (lampController != null && lampController.IsLightOn());
+            bool isHiding = (_hideController != null && _hideController.IsHiding);
 
-            if (isLightOn)
-                _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
-            else
-                _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
+            if (!isHiding)
+            {
+                if (isLightOn)
+                    _currentSanity += (maxSanity / timeToRecover) * Time.deltaTime;
+                else
+                    _currentSanity -= (maxSanity / timeToDeath) * Time.deltaTime;
+            }
 
             _currentSanity = Mathf.Clamp(_currentSanity, 0, maxSanity);
 

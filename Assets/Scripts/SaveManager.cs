@@ -32,6 +32,10 @@ namespace Assets.Scripts
         }
         #endregion
 
+        public const int AutoSaveSlotIndex = 0;
+        public const int QuickSaveSlotIndex = 1;
+        public const int FirstManualSlotIndex = 2;
+
         [Header("Settings")]
         [Tooltip("Maximum number of save slots")]
         public int maxSaveSlots = 10;
@@ -49,8 +53,13 @@ namespace Assets.Scripts
         private string saveFolderPath => Path.Combine(Application.persistentDataPath, "Saves");
         private string screenshotFolderPath => Path.Combine(Application.persistentDataPath, "Screenshots");
 
+        [Header("Autosave")]
+        [Tooltip("Minimum seconds between autosaves")]
+        public float autoSaveCooldown = 5f;
+
         private Canvas loadOverlayCanvas;
         private UnityEngine.UI.Image loadOverlayImage;
+        private float _lastAutoSaveTime = -999f;
 
         private void Awake()
         {
@@ -182,7 +191,15 @@ namespace Assets.Scripts
             SaveAllSceneObjects(saveData);
 
             string screenshotPath = Path.Combine(screenshotFolderPath, $"save_{slotIndex}.png");
-            yield return StartCoroutine(CaptureScreenshot(screenshotPath, uiToHide));
+
+            var canvasesToHide = new List<Canvas>();
+            foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                if (c.enabled && c.isRootCanvas)
+                    canvasesToHide.Add(c);
+            if (uiToHide != null && !canvasesToHide.Contains(uiToHide))
+                canvasesToHide.Add(uiToHide);
+
+            yield return StartCoroutine(CaptureScreenshot(screenshotPath, canvasesToHide.ToArray()));
             saveData.screenshotPath = screenshotPath;
 
             string savePath = GetSaveFilePath(slotIndex);
@@ -301,7 +318,11 @@ namespace Assets.Scripts
             while (IsLoadingGame) yield return null;
             yield return null;
             if (SceneManager.GetActiveScene().name == sceneName)
+            {
                 SaveCheckpoint();
+                _lastAutoSaveTime = -999f;
+                TriggerAutoSave();
+            }
         }
 
         public void LoadCheckpoint()
@@ -340,14 +361,85 @@ namespace Assets.Scripts
 
         #endregion
 
+        #region Autosave
+
+        public void TriggerAutoSave()
+        {
+            if (IsLoadingGame) return;
+            if (Time.time - _lastAutoSaveTime < autoSaveCooldown) return;
+            _lastAutoSaveTime = Time.time;
+            StartCoroutine(AutoSaveCoroutine());
+        }
+
+        private IEnumerator AutoSaveCoroutine()
+        {
+            Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            var activeRootCanvases = new List<Canvas>();
+            foreach (var c in allCanvases)
+            {
+                if (c.enabled && c.isRootCanvas)
+                    activeRootCanvases.Add(c);
+            }
+
+            string screenshotPath = Path.Combine(screenshotFolderPath, $"save_{AutoSaveSlotIndex}.png");
+            yield return StartCoroutine(CaptureScreenshot(screenshotPath, activeRootCanvases.ToArray()));
+
+            try
+            {
+                SaveData saveData = new SaveData();
+                saveData.saveName = "Autosave";
+                saveData.saveDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+                saveData.sceneName = SceneManager.GetActiveScene().name;
+                saveData.sceneBuildIndex = SceneManager.GetActiveScene().buildIndex;
+                saveData.screenshotPath = screenshotPath;
+
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                    saveData.playerData = new PlayerData(player.transform);
+
+                SanityController sanity = FindFirstObjectByType<SanityController>();
+                if (sanity != null)
+                {
+                    var f = typeof(SanityController).GetField("_currentSanity",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (f != null)
+                        saveData.playerData.currentSanity = (float)f.GetValue(sanity);
+                }
+
+                SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>(FindObjectsInactive.Include);
+                if (inventory != null)
+                {
+                    saveData.inventoryData.items = new List<string>(inventory.GetItems());
+                    saveData.inventoryData.collectedKeys = new List<KeyColorType>(inventory.GetCollectedKeys());
+                    saveData.inventoryData.collectedNewspaperIds = new List<string>();
+                    foreach (var n in inventory.GetCollectedNewspapers())
+                        if (n != null) saveData.inventoryData.collectedNewspaperIds.Add(n.newspaperId);
+                }
+
+                SaveAllSceneObjects(saveData);
+
+                string savePath = GetSaveFilePath(AutoSaveSlotIndex);
+                File.WriteAllText(savePath, JsonUtility.ToJson(saveData, false));
+                Debug.Log($"[SaveManager] Autosave → slot {AutoSaveSlotIndex}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveManager] Autosave failed: {e.Message}");
+            }
+        }
+
+        #endregion
+
         private void OnEnable()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            SimpleInventory.OnInventoryChanged += TriggerAutoSave;
         }
 
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            SimpleInventory.OnInventoryChanged -= TriggerAutoSave;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -527,25 +619,33 @@ namespace Assets.Scripts
 
         private IEnumerator CaptureScreenshot(string path, Canvas uiToHide)
         {
-            bool wasUIActive = false;
+            yield return StartCoroutine(CaptureScreenshot(path, uiToHide != null ? new Canvas[] { uiToHide } : null));
+        }
+
+        private IEnumerator CaptureScreenshot(string path, Canvas[] uiToHide)
+        {
+            var hiddenCanvases = new List<Canvas>();
             if (uiToHide != null)
             {
-                wasUIActive = uiToHide.enabled;
-                uiToHide.enabled = false;
+                foreach (var canvas in uiToHide)
+                {
+                    if (canvas != null && canvas.enabled)
+                    {
+                        canvas.enabled = false;
+                        hiddenCanvases.Add(canvas);
+                    }
+                }
             }
 
             yield return null;
-
             yield return new WaitForEndOfFrame();
 
             Texture2D screenshot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
             screenshot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
             screenshot.Apply();
 
-            if (uiToHide != null)
-            {
-                uiToHide.enabled = wasUIActive;
-            }
+            foreach (var canvas in hiddenCanvases)
+                if (canvas != null) canvas.enabled = true;
 
             Texture2D resized = ResizeTexture(screenshot, screenshotWidth, screenshotHeight);
 

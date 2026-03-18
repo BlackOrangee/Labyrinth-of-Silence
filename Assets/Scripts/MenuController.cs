@@ -2,6 +2,7 @@ using System.Linq;
 using Assets.Scripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.IO;
 
 public class MenuController : MonoBehaviour
 {
@@ -94,6 +95,8 @@ public class MenuController : MonoBehaviour
 
     public void ConfirmNewGame()
     {
+        SimpleInventory.ClearTransit();
+        LampController.ClearPlayerTransit();
         SceneLoader.Instance.LoadScene("IntroVideo");
     }
     

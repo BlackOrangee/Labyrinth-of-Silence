@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Assets.Scripts;
+using Assets.Scripts.Localization;
 
 public class LoadSaveMenuController : MonoBehaviour
 {
@@ -103,7 +104,7 @@ public class LoadSaveMenuController : MonoBehaviour
     {
         Initialize();
 
-        title.GetComponent<Text>().text = "Save Game";
+        title.GetComponent<Text>().text = Loc("Save Game", "Зберегти гру");
         content.SetActive(true);
 
         saveMenu = true;
@@ -114,7 +115,7 @@ public class LoadSaveMenuController : MonoBehaviour
     {
         Initialize();
 
-        title.GetComponent<Text>().text = "Load Game";
+        title.GetComponent<Text>().text = Loc("Load Game", "Завантажити гру");
         content.SetActive(true);
 
         saveMenu = false;
@@ -158,8 +159,10 @@ public class LoadSaveMenuController : MonoBehaviour
         Vector2 saveItemPos = new Vector2(0, -itemHeight / 2);
 
         int maxSlots = SaveManager.Instance.maxSaveSlots;
+        int startSlot = saveMenu ? SaveManager.FirstManualSlotIndex : 0;
+        int shownSlots = maxSlots - startSlot;
 
-        for (int i = 0; i < maxSlots; i++)
+        for (int i = startSlot; i < maxSlots; i++)
         {
             GameObject newSaveItem = Instantiate(this.saveItem);
             RectTransform newSaveItemRect = newSaveItem.GetComponent<RectTransform>();
@@ -179,7 +182,7 @@ public class LoadSaveMenuController : MonoBehaviour
         }
 
         RectTransform contentRect = content.GetComponent<RectTransform>();
-        float totalHeight = (itemHeight * maxSlots) + (spacing * (maxSlots - 1)) + spacing;
+        float totalHeight = (itemHeight * shownSlots) + (spacing * (shownSlots - 1)) + spacing;
         contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, totalHeight);
     }
 
@@ -214,7 +217,13 @@ public class LoadSaveMenuController : MonoBehaviour
         {
             if (saveNameText != null)
             {
-                saveNameText.text = saveData.saveName;
+                if (slotIndex >= SaveManager.FirstManualSlotIndex)
+                {
+                    int n = slotIndex - SaveManager.FirstManualSlotIndex + 1;
+                    saveNameText.text = Loc($"Save {n}", $"Збереження {n}");
+                }
+                else
+                    saveNameText.text = GetSlotDisplayName(slotIndex);
             }
 
             if (saveTimeText != null)
@@ -244,14 +253,10 @@ public class LoadSaveMenuController : MonoBehaviour
         else
         {
             if (saveNameText != null)
-            {
-                saveNameText.text = saveMenu ? $"Empty Slot {slotIndex + 1}" : $"Slot {slotIndex + 1}";
-            }
+                saveNameText.text = GetSlotDisplayName(slotIndex);
 
             if (saveTimeText != null)
-            {
-                saveTimeText.text = saveMenu ? "Click to Save" : "No Save";
-            }
+                saveTimeText.text = saveMenu ? Loc("Click to Save", "Натисніть для збереження") : Loc("No Save", "Немає збереження");
 
             if (questInfoText != null)
             {
@@ -410,5 +415,27 @@ public class LoadSaveMenuController : MonoBehaviour
     private void OnDisable()
     {
         ClearMenu();
+    }
+
+    private Language GetCurrentLanguage()
+    {
+        return SettingsManager.Instance != null
+            ? SettingsManager.Instance.GetCurrentLanguage()
+            : Language.English;
+    }
+
+    private string Loc(string en, string uk)
+    {
+        return GetCurrentLanguage() == Language.Ukrainian ? uk : en;
+    }
+
+    private string GetSlotDisplayName(int slotIndex)
+    {
+        if (slotIndex == SaveManager.AutoSaveSlotIndex)
+            return Loc("Autosave", "Автозбереження");
+        if (slotIndex == SaveManager.QuickSaveSlotIndex)
+            return Loc("Quick Save", "Швидке збереження");
+        int n = slotIndex - SaveManager.FirstManualSlotIndex + 1;
+        return saveMenu ? Loc($"Empty Slot {n}", $"Порожній слот {n}") : Loc($"Slot {n}", $"Слот {n}");
     }
 }

@@ -123,6 +123,11 @@ namespace Assets.Scripts
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.F5) && !IsGameOver && !isPaused)
+            {
+                Save();
+            }
+
             if (Input.GetKeyDown(pauseKey))
             {
                 if (IsGameOver) return;
@@ -226,15 +231,14 @@ namespace Assets.Scripts
         }
 
         /// <summary>
-        /// Quick save - Save to slot 0
+        /// Quick save - Save to slot 1
         /// </summary>
         public void Save()
         {
             if (SaveManager.Instance != null)
             {
                 Canvas canvasToHide = GetComponent<Canvas>();
-
-                SaveManager.Instance.SaveGame(0, "Quick Save", null, canvasToHide);
+                SaveManager.Instance.SaveGame(SaveManager.QuickSaveSlotIndex, "Quick Save", null, canvasToHide);
                 Debug.Log("Quick save created!");
             }
             else
@@ -280,7 +284,7 @@ namespace Assets.Scripts
             if (SaveManager.Instance != null)
             {
                 Canvas canvasToHide = GetComponent<Canvas>();
-                SaveManager.Instance.SaveGame(0, "Quick Save", null, canvasToHide);
+                SaveManager.Instance.SaveGame(SaveManager.QuickSaveSlotIndex, "Quick Save", null, canvasToHide);
                 Debug.Log("Quick save created before quitting!");
             }
             else
