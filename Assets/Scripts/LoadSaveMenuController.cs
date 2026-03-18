@@ -41,6 +41,8 @@ public class LoadSaveMenuController : MonoBehaviour
     private bool saveMenu = false;
     private List<GameObject> saveItems = new List<GameObject>();
     private bool initialized = false;
+    private List<Texture2D> cachedTextures = new List<Texture2D>();
+    private List<Sprite> cachedSprites = new List<Sprite>();
 
     void Awake()
     {
@@ -128,8 +130,15 @@ public class LoadSaveMenuController : MonoBehaviour
                 Destroy(item);
             }
         }
-
         saveItems.Clear();
+
+        foreach (var sprite in cachedSprites)
+            if (sprite != null) Destroy(sprite);
+        cachedSprites.Clear();
+
+        foreach (var tex in cachedTextures)
+            if (tex != null) Destroy(tex);
+        cachedTextures.Clear();
     }
 
     private void FillMenu()
@@ -344,12 +353,14 @@ public class LoadSaveMenuController : MonoBehaviour
             byte[] fileData = File.ReadAllBytes(path);
             Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             texture.LoadImage(fileData);
+            cachedTextures.Add(texture);
 
             Sprite sprite = Sprite.Create(
                 texture,
                 new Rect(0, 0, texture.width, texture.height),
                 new Vector2(0.5f, 0.5f)
             );
+            cachedSprites.Add(sprite);
 
             image.sprite = sprite;
             Color originalColor = image.color;
@@ -357,6 +368,17 @@ public class LoadSaveMenuController : MonoBehaviour
 
             image.raycastTarget = false;
         }
+    }
+
+    private void OnDestroy()
+    {
+        foreach (var sprite in cachedSprites)
+            if (sprite != null) Destroy(sprite);
+        cachedSprites.Clear();
+
+        foreach (var tex in cachedTextures)
+            if (tex != null) Destroy(tex);
+        cachedTextures.Clear();
     }
 
     private void OnSaveClicked(int slotIndex)

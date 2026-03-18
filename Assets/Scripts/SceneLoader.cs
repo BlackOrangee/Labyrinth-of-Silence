@@ -293,6 +293,12 @@ namespace Assets.Scripts
 
             isLoadingComplete = true;
 
+            // Unload unused assets from the previous scene and force GC
+            yield return Resources.UnloadUnusedAssets();
+            System.GC.Collect();
+            System.GC.WaitForPendingFinalizers();
+            System.GC.Collect();
+
             yield return new WaitForSeconds(0.1f);
 
             loadingOperation = null;
