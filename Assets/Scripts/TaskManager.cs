@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using Assets.Scripts; 
+using Assets.Scripts;
+using Assets.Scripts.Localization;
 
 public class TaskItem
 {
@@ -26,9 +27,25 @@ public class TaskManager : MonoBehaviour
 
 
     private List<TaskItem> activeTasks = new List<TaskItem>();
+    private HashSet<string> completedTaskIds = new HashSet<string>();
 
     private void Awake() { if (Instance == null) Instance = this; }
     private void Start() { UpdatePanelVisibility(); }
+
+    private void OnEnable()
+    {
+        SettingsManager.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnDisable()
+    {
+        SettingsManager.OnLanguageChanged -= OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(Language lang)
+    {
+        RefreshAllLanguages();
+    }
 
     public void AddTask(string id, string englishText, string ukrText)
     {
@@ -55,14 +72,13 @@ public class TaskManager : MonoBehaviour
     {
         if (task.textComponent == null) return;
 
-        bool isUkr = false;
-        if (Assets.Scripts.SettingsManager.Instance != null)
-        {
-            string currentLang = Assets.Scripts.SettingsManager.Instance.GetCurrentLanguage().ToString();
-            isUkr = (currentLang == "Ukrainian");
-        }
+        Language lang = SettingsManager.Instance != null
+            ? SettingsManager.Instance.GetCurrentLanguage()
+            : Language.English;
 
-        task.textComponent.text = isUkr && !string.IsNullOrEmpty(task.textUkr) ? task.textUkr : task.textEng;
+        task.textComponent.text = (lang == Language.Ukrainian && !string.IsNullOrEmpty(task.textUkr))
+            ? task.textUkr
+            : task.textEng;
     }
 
     public void RefreshAllLanguages()
@@ -91,8 +107,37 @@ public class TaskManager : MonoBehaviour
         {
             Destroy(task.uiObject);
             activeTasks.Remove(task);
+            completedTaskIds.Add(id);
         }
         UpdatePanelVisibility();
+    }
+
+    public bool IsCompleted(string id) => completedTaskIds.Contains(id);
+
+    public List<TaskSaveItem> GetActiveTasksForSave()
+    {
+        var result = new List<TaskSaveItem>();
+        foreach (var t in activeTasks)
+            result.Add(new TaskSaveItem { taskId = t.taskID, textEng = t.textEng, textUkr = t.textUkr });
+        return result;
+    }
+
+    public List<string> GetCompletedTaskIds() => new List<string>(completedTaskIds);
+
+    public void RestoreFromSave(List<TaskSaveItem> tasks, List<string> completed)
+    {
+        foreach (var t in activeTasks)
+            if (t.uiObject != null) Destroy(t.uiObject);
+        activeTasks.Clear();
+
+        completedTaskIds.Clear();
+        if (completed != null)
+            foreach (var id in completed)
+                completedTaskIds.Add(id);
+
+        if (tasks != null)
+            foreach (var t in tasks)
+                AddTask(t.taskId, t.textEng, t.textUkr);
     }
 
     private void UpdatePanelVisibility()

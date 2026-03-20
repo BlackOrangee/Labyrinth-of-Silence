@@ -18,8 +18,11 @@ public class LevelStarter : MonoBehaviour
             {
                 if (!string.IsNullOrEmpty(taskIDs[i]) && !string.IsNullOrEmpty(englishTexts[i]))
                 {
-                    string ukr = (ukrainianTexts.Length > i) ? ukrainianTexts[i] : "";
-                    TaskManager.Instance.AddTask(taskIDs[i], englishTexts[i], ukr);
+                    if (!TaskManager.Instance.IsCompleted(taskIDs[i]))
+                    {
+                        string ukr = (ukrainianTexts.Length > i) ? ukrainianTexts[i] : "";
+                        TaskManager.Instance.AddTask(taskIDs[i], englishTexts[i], ukr);
+                    }
                 }
             }
         }

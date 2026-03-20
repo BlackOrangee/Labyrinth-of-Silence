@@ -1,29 +1,28 @@
 using UnityEngine;
 using TMPro;
-using Assets.Scripts;
+using Assets.Scripts.Localization;
 
 [RequireComponent(typeof(TextMeshProUGUI))]
-public class StaticTextLocalizer : MonoBehaviour
+public class StaticTextLocalizer : LocalizedComponentBase
 {
+    [TextArea(2, 5)]
     public string englishText;
+
+    [TextArea(2, 5)]
     public string ukrainianText;
 
     private TextMeshProUGUI textComp;
 
-    private void Start()
+    private void Awake()
     {
         textComp = GetComponent<TextMeshProUGUI>();
-        UpdateLanguage();
     }
 
-private void UpdateLanguage()
+    protected override void ApplyLocalization(Language newLanguage)
     {
-        if (Assets.Scripts.SettingsManager.Instance != null)
-        {
-            string currentLang = Assets.Scripts.SettingsManager.Instance.GetCurrentLanguage().ToString();
-            bool isUkr = (currentLang == "Ukrainian");
-            
-            textComp.text = isUkr && !string.IsNullOrEmpty(ukrainianText) ? ukrainianText : englishText;
-        }
+        if (textComp == null) textComp = GetComponent<TextMeshProUGUI>();
+        textComp.text = (newLanguage == Language.Ukrainian && !string.IsNullOrEmpty(ukrainianText))
+            ? ukrainianText
+            : englishText;
     }
 }

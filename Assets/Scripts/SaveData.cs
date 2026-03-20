@@ -19,6 +19,9 @@ namespace Assets.Scripts
 
         public List<QuestData> questsData;
 
+        public List<TaskSaveItem> activeTasks;
+        public List<string> completedTaskIds;
+
         public string sceneName;
         public int sceneBuildIndex = -1;
 
@@ -30,6 +33,8 @@ namespace Assets.Scripts
             playerData = new PlayerData();
             inventoryData = new InventoryData();
             questsData = new List<QuestData>();
+            activeTasks = new List<TaskSaveItem>();
+            completedTaskIds = new List<string>();
             gameObjectStates = new List<GameObjectState>();
         }
     }
@@ -254,17 +259,14 @@ namespace Assets.Scripts
         public int targetProgress;
         public bool isCompleted;
 
-        public QuestData()
-        {
-        }
+        public QuestData() { }
+    }
 
-        // public QuestData(Quest quest)
-        // {
-        //     questId = quest.questId;
-        //     description = quest.description;
-        //     currentProgress = quest.currentProgress;
-        //     targetProgress = quest.targetProgress;
-        //     isCompleted = quest.isCompleted;
-        // }
+    [Serializable]
+    public class TaskSaveItem
+    {
+        public string taskId;
+        public string textEng;
+        public string textUkr;
     }
 }

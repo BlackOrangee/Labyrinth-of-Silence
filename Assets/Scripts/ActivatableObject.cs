@@ -69,6 +69,15 @@ namespace Assets.Scripts
         [Tooltip("Trigger parameter name for activation")]
         [SerializeField] private string activationTrigger = "Activate";
 
+        [Header("Task System")]
+        [Tooltip("Таску видалити при активації (напр. activate_light)")]
+        [SerializeField] private string taskIDToRemove;
+
+        [Tooltip("Таску додати при активації")]
+        [SerializeField] private string taskIDToAdd;
+        [SerializeField] private string taskTextEng;
+        [SerializeField] private string taskTextUkr;
+
         [Header("Messages")]
         [Tooltip("Message when activated")]
         [SerializeField] private string activationMessage = "Generator activated!";
@@ -160,6 +169,15 @@ namespace Assets.Scripts
             }
 
             ShowMessage(activationMessage);
+
+            if (TaskManager.Instance != null)
+            {
+                if (!string.IsNullOrEmpty(taskIDToRemove))
+                    TaskManager.Instance.RemoveTask(taskIDToRemove);
+
+                if (!string.IsNullOrEmpty(taskIDToAdd) && !string.IsNullOrEmpty(taskTextEng))
+                    TaskManager.Instance.AddTask(taskIDToAdd, taskTextEng, taskTextUkr);
+            }
 
             TriggerThought();
         }

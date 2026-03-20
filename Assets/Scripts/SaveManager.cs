@@ -188,6 +188,7 @@ namespace Assets.Scripts
                     saveData.playerData.currentSanity = (float)sanityField.GetValue(sanity);
             }
 
+            CollectTaskData(saveData);
             SaveAllSceneObjects(saveData);
 
             string screenshotPath = Path.Combine(screenshotFolderPath, $"save_{slotIndex}.png");
@@ -243,6 +244,7 @@ namespace Assets.Scripts
                 Debug.Log($"[SaveManager] Loading game from slot {slotIndex}...");
 
                 currentLoadData = saveData;
+                _wasLoadedFromSave = true;
 
                 Time.timeScale = 1f;
                 SimpleInventory.ClearTransit();
@@ -261,6 +263,7 @@ namespace Assets.Scripts
         }
 
         private SaveData currentLoadData;
+        private bool _wasLoadedFromSave = false;
 
         public static bool IsLoadingGame { get; private set; }
 
@@ -300,6 +303,7 @@ namespace Assets.Scripts
                         if (n != null) saveData.inventoryData.collectedNewspaperIds.Add(n.newspaperId);
                 }
 
+                CollectTaskData(saveData);
                 SaveAllSceneObjects(saveData);
 
                 File.WriteAllText(CheckpointPath, JsonUtility.ToJson(saveData, false));
@@ -320,8 +324,12 @@ namespace Assets.Scripts
             if (SceneManager.GetActiveScene().name == sceneName)
             {
                 SaveCheckpoint();
-                _lastAutoSaveTime = -999f;
-                TriggerAutoSave();
+                if (!_wasLoadedFromSave)
+                {
+                    _lastAutoSaveTime = -999f;
+                    TriggerAutoSave();
+                }
+                _wasLoadedFromSave = false;
             }
         }
 
@@ -343,6 +351,7 @@ namespace Assets.Scripts
             {
                 SaveData saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(CheckpointPath));
                 currentLoadData = saveData;
+                _wasLoadedFromSave = true;
                 Time.timeScale = 1f;
                 SimpleInventory.ClearTransit();
                 LampController.ClearPlayerTransit();
@@ -416,6 +425,7 @@ namespace Assets.Scripts
                         if (n != null) saveData.inventoryData.collectedNewspaperIds.Add(n.newspaperId);
                 }
 
+                CollectTaskData(saveData);
                 SaveAllSceneObjects(saveData);
 
                 string savePath = GetSaveFilePath(AutoSaveSlotIndex);
@@ -528,25 +538,7 @@ namespace Assets.Scripts
                 Debug.LogWarning("[SaveManager] SimpleInventory not found — inventory not restored!");
             }
 
-            // if (QuestTracker.Instance != null)
-            // {
-            //     QuestTracker.Instance.ClearAllQuests();
-            //
-            //     foreach (QuestData questData in saveData.questsData)
-            //     {
-            //         QuestTracker.Instance.AddQuest(
-            //             questData.questId,
-            //             questData.description,
-            //             questData.currentProgress,
-            //             questData.targetProgress
-            //         );
-            //
-            //         if (questData.isCompleted)
-            //         {
-            //             QuestTracker.Instance.CompleteQuest(questData.questId);
-            //         }
-            //     }
-            // }
+            RestoreTaskData(saveData);
 
             if (saveData.playerData.currentSanity >= 0f)
             {
@@ -673,6 +665,25 @@ namespace Assets.Scripts
             RenderTexture.ReleaseTemporary(rt);
 
             return result;
+        }
+
+        #endregion
+
+        #region Task Save/Load
+
+        private void CollectTaskData(SaveData saveData)
+        {
+            TaskManager tm = TaskManager.Instance;
+            if (tm == null) return;
+            saveData.activeTasks = tm.GetActiveTasksForSave();
+            saveData.completedTaskIds = tm.GetCompletedTaskIds();
+        }
+
+        private void RestoreTaskData(SaveData saveData)
+        {
+            TaskManager tm = TaskManager.Instance;
+            if (tm == null) return;
+            tm.RestoreFromSave(saveData.activeTasks, saveData.completedTaskIds);
         }
 
         #endregion

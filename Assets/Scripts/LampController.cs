@@ -296,6 +296,7 @@ namespace Assets.Scripts
 
         private void UpdateLightVisuals()
         {
+            if (Time.timeScale == 0f) return;
             if (lightGroupObject != null && !lightGroupObject.activeSelf) return;
 
             if (lampLight != null)

@@ -536,7 +536,7 @@ namespace Assets.Scripts
 
                 alertLookTimer += Time.deltaTime;
                 if (alertLookTimer >= alertLookAroundTime)
-                    ChangeState(MonsterState.Patrol);
+                    ChangeState(MonsterState.Search);
             }
         }
 
