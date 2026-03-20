@@ -132,18 +132,23 @@ namespace Assets.Scripts
             UpdateDisplay();
             IsLocked = false; 
         }
-        private IEnumerator SuccessRoutine()
-        {
-            IsLocked = true;
-            if (successSound) audioSource.PlayOneShot(successSound);
-            
-            displayText.color = successColor;
-            displayText.text = "OPEN";
+private IEnumerator SuccessRoutine()
+{
+    IsLocked = true;
+    if (successSound) audioSource.PlayOneShot(successSound);
+    
+    displayText.color = successColor;
+    displayText.text = "OPEN";
 
-            yield return new WaitForSeconds(1f);
+    if (TaskManager.Instance != null) 
+    {
+        TaskManager.Instance.RemoveTask("find_code");
+    }
 
-            OnCodeCorrect?.Invoke();
-        }
+    yield return new WaitForSeconds(1f);
+
+    OnCodeCorrect?.Invoke();
+}
         private void UpdateDisplay()
         {
             displayText.text = currentInput.Length > 0 ? currentInput : "----";

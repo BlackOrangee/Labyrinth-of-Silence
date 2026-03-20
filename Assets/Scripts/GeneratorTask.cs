@@ -47,6 +47,7 @@ namespace Assets.Scripts
                 indicators.SetState(GeneratorIndicators.IndicatorState.Idle);
             }
         }
+
         public string GetInteractText()
         {
             if (isRepaired) return "Generator is ON";
@@ -59,6 +60,7 @@ namespace Assets.Scripts
             }
             return "Need Fuel (Find Canister)";
         }
+
         private bool IsPlayerHoldingFuel()
         {
             SimpleInventory inventory = FindFirstObjectByType<SimpleInventory>();
@@ -68,6 +70,7 @@ namespace Assets.Scripts
             }
             return false;
         }
+
         public void Interact(GameObject actor)
         {
             if (isRepaired) return;
@@ -82,6 +85,12 @@ namespace Assets.Scripts
                     inventory.RemoveItem(fuelItemName);
                     Debug.Log("Generator: Refueling complete!");
 
+                    if (TaskManager.Instance != null)
+                    {
+                        TaskManager.Instance.RemoveTask("find_canister");
+                        TaskManager.Instance.AddTask("start_gen", "Start the generator", "Завести генератор");
+                    }
+
                     if (generatorAudio && refuelSound) generatorAudio.PlayOneShot(refuelSound);
 
                     if (indicators != null)
@@ -92,6 +101,11 @@ namespace Assets.Scripts
                 else
                 {
                     Debug.Log("Generator: You need fuel!");
+                    
+                    if (TaskManager.Instance != null)
+                    {
+                        TaskManager.Instance.AddTask("find_canister", "Find a generator canister", "Знайти каністру до генератора");
+                    }
                 }
                 return;
             }
@@ -106,6 +120,7 @@ namespace Assets.Scripts
                 StartCoroutine(MonitorPlayerDistance(actor));
             }
         }
+
         private IEnumerator MonitorPlayerDistance(GameObject player)
         {
             while (isSkillCheckActive)
@@ -128,6 +143,18 @@ namespace Assets.Scripts
             isRepaired = true;
             isSkillCheckActive = false;
             Debug.Log("Generator: REPAIRED! Power Restored.");
+            
+            if (TaskManager.Instance != null)
+            {
+                TaskManager.Instance.RemoveTask("start_gen");
+                TaskManager.Instance.RemoveTask("find_canister");
+            }
+            
+            if (CodePuzzleManager.Instance != null)
+            {
+                CodePuzzleManager.Instance.StartCodeTask(); 
+            }
+
             skillCheckSystem.OnSeriesComplete = null;
             skillCheckSystem.OnFail = null;
 
@@ -145,6 +172,7 @@ namespace Assets.Scripts
                 generatorAudio.Play();
             }
         }
+
         private void OnFail()
         {
             isSkillCheckActive = false;
@@ -165,6 +193,7 @@ namespace Assets.Scripts
                 monsterAI.TriggerChaseToLocation(transform.position);
             }
         }
+
         public void RestoreState(bool repaired, bool fuel)
         {
             isRepaired = repaired;
@@ -190,6 +219,7 @@ namespace Assets.Scripts
         }
 
         public void OnInteract(GameObject actor) => Interact(actor);
+
         public string GetPopupID()
         {
             if (isRepaired) return "generatorIsOn";

@@ -24,6 +24,16 @@ namespace Assets.Scripts
         [SerializeField] private AudioClip pickupSound;
         [Range(0f, 1f)] [SerializeField] private float pickupVolume = 1f;
 
+        [Header("Task System (Зміна завдань при піднятті)")]
+        [Tooltip("Яку таску ВИДАЛИТИ з екрана (напр. find_key_1)")]
+        [SerializeField] private string taskIDToRemove;
+        
+        [Tooltip("Яку таску ДОДАТИ на екран (напр. find_exit_A)")]
+        [SerializeField] private string taskIDToAdd;
+        [SerializeField] private string taskTextEng;
+        [SerializeField] private string taskTextUkr;
+
+
         private bool isCollected = false;
         private Collider cachedCollider;
         private Rigidbody cachedRigidbody;
@@ -73,6 +83,16 @@ namespace Assets.Scripts
             {
                 Debug.LogWarning("CollectItem: Player has no SimpleInventory component!");
             }
+
+            if (TaskManager.Instance != null)
+            {
+                if (!string.IsNullOrEmpty(taskIDToRemove)) 
+                    TaskManager.Instance.RemoveTask(taskIDToRemove);
+                
+                if (!string.IsNullOrEmpty(taskIDToAdd) && !string.IsNullOrEmpty(taskTextEng))
+                    TaskManager.Instance.AddTask(taskIDToAdd, taskTextEng, taskTextUkr);
+            }
+
 
             if (pickupSound != null)
             {

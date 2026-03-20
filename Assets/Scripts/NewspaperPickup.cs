@@ -67,6 +67,11 @@ namespace Assets.Scripts
 
             Debug.Log($"NewspaperPickup: Picked up newspaper '{newspaperData.newspaperName}' (ID: {newspaperData.newspaperId})");
 
+        if (DocumentManager.Instance != null)
+        {
+            DocumentManager.Instance.DocumentFound();
+        }
+
             TriggerThought();
         }
 

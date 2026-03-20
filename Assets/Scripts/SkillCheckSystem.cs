@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 namespace Assets.Scripts
 {
@@ -16,30 +17,34 @@ namespace Assets.Scripts
         [SerializeField] private TextMeshProUGUI percentTextTMP;
         [SerializeField] private TextMeshProUGUI spacePromptText;
 
-        [Header("Speed Settings (Налаштування швидкості бігунка голки)")]
-        [Tooltip("Початкова швидкість бігунка (пікселів за секунду)")]
+        [Header("Speed Settings (Швидкість бігунка)")]
         [SerializeField] private float startRotationSpeed = 250f;
-
-        [Tooltip("На скільки прискорюється бігунок після кожного вдалого влучання")]
         [SerializeField] private float speedIncreaseOnHit = 20f;
         private float rotationSpeed;
 
-        [Header("Settings")]
-
+        [Header("Zone Settings (Математика Зон)")]
         [Range(0.05f, 0.5f)]
-        public float successZoneSize = 0.15f;
-        [SerializeField] private float randomPositionRadius = 200f;
+        [Tooltip("Відсоток ширини бару для Успішної зони (напр. 0.2 = 20%)")]
+        public float successZoneSize = 0.2f; 
+        
+        [Range(0.01f, 0.2f)]
+        [Tooltip("Відсоток ширини бару для Ідеальної зони")]
+        public float perfectZoneSize = 0.05f;
 
-        [Tooltip("Наскільки далеко має стрибнути наступний скілчек від попереднього")]
+        [Tooltip("ХІТРОЩІ: Прихований допуск для гравця. Робить зону влучання трішки ширшою за візуальну.")]
+        [SerializeField] private float forgivenessMargin = 0.015f; 
+
+        [SerializeField] private float randomPositionRadius = 200f;
         [SerializeField] private float minSpawnDistance = 150f; 
         private Vector2 lastPosition = Vector2.zero;
-
-        [Tooltip("Розмір одного сегменту бару (20 = один квадратик)")]
-        [SerializeField] private float tileSize = 20f;
 
         [Header("Zone Appearance")]
         [SerializeField] private Color successZoneColor = new Color(1f, 1f, 1f, 0.85f);
         [SerializeField] private Color perfectZoneColor = new Color(1f, 0.85f, 0f, 0.95f);
+        
+        [Header("Visual Feedback")]
+        [Tooltip("Скільки секунд голка стоїть на місці після кліку, щоб гравець побачив своє влучання/промах")]
+        [SerializeField] private float pauseAfterHit = 0.2f;
 
         [Header("Progress Settings")]
         public float successBonus = 25f;
@@ -54,16 +59,21 @@ namespace Assets.Scripts
         [SerializeField] private AudioClip completeSound;
         [SerializeField] private AudioClip appearSound;
         [SerializeField] private AudioClip alarmSound;
+
         public System.Action OnSeriesComplete;
         public System.Action OnFail;
+
         private bool isActive = false;
+        private bool isPaused = false;
         private float currentRotation = 0f;
         private float targetZoneAngle = 0f;
         private float needleDirection = 1f;
+        
         private float barWidth = 300f;
         private float barHeight = 30f;
         private float currentProgress = 0f;
         private int consecutiveMisses = 0;
+
         private void Start()
         {
             if (barContainer != null)
@@ -76,14 +86,15 @@ namespace Assets.Scripts
             if (progressSlider) progressSlider.gameObject.SetActive(false);
             if (spacePromptText) spacePromptText.gameObject.SetActive(false);
 
-            if (audioSource == null)
-                audioSource = gameObject.AddComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
         }
+
         private void Update()
         {
-            if (!isActive) return;
+            if (!isActive || isPaused) return;
 
             currentRotation += needleDirection * (rotationSpeed / barWidth) * Time.deltaTime;
+            
             if (currentRotation >= 1f) { currentRotation = 1f; needleDirection = -1f; }
             if (currentRotation <= 0f) { currentRotation = 0f; needleDirection = 1f; }
 
@@ -92,19 +103,18 @@ namespace Assets.Scripts
                 RectTransform nr = needlePivot as RectTransform ?? needlePivot.GetComponent<RectTransform>();
                 if (nr != null)
                 {
-                    float xPos = Mathf.Clamp(
-                        (currentRotation - 0.5f) * barWidth,
-                        -barWidth / 2f,
-                        barWidth / 2f
-                    );
+                    float xPos = Mathf.Lerp(-barWidth / 2f, barWidth / 2f, currentRotation);
                     nr.anchoredPosition = new Vector2(xPos, 0f);
                     nr.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, barHeight);
                 }
             }
 
             if (Input.GetKeyDown(KeyCode.Space))
+            {
                 CheckHit();
+            }
         }
+
         public void StartRepair()
         {
             currentProgress = 0f;
@@ -121,48 +131,41 @@ namespace Assets.Scripts
             UpdateUI();
             StartRound();
         }
+
         public void ForceStop()
         {
             isActive = false;
+            StopAllCoroutines();
             if (skillCheckContainer) skillCheckContainer.gameObject.SetActive(false);
             if (progressSlider) progressSlider.gameObject.SetActive(false);
             if (spacePromptText) spacePromptText.gameObject.SetActive(false);
         }
+
         private void StartRound()
         {
             isActive = true;
+            isPaused = false;
+
             if (skillCheckContainer)
             {
                 skillCheckContainer.gameObject.SetActive(true);
 
                 Vector2 newPos;
                 int attempts = 0;
-
-                do
-                {
+                do {
                     newPos = Random.insideUnitCircle * randomPositionRadius;
-                    
                     attempts++;
-                } 
-                while (Vector2.Distance(newPos, lastPosition) < minSpawnDistance && attempts < 10);
-
+                } while (Vector2.Distance(newPos, lastPosition) < minSpawnDistance && attempts < 10);
                 skillCheckContainer.anchoredPosition = newPos;
-
                 lastPosition = newPos;
             }
             if (spacePromptText) spacePromptText.gameObject.SetActive(true);
 
-            int totalTiles = Mathf.RoundToInt(barWidth / tileSize);
+            float safeMargin = successZoneSize / 2f; 
 
-            int successTiles = Mathf.Max(1, Mathf.RoundToInt(successZoneSize * totalTiles));
-            float successWidth = successTiles * tileSize;
+            targetZoneAngle = Random.Range(safeMargin, 1f - safeMargin); 
 
-            int minTile = successTiles / 2 + 1;
-            int maxTile = totalTiles - successTiles / 2 - 1;
-            int randomTile = Random.Range(minTile, maxTile + 1);
-            targetZoneAngle = (float)randomTile / totalTiles;
-
-            float zoneX = (targetZoneAngle - 0.5f) * barWidth;
+            float zoneCenterPixel = Mathf.Lerp(-barWidth / 2f, barWidth / 2f, targetZoneAngle);
 
             if (successZoneImage)
             {
@@ -170,8 +173,8 @@ namespace Assets.Scripts
                 RectTransform sr = successZoneImage.GetComponent<RectTransform>();
                 if (sr != null)
                 {
-                    sr.anchoredPosition = new Vector2(zoneX, 0f);
-                    sr.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, successWidth);
+                    sr.anchoredPosition = new Vector2(zoneCenterPixel, 0f);
+                    sr.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, successZoneSize * barWidth);
                     sr.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, barHeight);
                 }
             }
@@ -182,37 +185,29 @@ namespace Assets.Scripts
                 RectTransform pr = perfectZoneImage.GetComponent<RectTransform>();
                 if (pr != null)
                 {
-                    pr.anchoredPosition = new Vector2(zoneX, 0f);
-                    pr.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tileSize);
+                    pr.anchoredPosition = new Vector2(zoneCenterPixel, 0f);
+                    pr.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, perfectZoneSize * barWidth);
                     pr.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, barHeight);
                 }
             }
 
             currentRotation = 0f;
             needleDirection = 1f;
-            if (needlePivot)
-            {
-                RectTransform nr = needlePivot as RectTransform ?? needlePivot.GetComponent<RectTransform>();
-                if (nr != null)
-                {
-                    nr.anchoredPosition = new Vector2(-barWidth / 2f, 0f);
-                    nr.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, barHeight);
-                }
-            }
 
             if (audioSource && appearSound) audioSource.PlayOneShot(appearSound);
         }
+
         private void CheckHit()
         {
-            int totalTiles = Mathf.RoundToInt(barWidth / tileSize);
-            int successTiles = Mathf.Max(1, Mathf.RoundToInt(successZoneSize * totalTiles));
+            isPaused = true; 
 
             float posDiff = Mathf.Abs(currentRotation - targetZoneAngle);
-            float successHalfNorm = (successTiles * tileSize / 2f) / barWidth;
-            float perfectHalfNorm = (tileSize / 2f) / barWidth;
+            
+            float successThreshold = (successZoneSize / 2f) + forgivenessMargin;
+            float perfectThreshold = (perfectZoneSize / 2f) + forgivenessMargin;
 
-            bool hitPerfect = posDiff <= perfectHalfNorm;
-            bool hitGood = posDiff <= successHalfNorm;
+            bool hitPerfect = posDiff <= perfectThreshold;
+            bool hitGood = posDiff <= successThreshold;
 
             if (hitGood)
             {
@@ -220,15 +215,15 @@ namespace Assets.Scripts
                 currentProgress += hitPerfect ? perfectBonus : successBonus;
                 if (currentProgress > 100f) currentProgress = 100f;
 
-                Debug.Log(hitPerfect ? "Perfect! +20%" : "Good! +25%");
                 if (audioSource && successSound) audioSource.PlayOneShot(successSound);
                 UpdateUI();
 
-                if (currentProgress >= 100f) Complete();
+                if (currentProgress >= 100f) 
+                    StartCoroutine(HitPauseRoutine(true));
                 else 
                 {
                     rotationSpeed += speedIncreaseOnHit; 
-                    StartRound(); 
+                    StartCoroutine(HitPauseRoutine(false));
                 }
             }
             else
@@ -237,34 +232,50 @@ namespace Assets.Scripts
                 currentProgress -= failPenalty;
                 if (currentProgress < 0) currentProgress = 0;
 
-                Debug.Log($"Miss! {consecutiveMisses}/{maxConsecutiveMisses}");
                 if (audioSource && failSound) audioSource.PlayOneShot(failSound);
                 UpdateUI();
 
-                if (consecutiveMisses >= maxConsecutiveMisses) FailSequence();
-                else StartRound();
+                if (consecutiveMisses >= maxConsecutiveMisses) 
+                {
+                    FailSequence();
+                }
+                else 
+                {
+                    StartCoroutine(HitPauseRoutine(false));
+                }
             }
         }
+
+        private IEnumerator HitPauseRoutine(bool isComplete)
+        {
+            yield return new WaitForSeconds(pauseAfterHit); 
+
+            if (isComplete)
+            {
+                Complete();
+            }
+            else
+            {
+                StartRound();
+            }
+        }
+
         private void UpdateUI()
         {
             if (progressSlider) progressSlider.value = currentProgress / 100f;
             if (percentTextTMP != null) percentTextTMP.text = $"{Mathf.RoundToInt(currentProgress)}%";
         }
+
         private void FailSequence()
         {
-            isActive = false;
-            if (skillCheckContainer) skillCheckContainer.gameObject.SetActive(false);
-            if (progressSlider) progressSlider.gameObject.SetActive(false);
-            if (spacePromptText) spacePromptText.gameObject.SetActive(false);
+            ForceStop();
             if (audioSource && alarmSound) audioSource.PlayOneShot(alarmSound);
             OnFail?.Invoke();
         }
+
         private void Complete()
         {
-            isActive = false;
-            if (skillCheckContainer) skillCheckContainer.gameObject.SetActive(false);
-            if (progressSlider) progressSlider.gameObject.SetActive(false);
-            if (spacePromptText) spacePromptText.gameObject.SetActive(false);
+            ForceStop();
             if (audioSource && completeSound) audioSource.PlayOneShot(completeSound);
             OnSeriesComplete?.Invoke();
         }

@@ -70,6 +70,20 @@ namespace Assets.Scripts
         [Tooltip("Message when unlocked")]
         [SerializeField] private string popupID = "open";
 
+        [Header("Task System (Завдання дверей)")]
+        [Tooltip("Що додати, якщо гравець підійшов до ЗАЧИНЕННИХ дверей? (напр: find_key)")]
+        [SerializeField] private string taskToAddIfLocked;
+        
+        [Tooltip("Текст англійською")]
+        [SerializeField] private string taskTextEngIfLocked;
+        
+        [Tooltip("Текст українською")]
+        [SerializeField] private string taskTextUkrIfLocked;
+        
+        [Tooltip("Що видалити, коли двері ВІДЧИНЯЮТЬСЯ? (напр: find_key, next_block) - можна вписати декілька через кому")]
+        [SerializeField] private string tasksToRemoveOnOpen;
+
+
         private bool isOpen = false;
         private bool isLocked = true;
         private SimpleInventory playerInventory;
@@ -126,6 +140,11 @@ namespace Assets.Scripts
                 {
                     PlaySound(lockedSound);
                     ShowLockedMessage();
+
+                    if (TaskManager.Instance != null && !string.IsNullOrEmpty(taskToAddIfLocked) && !string.IsNullOrEmpty(taskTextEngIfLocked))
+                    {
+                        TaskManager.Instance.AddTask(taskToAddIfLocked, taskTextEngIfLocked, taskTextUkrIfLocked);
+                    }
                 }
             }
             else
@@ -236,6 +255,15 @@ namespace Assets.Scripts
 
             isOpen = true;
             PlaySound(openSound);
+
+            if (TaskManager.Instance != null && !string.IsNullOrEmpty(tasksToRemoveOnOpen))
+            {
+                string[] tasks = tasksToRemoveOnOpen.Split(',');
+                foreach (string task in tasks)
+                {
+                    TaskManager.Instance.RemoveTask(task.Trim()); 
+                }
+            }
 
             if (doorCoroutine != null)
             {
