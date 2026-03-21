@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 
@@ -63,3 +64,5 @@ public class RaiseLowerTerrain : EditorWindow
         Debug.Log($"Terrain изменён на {meters} метров!");
     }
 }
+
+#endif

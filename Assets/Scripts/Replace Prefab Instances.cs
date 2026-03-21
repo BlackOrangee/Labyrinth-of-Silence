@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using System.Reflection;
@@ -89,3 +90,4 @@ public class PrefabReplacerAdvanced : EditorWindow
         EditorUtility.DisplayDialog("Prefab Replacer", $"Replaced {count} instance(s)!", "OK");
     }
 }
+#endif
