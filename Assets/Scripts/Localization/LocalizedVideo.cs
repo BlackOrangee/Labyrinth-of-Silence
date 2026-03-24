@@ -4,7 +4,7 @@ using UnityEngine.Video;
 namespace Assets.Scripts.Localization
 {
     /// <summary>
-    /// NEW: Компонент для локалізації відео. 
+    /// Компонент для локалізації відео. 
     /// Вішається на той самий об'єкт, де знаходиться VideoPlayer.
     /// </summary>
     [RequireComponent(typeof(VideoPlayer))]
