@@ -155,7 +155,7 @@ namespace Assets.Scripts
         {
             Debug.Log($"[SettingsManager] Applying graphics settings: {currentSettings.resolutionWidth}x{currentSettings.resolutionHeight}, Fullscreen: {currentSettings.fullscreen}");
 
-            FullScreenMode fullscreenMode = currentSettings.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
+            FullScreenMode fullscreenMode = currentSettings.fullscreen ? FullScreenMode.ExclusiveFullScreen : FullScreenMode.Windowed;
 
             Debug.Log($"[SettingsManager] Current screen: {Screen.width}x{Screen.height}, Fullscreen: {Screen.fullScreen}");
 
@@ -340,6 +340,8 @@ namespace Assets.Scripts
 
             foreach (var res in all)
             {
+                if (res.width < 1280 || res.height < 720) continue;
+
                 var key = (res.width, res.height);
                 if (!best.ContainsKey(key))
                 {

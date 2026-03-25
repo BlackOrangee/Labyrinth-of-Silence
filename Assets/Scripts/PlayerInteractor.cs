@@ -192,23 +192,19 @@ namespace Assets.Scripts
                 Localization.PopupManager.Instance.fadeDuration = fadeOutDuration;
             }
 
-            yield return new WaitForSeconds(crossfadeDuration);
-            yield return new WaitForSeconds(pressedDisplayDuration);
-            if (Localization.PopupManager.Instance != null)
-            {
-                Localization.PopupManager.Instance.HidePopup();
-            }
-
-            if (waitForFadeOut)
-            {
-                yield return new WaitForSeconds(fadeOutDuration);
-            }
-
             target.Interact(this.gameObject);
 
             currentInteractable = null;
             lastHitGO = null;
             currentPopupID = null;
+
+            yield return new WaitForSeconds(crossfadeDuration);
+            yield return new WaitForSeconds(pressedDisplayDuration);
+
+            if (Localization.PopupManager.Instance != null)
+            {
+                Localization.PopupManager.Instance.HidePopup();
+            }
 
             interactionCoroutine = null;
         }

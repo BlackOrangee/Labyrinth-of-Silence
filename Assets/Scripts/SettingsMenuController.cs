@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 namespace Assets.Scripts
 {
@@ -65,24 +66,35 @@ namespace Assets.Scripts
             }
         }
 
+        private static void FixDropdownScrollSensitivity(Dropdown dropdown, float sensitivity = 30f)
+        {
+            if (dropdown == null || dropdown.template == null) return;
+            var scrollRect = dropdown.template.GetComponent<ScrollRect>();
+            if (scrollRect != null)
+                scrollRect.scrollSensitivity = sensitivity;
+        }
+
         void InitializeUI()
         {
             if (resolutionDropdown != null)
             {
                 resolutionDropdown.ClearOptions();
                 resolutionDropdown.AddOptions(settingsManager.GetResolutionStrings());
+                FixDropdownScrollSensitivity(resolutionDropdown);
             }
 
             if (subtitleLanguageDropdown != null)
             {
                 subtitleLanguageDropdown.ClearOptions();
                 subtitleLanguageDropdown.AddOptions(new List<string>(settingsManager.AvailableLanguages));
+                FixDropdownScrollSensitivity(subtitleLanguageDropdown);
             }
 
             if (gameLanguageDropdown != null)
             {
                 gameLanguageDropdown.ClearOptions();
                 gameLanguageDropdown.AddOptions(new List<string>(settingsManager.AvailableLanguages));
+                FixDropdownScrollSensitivity(gameLanguageDropdown);
             }
         }
 

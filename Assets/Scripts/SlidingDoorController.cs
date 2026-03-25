@@ -117,6 +117,17 @@ namespace Assets.Scripts
             {
                 if (showThoughtWhenLocked)
                     TriggerLockedThought();
+
+                if (!taskGiven && TaskManager.Instance != null)
+                {
+                    taskGiven = true;
+
+                    if (!string.IsNullOrEmpty(taskIDToRemove))
+                        TaskManager.Instance.RemoveTask(taskIDToRemove);
+
+                    if (!string.IsNullOrEmpty(taskIDToAdd) && !string.IsNullOrEmpty(taskTextEng))
+                        TaskManager.Instance.AddTask(taskIDToAdd, taskTextEng, taskTextUkr);
+                }
             }
         }
 

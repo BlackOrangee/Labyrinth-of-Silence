@@ -84,7 +84,7 @@ MonoBehaviour:
     spriteNormalUkrainian: {fileID: 1654663961, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
     spritePressedUkrainian: {fileID: 1501484717, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
   - popupID: takeDigit
-    spriteNormalEnglish: {fileID: 21300000, guid: c8c0f88b3220f47f5b2d0ae20680f7a0, type: 3}
-    spritePressedEnglish: {fileID: 21300000, guid: 1afe4969ebfc04513afe8926ac8e80e1, type: 3}
-    spriteNormalUkrainian: {fileID: 21300000, guid: 634ad119d8b98464e88a1ffec3f552f8, type: 3}
-    spritePressedUkrainian: {fileID: 21300000, guid: 91cc05c2e0d2447a1a8480d48db41f79, type: 3}
+    spriteNormalEnglish: {fileID: -1168471675, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spritePressedEnglish: {fileID: -1812192998, guid: 652eccba21bac3b43b6f77083e286bea, type: 3}
+    spriteNormalUkrainian: {fileID: 212511698, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}
+    spritePressedUkrainian: {fileID: 1887562605, guid: 25e31f75d46cfb443a679c22f5e3c411, type: 3}

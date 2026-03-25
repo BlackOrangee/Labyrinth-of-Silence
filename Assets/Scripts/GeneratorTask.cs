@@ -223,7 +223,8 @@ namespace Assets.Scripts
         public string GetPopupID()
         {
             if (isRepaired) return "generatorIsOn";
-            if (hasFuel || debugHasFuel || IsPlayerHoldingFuel()) return "refuel";
+            if (hasFuel || debugHasFuel) return "turnOn";
+            if (IsPlayerHoldingFuel()) return "refuel";
             return "needFuel";
         }
     }
